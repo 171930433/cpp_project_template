@@ -2,6 +2,12 @@ file(GLOB_RECURSE HEADER_FILES  ${PROJECT_SOURCE_DIR}/include/*.h)
 
 add_library(${PROJECT_NAME} SHARED mylib.cpp)
 
+
+target_link_libraries(${PROJECT_NAME}
+PUBLIC
+    $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
+)
+
 target_include_directories(${PROJECT_NAME}
 PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

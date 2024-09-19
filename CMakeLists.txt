@@ -12,8 +12,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
 
 # message(CMAKE_INSTALL_BINDIR=======${CMAKE_INSTALL_BINDIR})
 
-add_subdirectory(src)
+option(PROTOBUF_DEMO "demo of use protobuf" ON)
+if(PROTOBUF_DEMO)
+    add_subdirectory(proto)
+endif()
 
+add_subdirectory(src)
 
 option(ENABLE_TESTS "ENABLE_TESTS OPTIONS" ON)
 if(ENABLE_TESTS)

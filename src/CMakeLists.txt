@@ -4,7 +4,7 @@ add_library(${PROJECT_NAME} SHARED mylib.cpp)
 
 
 target_link_libraries(${PROJECT_NAME}
-PUBLIC
+PRIVATE
     $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
 )
 
@@ -46,8 +46,6 @@ PUBLIC_HEADER
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
     COMPONENT dev
 )
-
-set(CMAKE_DESTINATION_DIR share/cmake/${PROJECT_NAME})
 
 install(
 EXPORT

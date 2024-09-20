@@ -2,7 +2,7 @@ find_package(protobuf CONFIG REQUIRED)
 
 file(GLOB_RECURSE PROTO_FILES *.proto)
 
-#! 很奇怪,这个变量不能随便命名 PROTO_SRCS PROTO_HDRS
+#! 注意,这个变量不能是用 HDRS和SRCS ，即不能和PROTOBUF_GENERATE_CPP函数定义的两个输出参数名称一致
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 # message(PROTO_FILES============${PROTO_FILES})
 # message(PROTO_SRCS============${PROTO_SRCS})

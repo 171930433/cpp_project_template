@@ -12,6 +12,8 @@ target_include_directories(${PROJECT_NAME}
 PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+INTERFACE
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
 )
 
 set_target_properties(${PROJECT_NAME}

@@ -13,6 +13,11 @@ set(CMAKE_DESTINATION_DIR share/cmake/${PROJECT_NAME})
 
 # message(CMAKE_INSTALL_BINDIR=======${CMAKE_INSTALL_BINDIR})
 
+option(ENABLE_CPPCHECK "demo of use static check, cppcheck" ON)
+if(ENABLE_CPPCHECK)
+    include(cmake/cppcheck.cmake)
+endif()
+
 option(PROTOBUF_DEMO "demo of use protobuf" ON)
 if(PROTOBUF_DEMO)
     add_subdirectory(proto)

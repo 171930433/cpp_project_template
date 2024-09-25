@@ -29,9 +29,22 @@ add_test(NAME use-target_cleanup
 set_tests_properties(use-target_cleanup PROPERTIES FIXTURES_CLEANUP use-target)
 
 #
-add_executable(main_test main.cpp)
+set(GFLAGS_USE_TARGET_NAMESPACE ON)
+find_package(gflags CONFIG REQUIRED)
+find_package(GTest CONFIG REQUIRED)
+find_package(glog CONFIG REQUIRED)
+find_package(yalantinglibs REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
+file(GLOB TEST_FILES *.cpp)
+
+add_executable(main_test ${TEST_FILES})
 target_link_libraries(
-  main_test PRIVATE ${PROJECT_NAME}
-                    $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>)
+  main_test
+  PRIVATE ${PROJECT_NAME}
+          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> GTest::gtest
+          gflags::gflags glog::glog yalantinglibs::yalantinglibs fmt::fmt)
+
+target_compile_features(main_test PRIVATE cxx_std_20)
 
 add_test(NAME main_test COMMAND $<TARGET_FILE:main_test>)

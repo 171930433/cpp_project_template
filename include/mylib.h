@@ -1,6 +1,7 @@
 #pragma once
 
 #include "export.h"
+#include "sensor_frames.h"
 
 // #include <reflection/member_value.hpp>
 // #include <reflection/private_visitor.hpp>

@@ -1,19 +1,11 @@
-#include <iostream>
-#include <assert.h>
-#include "mylib.h"
+#include <gtest/gtest.h>
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 
-struct SA
-{
-    int x;
-    std::string str;
-};
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  google::InitGoogleLogging(argv[0]);
 
-int main()
-{
-#ifdef HAVE_THIRD_PARTY
-    SA sa{1, "abc"};
-    assert(to_string(sa) == R"({"x":1,"str":"abc"})");
-#endif
-
-    return 0;
+  return RUN_ALL_TESTS();
 }

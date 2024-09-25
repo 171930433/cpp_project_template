@@ -1,11 +1,19 @@
 file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/include/*.h)
 
+find_package(Eigen3 CONFIG REQUIRED)
+find_package(yalantinglibs REQUIRED)
+find_package(glog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
 add_library(${PROJECT_NAME} SHARED mylib.cpp)
 
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
-          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>)
+          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>
+          Eigen3::Eigen yalantinglibs::yalantinglibs fmt::fmt glog::glog)
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 target_compile_definitions(
   ${PROJECT_NAME} PUBLIC $<$<BOOL:${PROTOBUF_DEMO}>:HAVE_PROTOBUF>

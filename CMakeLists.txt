@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(mylib VERSION 1.0.0 LANGUAGES CXX)
 
+option(FETCH_THIRD_PARTY_DEMO "demo of use protobuf" ON)
+if(FETCH_THIRD_PARTY_DEMO)
+    include(cmake/third_party.cmake)
+endif()
+
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()

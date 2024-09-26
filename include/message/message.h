@@ -1,5 +1,5 @@
 #pragma once
-#include "sensor_frames.h"
+#include "message/sensors.h"
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <unordered_set>
@@ -55,4 +55,4 @@ public:
 //   return os;
 // }
 
-#include "channel_message_impl.h"
+#include "message_impl.h"

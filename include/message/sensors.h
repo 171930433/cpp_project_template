@@ -18,7 +18,7 @@ struct Vec3d
     double z_ = 0;
 };
 
-struct ImuFrame
+struct Imu
 {
     double t0_ = 0;          // 产生时间 s
     Vec3d acc_ = {0, 0, 0};  // imu系比力观测值
@@ -26,7 +26,7 @@ struct ImuFrame
     double temperature_ = 0; // 温度 摄氏度
 };
 
-struct GnssPositionFrame
+struct GnssPosition
 {
     double t0_ = 0; // 产生时间 s
     double hdop = 0;
@@ -38,7 +38,7 @@ struct GnssPositionFrame
     Vec3d std_pos = {0, 0, 0};
 };
 
-struct GnssVelocityFrame
+struct GnssVelocity
 {
     double t0_ = 0; // 产生时间 s
     Vec3d vel = {0, 0, 0};
@@ -47,7 +47,7 @@ struct GnssVelocityFrame
     Vec3d std_vel = {0, 0, 0};
 };
 
-struct GnssDualAntennaFrame
+struct GnssDualAntenna
 {
     double t0_ = 0; // 产生时间 s
     Vec2d dual_antenna_angle = {0, 0};
@@ -56,19 +56,19 @@ struct GnssDualAntennaFrame
     int heading_sat_num = 0;
 };
 
-struct GnssFrame
+struct Gnss
 {
     double t0_ = 0; // 产生时间 s
-    GnssPositionFrame pos_;
-    GnssVelocityFrame vel_;
-    GnssDualAntennaFrame dual_antenna_;
+    GnssPosition pos_;
+    GnssVelocity vel_;
+    GnssDualAntenna dual_antenna_;
 };
 
 struct FramesPack
 {
-    ImuFrame imu;
-    GnssPositionFrame gnss_pos;
-    GnssVelocityFrame gnss_vel;
-    GnssDualAntennaFrame gnss_dual_antenna;
-    GnssFrame gnss;
+    Imu imu;
+    GnssPosition gnss_pos;
+    GnssVelocity gnss_vel;
+    GnssDualAntenna gnss_dual_antenna;
+    Gnss gnss;
 };

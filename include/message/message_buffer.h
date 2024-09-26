@@ -1,6 +1,6 @@
 #pragma once
 
-#include "channel_message.h"
+#include "message/message.h"
 
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/key.hpp>

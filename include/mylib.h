@@ -3,6 +3,7 @@
 #include "export.h"
 #include "sensor_frames.h"
 #include "channel_message.h"
+#include "channel_message_buffer.h"
 
 // #include <reflection/member_value.hpp>
 // #include <reflection/private_visitor.hpp>

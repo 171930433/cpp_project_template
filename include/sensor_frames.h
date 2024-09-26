@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <ylt/struct_pb.hpp>
 #include <ylt/struct_json/json_writer.h>
+#include <glog/logging.h>
 
 struct Vec2d
 {

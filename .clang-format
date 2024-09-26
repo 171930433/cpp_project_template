@@ -1,0 +1,24 @@
+# This configuration requires clang-format 8.0 or higher.
+BasedOnStyle: Mozilla
+AlignAfterOpenBracket: DontAlign
+AlignOperands: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+# BreakBeforeBraces: Allman
+BinPackArguments: true
+BinPackParameters: true
+ColumnLimit: 80
+SpaceAfterTemplateKeyword: true
+Standard: Cpp11
+BreakBeforeBraces: Attach # 大括号跟随在语句的同一行
+# 额外设置
+BreakBeforeBinaryOperators: NonAssignment
+AllowShortBlocksOnASingleLine: Always # 强制短块语句在同一行
+AllowShortFunctionsOnASingleLine: InlineOnly # 强制短函数体在同一行
+AllowShortIfStatementsOnASingleLine: WithoutElse # 短 if 语句在无 else 的情况下保持在一行
+AllowShortLoopsOnASingleLine: true # 强制短循环语句保持在同一行
+CompactNamespaces: false # 禁止紧凑命名空间
+
+StatementMacros:
+- vtkTypeMacro
+...

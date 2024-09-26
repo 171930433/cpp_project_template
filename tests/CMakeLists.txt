@@ -28,13 +28,16 @@ add_test(NAME use-target_cleanup
 
 set_tests_properties(use-target_cleanup PROPERTIES FIXTURES_CLEANUP use-target)
 
-#
+# vcpkg
 set(GFLAGS_USE_TARGET_NAMESPACE ON)
 find_package(gflags CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(glog CONFIG REQUIRED)
 find_package(yalantinglibs REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+# system 
+find_package(Boost REQUIRED COMPONENTS system)
+
 
 file(GLOB TEST_FILES *.cpp)
 
@@ -43,7 +46,7 @@ target_link_libraries(
   main_test
   PRIVATE ${PROJECT_NAME}
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> GTest::gtest
-          gflags::gflags glog::glog yalantinglibs::yalantinglibs fmt::fmt)
+          gflags::gflags glog::glog yalantinglibs::yalantinglibs fmt::fmt Boost::system)
 
 target_compile_features(main_test PRIVATE cxx_std_20)
 

@@ -5,6 +5,7 @@
     "glog",
     "gtest",
     "gflags",
-    "fmt"
+    "fmt",
+    "units"
   ]
 }

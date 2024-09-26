@@ -1,10 +1,12 @@
-file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/include/*.h)
+file(GLOB_RECURSE HEADER_FILES *.h)
 file(GLOB_RECURSE SOURCE_FILES *.cpp)
 
+# vcpkg
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(yalantinglibs REQUIRED)
 find_package(glog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(units CONFIG REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
@@ -12,7 +14,11 @@ target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>
-          Eigen3::Eigen yalantinglibs::yalantinglibs fmt::fmt glog::glog)
+          Eigen3::Eigen
+          yalantinglibs::yalantinglibs
+          fmt::fmt
+          glog::glog
+          units::units)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
@@ -22,18 +28,18 @@ target_compile_definitions(
 
 target_include_directories(
   ${PROJECT_NAME}
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
 
 set_target_properties(
   ${PROJECT_NAME}
   PROPERTIES DEBUG_POSTFIX "_d" PUBLIC_HEADER
-                                "${CMAKE_BINARY_DIR}/include/export.h")
+                                "${CMAKE_CURRENT_BINARY_DIR}/export.h")
 
 include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME
-                       ${CMAKE_BINARY_DIR}/include/export.h)
+                       ${CMAKE_CURRENT_BINARY_DIR}/export.h)
 
 # install and export
 install(
@@ -64,7 +70,13 @@ configure_package_config_file(
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
-              ${HEADER_FILES} DESTINATION ${CMAKE_DESTINATION_DIR})
+              DESTINATION ${CMAKE_DESTINATION_DIR})
 
-install(FILES ${HEADER_FILES}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+# install(FILES ${HEADER_FILES}
+#         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+
+foreach(single_header ${HEADER_FILES})
+  file(RELATIVE_PATH relative_header ${CMAKE_CURRENT_LIST_DIR} ${single_header})
+  get_filename_component(header_dir ${relative_header} DIRECTORY)
+  install(FILES ${single_header} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${header_dir})
+endforeach()

@@ -1,5 +1,6 @@
 #include "mylib.h"
 
+#include <fmt/ranges.h>
 #include <fstream>
 #include <glog/logging.h>
 #include <gtest/gtest.h>
@@ -10,11 +11,9 @@ TEST(sensors, imu) {
   std::string str;
   struct_pb::to_proto<Imu>(str, "pb");
 
-  // fmt::println("{}", str);
-
   std::ofstream out("sensors.proto");
 
-  struct_pb::to_proto_file<FramesPack>(out, "pb");
+  // struct_pb::to_proto_file<FramesPack>(out, "pb");
 
   EXPECT_TRUE(1);
 }
@@ -34,55 +33,94 @@ TEST(sensors, channel_message) {
 TEST(sensors, cache_message) {
 
   auto imu = ChannelMsg<Imu>::Create("/imu");
-  auto imu2 = ChannelMsg<Imu>::Create("/imu");
-  imu2->msg_.t0_ = 0.01;
   auto gnss = ChannelMsg<Gnss>::Create("/gnss");
-  auto gnss2 = ChannelMsg<Gnss>::Create("/gnss");
-  gnss2->msg_.t0_ = 0.2;
 
   std::vector<MessageBase::SPtr> buffer;
   buffer.push_back(imu);
-  buffer.push_back(imu2);
   buffer.push_back(gnss);
-  buffer.push_back(gnss2);
 
-  for (auto& elem : buffer) {
-    LOG(INFO) << elem->channel_name_ << fmt::format(" t0 = {:.3f}", elem->t0());
-  }
+  // for (auto& elem : buffer) {
+  //   LOG(INFO) << elem->channel_name_ << fmt::format(" t0 = {:.3f}",
+  //   elem->t0());
+  // }
 
-  EXPECT_TRUE(1);
+  EXPECT_TRUE(buffer.size() == 2);
 }
 
-TEST(sensors, sort_message) {
-  auto imu = ChannelMsg<Imu>::Create("/imu");
-  imu->t1_ = 0.01;
-  auto imu2 = ChannelMsg<Imu>::Create("/imu");
-  imu2->msg_.t0_ = 0.01;
-  imu2->t1_ = 0.02;
-  auto gnss = ChannelMsg<Gnss>::Create("/gnss");
-  gnss->t1_ = 0.1;
-  auto gnss2 = ChannelMsg<Gnss>::Create("/gnss");
-  gnss2->msg_.t0_ = 0.2;
-  gnss2->t1_ = 0.3;
+class MessageBufferTest : public testing::Test {
+protected:
+  MessageBufferTest() {
+    imu = ChannelMsg<Imu>::Create("/imu");
+    imu->t1_ = 0.01;
 
+    imu2 = ChannelMsg<Imu>::Create("/imu");
+    imu2->msg_.t0_ = 0.01;
+    imu2->t1_ = 0.02;
+
+    gnss = ChannelMsg<Gnss>::Create("/gnss");
+    gnss->t1_ = 0.1;
+
+    gnss2 = ChannelMsg<Gnss>::Create("/gnss");
+    gnss2->msg_.t0_ = 0.2;
+    gnss2->t1_ = 0.3;
+  }
+
+  void SetUp() override {
+    buffer.Append(imu2);
+    buffer.Append(gnss2);
+    buffer.Append(gnss);
+    buffer.Append(imu);
+  }
+
+  void TearDown() override {}
   TotalBuffer buffer;
-  buffer.Append(imu2);
-  buffer.Append(gnss2);
-  buffer.Append(gnss);
-  buffer.Append(imu);
+  ChannelMsg<Imu>::SPtr imu;
+  ChannelMsg<Imu>::SPtr imu2;
+  ChannelMsg<Gnss>::SPtr gnss;
+  ChannelMsg<Gnss>::SPtr gnss2;
+};
+
+TEST_F(MessageBufferTest, base) {
+  EXPECT_TRUE(buffer.size() == 4);
+  EXPECT_TRUE(buffer.channel_types_.size() == 2);
+  EXPECT_TRUE(buffer.channel_names_.size() == 2);
+}
+
+TEST_F(MessageBufferTest, order_pushback) {
 
   // push back order
+  std::vector<double> true_order{ imu2->t0(), gnss2->t0(), gnss->t0(),
+    imu->t0() };
+  std::vector<double> test_order;
   for (auto const& elem : buffer.get<id>()) {
-    LOG(INFO) << elem->to_json_str();
+    test_order.push_back(elem->t0());
   }
-  // t1
-  for (auto const& elem : buffer.get<t0>()) {
-    LOG(INFO) << elem->to_json_str();
-  }
-  // t0
-  for (auto const& elem : buffer.get<t1>()) {
-    LOG(INFO) << elem->to_json_str();
-  }
+  LOG(INFO) << "order push_bask: "
+            << fmt::format("{:.3f}", fmt::join(test_order, ", "));
+  EXPECT_EQ(true_order, test_order);
+}
 
-  EXPECT_TRUE(1);
+TEST_F(MessageBufferTest, order_t1) {
+
+  // t1
+  std::vector<double> test_order;
+  std::vector<double> true_order_t1{ imu->t1_, imu2->t1_, gnss->t1_,
+    gnss2->t1_ };
+  for (auto const& elem : buffer.get<t1>()) { test_order.push_back(elem->t1_); }
+  LOG(INFO) << "order t1: "
+            << fmt::format("{:.3f}", fmt::join(test_order, ", "));
+  EXPECT_EQ(true_order_t1, test_order);
+}
+
+TEST_F(MessageBufferTest, order_t0) {
+  // t0
+  std::vector<double> test_order;
+  std::vector<double> true_order_t0{ imu->t0(), gnss->t0(), imu2->t0(),
+    gnss2->t0() };
+  for (auto const& elem : buffer.get<t0>()) {
+    test_order.push_back(elem->t0());
+  }
+  LOG(INFO) << "order t0: "
+            << fmt::format("{:.3f}", fmt::join(test_order, ", "));
+  EXPECT_EQ(true_order_t0, test_order);
 }

@@ -53,6 +53,8 @@ public:
 
 protected:
   std::mutex mtx_;
+
+public:
   std::unordered_set<std::string_view> channel_names_;
   std::unordered_set<std::string_view> channel_types_;
 };

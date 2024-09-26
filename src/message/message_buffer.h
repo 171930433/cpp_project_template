@@ -53,10 +53,17 @@ public:
 
 protected:
   std::mutex mtx_;
+  std::unordered_set<std::string_view> channel_names_;
+  std::unordered_set<std::string_view> channel_types_;
 };
 
 template <typename _Message>
 void TotalBuffer::Append(std::shared_ptr<ChannelMsg<_Message>> frame) {
+  // 缓存通道与类型消息
+  channel_types_.insert(frame->channel_type_);
+  channel_names_.insert(frame->channel_name_);
+
+  // 限定区间的缓存
   std::lock_guard<std::mutex> lg(mtx_);
   if (!this->empty()
     && (this->back()->t1_ - this->front()->t1_) >= duration_s_) {

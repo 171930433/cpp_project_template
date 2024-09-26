@@ -1,9 +1,9 @@
 template <typename _Message>
 ChannelMsg<_Message>::ChannelMsg(std::string const& channel_name) {
-  auto const& [it, insert_re] = channel_names_.insert(channel_name);
+  static std::unordered_set<std::string> channel_names;
+  auto const& [it, insert_re] = channel_names.insert(channel_name);
   channel_name_ = *it;
   channel_type_ = ylt::reflection::type_string<_Message>();
-  channel_types_.insert(channel_type_);
 }
 
 template <typename _Message>

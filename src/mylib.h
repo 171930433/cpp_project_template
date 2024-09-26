@@ -10,6 +10,8 @@ public:
     buffer_.Append(frame);
   }
 
+  TotalBuffer const& get_buffer() const { return buffer_; }
+
 protected:
   TotalBuffer buffer_;
 };

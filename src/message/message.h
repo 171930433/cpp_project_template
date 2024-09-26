@@ -25,17 +25,14 @@ public:
   std::string_view channel_type_ = "";
   double t1_ = 0; // 接收到时间
   double t2_ = 0; // 落盘时间
-public:
-  static std::unordered_set<std::string> channel_names_;
-  static std::unordered_set<std::string_view> channel_types_;
 };
 
 template <typename _Message>
 struct ChannelMsg : public MessageBase {
   using SPtr = std::shared_ptr<ChannelMsg>;
   using SCPtr = std::shared_ptr<ChannelMsg const>;
-  ChannelMsg(std::string const& channel_name);
 
+  ChannelMsg(std::string const& channel_name);
   static std::shared_ptr<ChannelMsg> Create(std::string const& channel_name);
 
   std::string to_json_str() const;

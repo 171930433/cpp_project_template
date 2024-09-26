@@ -1,11 +1,12 @@
 file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/include/*.h)
+file(GLOB_RECURSE SOURCE_FILES *.cpp)
 
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(yalantinglibs REQUIRED)
 find_package(glog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
-add_library(${PROJECT_NAME} SHARED mylib.cpp)
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 target_link_libraries(
   ${PROJECT_NAME}

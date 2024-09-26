@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 #include <ylt/struct_pb.hpp>
-#include <variant>
+#include <ylt/struct_json/json_writer.h>
 
 struct Vec2d
 {

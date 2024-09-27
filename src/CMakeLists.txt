@@ -8,17 +8,17 @@ find_package(glog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(units CONFIG REQUIRED)
 
+# system
+find_package(Boost REQUIRED COMPONENTS system)
+
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
-          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>
-          Eigen3::Eigen
-          yalantinglibs::yalantinglibs
-          fmt::fmt
-          glog::glog
-          units::units)
+          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
+          units::units Boost::system
+  PUBLIC glog::glog yalantinglibs::yalantinglibs fmt::fmt)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
@@ -70,13 +70,11 @@ configure_package_config_file(
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
-              DESTINATION ${CMAKE_DESTINATION_DIR})
-
-# install(FILES ${HEADER_FILES}
-#         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+        DESTINATION ${CMAKE_DESTINATION_DIR})
 
 foreach(single_header ${HEADER_FILES})
   file(RELATIVE_PATH relative_header ${CMAKE_CURRENT_LIST_DIR} ${single_header})
   get_filename_component(header_dir ${relative_header} DIRECTORY)
-  install(FILES ${single_header} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${header_dir})
+  install(FILES ${single_header}
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${header_dir})
 endforeach()

@@ -2,6 +2,7 @@
 
 #include "export.h"
 #include "message/message_buffer.h"
+#include <glog/logging.h>
 
 class MYLIB_EXPORT MultuiSensorFusion {
 public:

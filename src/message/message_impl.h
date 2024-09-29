@@ -13,9 +13,9 @@ std::shared_ptr<ChannelMsg<_Message>> ChannelMsg<_Message>::Create(
 }
 
 template <typename _Message>
-std::string ChannelMsg<_Message>::to_json_str() const {
-  std::string msg_str = MessageBase::to_json_str();
-  msg_str += "msg_:";
+inline std::string ChannelMsg<_Message>::to_json_str() const {
+  std::string msg_str = this->to_header_str();
+  msg_str += ",msg_:";
   iguana::to_json(msg_, msg_str);
   return msg_str;
 }

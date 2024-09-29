@@ -34,17 +34,18 @@ TEST_F(OfflineTest, base) {
 
   MockDataReader reader;
   EXPECT_CALL(reader, ReadFrame)
-    .Times(4)
+    .Times(5)
     .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ imu, IDataReader::State::OK }))
     .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ imu2, IDataReader::State::OK }))
     .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ gnss, IDataReader::State::OK }))
-    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ gnss2, IDataReader::State::END }));
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ gnss2, IDataReader::State::OK }))
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ nullptr, IDataReader::State::END }));
 
   for (auto it = reader.ReadFrame(); it.second != IDataReader::State::END; it = reader.ReadFrame()) {
     msf.ProcessData(it.first);
 
-    GTEST_LOG_(INFO) << (int)it.second << " " << it.first->to_json_str();
+    GTEST_LOG_(INFO) << (int)it.second << " " << it.first->to_header_str();
   }
 
-  EXPECT_TRUE(1);
+  EXPECT_EQ(msf.get_buffer().size(), 4);
 }

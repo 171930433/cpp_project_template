@@ -10,13 +10,14 @@ struct MessageBase {
   using SCPtr = std::shared_ptr<MessageBase const>;
   virtual ~MessageBase() = default;
   virtual double t0() const = 0;
-  virtual std::string to_json_str() const {
+  virtual std::string to_json_str() const = 0;
+  std::string to_header_str() const {
     std::stringstream ss;
     ss << fmt::format(R"("channel_name_":"{}",)", channel_name_);
     ss << fmt::format(R"("channel_type_":"{}",)", channel_type_);
     ss << fmt::format(R"("t0_":{},)", t0());
     ss << fmt::format(R"("t1_":{},)", t1_);
-    ss << fmt::format(R"("t2_":{},)", t2_);
+    ss << fmt::format(R"("t2_":{})", t2_);
     return ss.str();
   }
 
@@ -35,7 +36,7 @@ struct ChannelMsg : public MessageBase {
   ChannelMsg(std::string const& channel_name);
   static std::shared_ptr<ChannelMsg> Create(std::string const& channel_name);
 
-  std::string to_json_str() const;
+  std::string to_json_str() const override;
 
 public:
   double t0() const override { return msg_.t0_; }

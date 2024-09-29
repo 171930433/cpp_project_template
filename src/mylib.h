@@ -6,8 +6,12 @@
 
 class MYLIB_EXPORT MultuiSensorFusion {
 public:
-  template <typename _Message>
-  void Append(std::shared_ptr<ChannelMsg<_Message>> frame) {
+  // template <typename _Message>
+  // void ProcessData(std::shared_ptr<ChannelMsg<_Message>> frame) {
+  //   buffer_.Append(frame);
+  // }
+
+  void ProcessData(MessageBase::SPtr frame) {
     buffer_.Append(frame);
   }
 

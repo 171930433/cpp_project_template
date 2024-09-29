@@ -47,8 +47,9 @@ typedef multi_index_container<MessageBase::SPtr,
 
 class TotalBuffer : public boost::multi_index::TotalMIC {
 public:
-  template <typename _Message>
-  void Append(std::shared_ptr<ChannelMsg<_Message>> frame);
+  // template <typename _Message>
+  // void Append(std::shared_ptr<ChannelMsg<_Message>> frame);
+  void Append(MessageBase::SPtr frame);
   double duration_s_ = 1;
 
 protected:
@@ -59,8 +60,8 @@ public:
   std::unordered_set<std::string_view> channel_types_;
 };
 
-template <typename _Message>
-void TotalBuffer::Append(std::shared_ptr<ChannelMsg<_Message>> frame) {
+// template <typename _Message>
+inline void TotalBuffer::Append(MessageBase::SPtr frame) {
   // 缓存通道与类型消息
   channel_types_.insert(frame->channel_type_);
   channel_names_.insert(frame->channel_name_);

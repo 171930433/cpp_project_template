@@ -1,5 +1,6 @@
 #include "common/eigen_units.h"
 #include "data_mock.h"
+#include "modules/demo_module.h"
 #include "mylib.h"
 #include <gtest/gtest.h>
 #include <units.h>
@@ -46,4 +47,11 @@ TEST_F(MsfTest, units) {
   GTEST_LOG_(INFO) << v3.transpose();
 
   EXPECT_TRUE(1);
+}
+
+TEST_F(MsfTest, create_module) {
+
+  auto re = msf.CreateModule<DemoModule>();
+
+  EXPECT_EQ(re->name_, "DemoModule");
 }

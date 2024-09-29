@@ -1,3 +1,4 @@
+#include "common/eigen_units.h"
 #include "mylib.h"
 #include <gtest/gtest.h>
 #include <units.h>
@@ -28,45 +29,22 @@ protected:
   MultuiSensorFusion msf;
 };
 
-namespace Eigen {
-
-template <>
-struct NumTraits<units::angle::degree_t>
-  : NumTraits<double> // permits to get the epsilon, dummy_precision, lowest,
-                      // highest functions
-{};
-
-namespace internal {
-template <>
-struct scalar_cos_op<units::angle::degree_t> {
-  EIGEN_EMPTY_STRUCT_CTOR(scalar_cos_op)
-  EIGEN_DEVICE_FUNC inline double operator()(
-    const units::angle::degree_t& a) const {
-    return units::math::cos(a);
-  }
-  template <typename Packet>
-  EIGEN_DEVICE_FUNC inline Packet packetOp(const Packet& a) const {
-    return internal::pcos(a);
-  }
-};
-}
-
-}
-
-TEST_F(MsfTest, base) {
+TEST_F(MsfTest, units) {
 
   using namespace units::angle;
   using namespace units::literals;
   using namespace Eigen;
-  // using namespace units::math;
 
-  Array3<degree_t> v1{ 10.0_deg, 5_deg, 90_deg };
-  Array3<degree_t> v2{ 20.0_deg, 10_deg, 90_deg };
+  Vector3<degree_t> v1{ 10.0_deg, 5_deg, 90_deg };
+  Vector3<degree_t> v2{ 20.0_deg, 10_deg, 90_deg };
 
-  GTEST_LOG_(INFO) << v1.transpose();
+  GTEST_LOG_(INFO) << v1;
+  GTEST_LOG_(INFO) << v1[0] * 2;
   GTEST_LOG_(INFO) << (v1 + v2).transpose();
   GTEST_LOG_(INFO) << units::math::cos(v1[2]);
-  GTEST_LOG_(INFO) << v1.transpose().cos();
+
+  Vector3<double> v3 = v1.cast<radian_t>().cast<double>();
+  GTEST_LOG_(INFO) << v3.transpose();
 
   EXPECT_TRUE(1);
 }

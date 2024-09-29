@@ -7,7 +7,7 @@ AlwaysBreakAfterDefinitionReturnType: None
 # BreakBeforeBraces: Allman
 BinPackArguments: true
 BinPackParameters: true
-ColumnLimit: 80
+ColumnLimit: 120
 SpaceAfterTemplateKeyword: true
 Standard: Cpp11
 BreakBeforeBraces: Attach # 大括号跟随在语句的同一行

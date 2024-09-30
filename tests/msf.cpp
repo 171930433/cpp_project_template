@@ -77,9 +77,9 @@ TEST_F(MsfTest, config_manager) {
 
 TEST_F(MsfTest, module_base) {
 
-  auto& mock_app = *msf.CreateModule<MockDemoModule>();
-  EXPECT_CALL(mock_app, ProcessImu).Times(1);
-  EXPECT_CALL(mock_app, ProcessGnss).Times(1);
+  auto mock_app = msf.CreateModule<MockDemoModule>();
+  EXPECT_CALL(*mock_app, ProcessImu).Times(1);
+  EXPECT_CALL(*mock_app, ProcessGnss).Times(1);
 
   msf.ProcessData(imu);
   msf.ProcessData(gnss);
@@ -90,7 +90,7 @@ TEST_F(MsfTest, module_base) {
 
   msf.dispatcher()->RegisterWriter("/state", func);
 
-  mock_app.Write();
+  mock_app->Write();
 
   EXPECT_FLOAT_EQ(re_state.t0_, 1.0);
   EXPECT_EQ(msf.modules()->size(), 1);
@@ -100,9 +100,9 @@ TEST_F(MsfTest, module_base) {
 TEST_F(MsfTest, init_from_config) {
   msf.Init(FLAGS_config_dir);
 
-  auto& mock_app = *msf.CreateModule<MockDemoModule>();
-  EXPECT_CALL(mock_app, ProcessImu).Times(1);
-  EXPECT_CALL(mock_app, ProcessGnss).Times(1);
+  auto mock_app = msf.CreateModule<MockDemoModule>();
+  EXPECT_CALL(*mock_app, ProcessImu).Times(1);
+  EXPECT_CALL(*mock_app, ProcessGnss).Times(1);
 
   msf.ProcessData(imu);
   msf.ProcessData(gnss);
@@ -113,7 +113,7 @@ TEST_F(MsfTest, init_from_config) {
 
   msf.dispatcher()->RegisterWriter(msf.cm()->io_.state_, func);
 
-  mock_app.Write();
+  mock_app->Write();
 
   EXPECT_FLOAT_EQ(re_state.t0_, 1.0);
   EXPECT_EQ(msf.modules()->size(), 1);

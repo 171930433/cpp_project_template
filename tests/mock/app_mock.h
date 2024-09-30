@@ -13,8 +13,7 @@ public:
     GTEST_LOG_(INFO) << "DemoModule init done";
 
     dispatcher()->RegisterReader("/imu", &DemoModule::ProcessImu, this);
-    // dispatcher()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
-    dispatcher()->RegisterReader("/gnss", &DemoModule::ProcessImu, this);
+    dispatcher()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
   }
   virtual void ProcessImu(std::shared_ptr<const Message<Imu>> frame) = 0;
   virtual void ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) = 0;

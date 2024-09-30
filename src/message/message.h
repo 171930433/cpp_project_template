@@ -10,7 +10,7 @@ struct MessageBase {
   using SCPtr = std::shared_ptr<MessageBase const>;
   virtual ~MessageBase() = default;
   virtual double t0() const = 0;
-  virtual std::string to_json_str() const = 0;
+  virtual std::string to_json() const = 0;
   std::string to_header_str() const {
     std::stringstream ss;
     ss << fmt::format(R"("channel_name_":"{}",)", channel_name_);
@@ -29,28 +29,21 @@ public:
 };
 
 template <typename _Message>
-struct ChannelMsg : public MessageBase {
-  using SPtr = std::shared_ptr<ChannelMsg>;
-  using SCPtr = std::shared_ptr<ChannelMsg const>;
+struct Channel : public MessageBase {
+  using SPtr = std::shared_ptr<Channel>;
+  using SCPtr = std::shared_ptr<Channel const>;
+  using Func = std::function<void(SPtr)>;
+  using CFunc = std::function<void(SCPtr)>;
 
-  ChannelMsg(std::string const& channel_name);
-  static std::shared_ptr<ChannelMsg> Create(std::string const& channel_name);
+  Channel(std::string const& channel_name);
+  static std::shared_ptr<Channel> Create(std::string const& channel_name);
 
-  std::string to_json_str() const override;
+  std::string to_json() const override;
 
 public:
   double t0() const override { return msg_.t0_; }
   _Message msg_;
 };
 
-// inline std::ostream& operator<<(std::ostream& os, MessageBase::SPtr elem) {
-//   os << elem->to_json_str();
-//   return os;
-// }
-
-// inline std::ostream& operator<<(std::ostream& os, MessageBase::SCPtr elem) {
-//   os << elem->to_json_str();
-//   return os;
-// }
 
 #include "message_impl.h"

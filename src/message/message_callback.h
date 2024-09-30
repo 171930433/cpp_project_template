@@ -5,13 +5,17 @@ class MesageIO {
   using CallBackT = std::deque<std::function<void(MessageBase::SCPtr)>>;
 
 public:
+  // for app user
   template <typename _InnerStruct, typename _Module>
   void RegisterReader(std::string_view cn, void (_Module::*mf)(std::shared_ptr<_InnerStruct>), _Module* module);
 
+  // for app user
   template <typename _InnerStruct>
   void WriteMessage(std::shared_ptr<_InnerStruct> frame);
 
 public:
+
+  // for msf user
   template <typename _InnerStruct>
   void RegisterWriter(std::string_view cn, std::function<void(std::shared_ptr<_InnerStruct>)>);
 
@@ -55,5 +59,5 @@ inline void MesageIO::RegisterWriter(std::string_view cn, std::function<void(std
     func(frame);
   };
 
-  writer_[cn].push_back(type_erased_cbk) ;
+  writer_[cn].push_back(type_erased_cbk);
 }

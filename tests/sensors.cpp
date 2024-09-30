@@ -20,11 +20,11 @@ TEST(sensors, imu) {
 
 TEST(sensors, channel_message) {
 
-  auto imu = ChannelMsg<Imu>::Create("/imu");
-  auto gnss = ChannelMsg<Gnss>::Create("/gnss");
+  auto imu = Channel<Imu>::Create("/imu");
+  auto gnss = Channel<Gnss>::Create("/gnss");
 
-  // LOG(INFO) << imu->to_json_str();
-  // LOG(INFO) << gnss->to_json_str();
+  // LOG(INFO) << imu->to_json();
+  // LOG(INFO) << gnss->to_json();
 
   EXPECT_TRUE(imu);
   EXPECT_TRUE(gnss);
@@ -32,8 +32,8 @@ TEST(sensors, channel_message) {
 
 TEST(sensors, cache_message) {
 
-  auto imu = ChannelMsg<Imu>::Create("/imu");
-  auto gnss = ChannelMsg<Gnss>::Create("/gnss");
+  auto imu = Channel<Imu>::Create("/imu");
+  auto gnss = Channel<Gnss>::Create("/gnss");
 
   std::vector<MessageBase::SPtr> buffer;
   buffer.push_back(imu);
@@ -50,17 +50,17 @@ TEST(sensors, cache_message) {
 class MessageBufferTest : public testing::Test {
 protected:
   MessageBufferTest() {
-    imu = ChannelMsg<Imu>::Create("/imu");
+    imu = Channel<Imu>::Create("/imu");
     imu->t1_ = 0.01;
 
-    imu2 = ChannelMsg<Imu>::Create("/imu");
+    imu2 = Channel<Imu>::Create("/imu");
     imu2->msg_.t0_ = 0.01;
     imu2->t1_ = 0.02;
 
-    gnss = ChannelMsg<Gnss>::Create("/gnss");
+    gnss = Channel<Gnss>::Create("/gnss");
     gnss->t1_ = 0.1;
 
-    gnss2 = ChannelMsg<Gnss>::Create("/gnss");
+    gnss2 = Channel<Gnss>::Create("/gnss");
     gnss2->msg_.t0_ = 0.2;
     gnss2->t1_ = 0.3;
   }
@@ -74,10 +74,10 @@ protected:
 
   void TearDown() override {}
   TotalBuffer buffer;
-  ChannelMsg<Imu>::SPtr imu;
-  ChannelMsg<Imu>::SPtr imu2;
-  ChannelMsg<Gnss>::SPtr gnss;
-  ChannelMsg<Gnss>::SPtr gnss2;
+  Channel<Imu>::SPtr imu;
+  Channel<Imu>::SPtr imu2;
+  Channel<Gnss>::SPtr gnss;
+  Channel<Gnss>::SPtr gnss2;
 };
 
 TEST_F(MessageBufferTest, base) {

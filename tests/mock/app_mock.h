@@ -16,10 +16,10 @@ public:
     io()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
 
   }
-  virtual void ProcessImu(std::shared_ptr<const ChannelMsg<Imu>> frame) = 0;
-  virtual void ProcessGnss(std::shared_ptr<const ChannelMsg<Gnss>> frame) = 0;
+  virtual void ProcessImu(std::shared_ptr<const Channel<Imu>> frame) = 0;
+  virtual void ProcessGnss(std::shared_ptr<const Channel<Gnss>> frame) = 0;
   void Write() {
-    auto state = ChannelMsg<State>::Create("/state");
+    auto state = Channel<State>::Create("/state");
     state->msg_.t0_ = 1;
     io()->WriteMessage(state);
   }
@@ -28,6 +28,6 @@ public:
 class MockDemoModule : public DemoModule {
 public:
   using SPtr = std::shared_ptr<MockDemoModule>;
-  MOCK_METHOD(void, ProcessImu, (std::shared_ptr<const ChannelMsg<Imu>>), ());
-  MOCK_METHOD(void, ProcessGnss, (std::shared_ptr<const ChannelMsg<Gnss>>), ());
+  MOCK_METHOD(void, ProcessImu, (std::shared_ptr<const Channel<Imu>>), ());
+  MOCK_METHOD(void, ProcessGnss, (std::shared_ptr<const Channel<Gnss>>), ());
 };

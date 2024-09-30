@@ -7,14 +7,14 @@
 class MsfTest : public testing::Test {
 protected:
   MsfTest() {
-    imu = Channel<Imu>::Create("/imu");
+    imu = Message<Imu>::Create("/imu");
     imu->t1_ = 0.01;
-    imu2 = Channel<Imu>::Create("/imu");
+    imu2 = Message<Imu>::Create("/imu");
     imu2->msg_.t0_ = 0.01;
     imu2->t1_ = 0.02;
-    gnss = Channel<Gnss>::Create("/gnss");
+    gnss = Message<Gnss>::Create("/gnss");
     gnss->t1_ = 0.1;
-    gnss2 = Channel<Gnss>::Create("/gnss");
+    gnss2 = Message<Gnss>::Create("/gnss");
     gnss2->msg_.t0_ = 0.2;
     gnss2->t1_ = 0.3;
   }
@@ -24,11 +24,11 @@ protected:
   void TearDown() override {}
   MultuiSensorFusion msf;
   // demo data
-  Channel<Imu>::SPtr imu, imu2;
-  Channel<Gnss>::SPtr gnss, gnss2;
+  Message<Imu>::SPtr imu, imu2;
+  Message<Gnss>::SPtr gnss, gnss2;
 };
 
-TEST_F(MsfTest, units) {
+TEST(MsfTest, units) {
 
   using namespace units::angle;
   using namespace units::literals;
@@ -48,6 +48,33 @@ TEST_F(MsfTest, units) {
   EXPECT_TRUE(1);
 }
 
+TEST_F(MsfTest, config_manager) {
+  auto* cm = msf.cm();
+  auto& io_config = cm->io_;
+
+  io_config.imu_ = { "/imu", 100, "imu name" };
+  io_config.gnss_ = { "/gnss", 10, "gnss name" };
+  io_config.state_ = { "/state", 100, "state name" };
+
+  std::string json_str;
+  iguana::to_json(*cm, json_str);
+
+  std::string path = FLAGS_config_dir + "/tmp_cm.json";
+  std::ofstream out(path);
+  out << json_str;
+
+  ConfigManager cm2;
+  iguana::from_json(cm2, json_str);
+
+  GTEST_LOG_(INFO) << "write to " << path << json_str;
+
+  EXPECT_TRUE(1);
+
+  EXPECT_EQ(cm->io_.imu_.channel_name_, cm2.io_.imu_.channel_name_);
+  EXPECT_EQ(cm->io_.imu_.rate_hz_, cm2.io_.imu_.rate_hz_);
+  EXPECT_EQ(cm->io_.imu_.device_name_, cm2.io_.imu_.device_name_);
+}
+
 TEST_F(MsfTest, module_base) {
 
   auto& mock_app = *msf.CreateModule<MockDemoModule>();
@@ -59,13 +86,36 @@ TEST_F(MsfTest, module_base) {
 
   State re_state;
   // !需要显示给定类型,否则lambda的闭包类型不支持模板参数推导
-  Channel<State>::CFunc func = [&re_state](Channel<State>::SCPtr frame) { re_state = frame->msg_; };
+  Message<State>::CFunc func = [&re_state](Message<State>::SCPtr frame) { re_state = frame->msg_; };
 
-  msf.io()->RegisterWriter("/state", func);
+  msf.dispatcher()->RegisterWriter("/state", func);
 
   mock_app.Write();
 
   EXPECT_FLOAT_EQ(re_state.t0_, 1.0);
   EXPECT_EQ(msf.modules()->size(), 1);
-  EXPECT_EQ(msf.io()->reader_.size(), 2);
+  EXPECT_EQ(msf.dispatcher()->reader_.size(), 2);
+}
+
+TEST_F(MsfTest, init_from_config) {
+  msf.Init(FLAGS_config_dir);
+
+  auto& mock_app = *msf.CreateModule<MockDemoModule>();
+  EXPECT_CALL(mock_app, ProcessImu).Times(1);
+  EXPECT_CALL(mock_app, ProcessGnss).Times(1);
+
+  msf.ProcessData(imu);
+  msf.ProcessData(gnss);
+
+  State re_state;
+  // !需要显示给定类型,否则lambda的闭包类型不支持模板参数推导
+  Message<State>::CFunc func = [&re_state](Message<State>::SCPtr frame) { re_state = frame->msg_; };
+
+  msf.dispatcher()->RegisterWriter(msf.cm()->io_.state_, func);
+
+  mock_app.Write();
+
+  EXPECT_FLOAT_EQ(re_state.t0_, 1.0);
+  EXPECT_EQ(msf.modules()->size(), 1);
+  EXPECT_EQ(msf.dispatcher()->reader_.size(), 2);
 }

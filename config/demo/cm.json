@@ -1,0 +1,19 @@
+{
+    "io_": {
+        "imu_": {
+            "channel_name_": "/imu",
+            "rate_hz_": 100,
+            "device_name_": "imu name"
+        },
+        "gnss_": {
+            "channel_name_": "/gnss",
+            "rate_hz_": 10,
+            "device_name_": "gnss name"
+        },
+        "state_": {
+            "channel_name_": "/state",
+            "rate_hz_": 100,
+            "device_name_": "state name"
+        }
+    }
+}

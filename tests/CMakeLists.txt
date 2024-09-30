@@ -1,6 +1,4 @@
 # vcpkg
-set(GFLAGS_USE_TARGET_NAMESPACE ON)
-find_package(gflags CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 
 file(GLOB TEST_FILES *.cpp)
@@ -10,11 +8,19 @@ target_link_libraries(
   main_test
   PRIVATE ${PROJECT_NAME}
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> GTest::gtest
-          GTest::gmock gflags::gflags)
+          GTest::gmock)
 
 target_compile_features(main_test PRIVATE cxx_std_20)
 
-add_test(NAME main_test COMMAND $<TARGET_FILE:main_test>)
+# add_test(NAME main_test COMMAND $<TARGET_FILE:main_test> ENVIRONMENT
+#                                 "--config_dir=${CMAKE_SOURCE_DIR}/config/demo")
+
+include(GoogleTest)
+gtest_add_tests(
+  TARGET main_test
+  EXTRA_ARGS --config_dir ${CMAKE_SOURCE_DIR}/config/demo
+  TEST_SUFFIX ""
+  TEST_LIST "")
 
 option(ENABLE_USE_TARGET_TEST "enable use target tests" OFF)
 

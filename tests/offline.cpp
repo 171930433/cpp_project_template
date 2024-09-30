@@ -7,14 +7,14 @@
 class OfflineTest : public testing::Test {
 protected:
   OfflineTest() {
-    imu = Channel<Imu>::Create("/imu");
+    imu = Message<Imu>::Create("/imu");
     imu->t1_ = 0.01;
-    imu2 = Channel<Imu>::Create("/imu");
+    imu2 = Message<Imu>::Create("/imu");
     imu2->msg_.t0_ = 0.01;
     imu2->t1_ = 0.02;
-    gnss = Channel<Gnss>::Create("/gnss");
+    gnss = Message<Gnss>::Create("/gnss");
     gnss->t1_ = 0.1;
-    gnss2 = Channel<Gnss>::Create("/gnss");
+    gnss2 = Message<Gnss>::Create("/gnss");
     gnss2->msg_.t0_ = 0.2;
     gnss2->t1_ = 0.3;
   }
@@ -24,8 +24,8 @@ protected:
   void TearDown() override {}
   MultuiSensorFusion msf;
   // demo data
-  Channel<Imu>::SPtr imu, imu2;
-  Channel<Gnss>::SPtr gnss, gnss2;
+  Message<Imu>::SPtr imu, imu2;
+  Message<Gnss>::SPtr gnss, gnss2;
 };
 
 TEST_F(OfflineTest, base) {

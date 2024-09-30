@@ -5,6 +5,8 @@
 #include <unordered_set>
 #include <ylt/reflection/template_string.hpp>
 
+
+
 struct MessageBase {
   using SPtr = std::shared_ptr<MessageBase>;
   using SCPtr = std::shared_ptr<MessageBase const>;
@@ -28,22 +30,21 @@ public:
   double t2_ = 0; // 落盘时间
 };
 
-template <typename _Message>
-struct Channel : public MessageBase {
-  using SPtr = std::shared_ptr<Channel>;
-  using SCPtr = std::shared_ptr<Channel const>;
+template <typename _Sensor>
+struct Message : public MessageBase {
+  using SPtr = std::shared_ptr<Message>;
+  using SCPtr = std::shared_ptr<Message const>;
   using Func = std::function<void(SPtr)>;
   using CFunc = std::function<void(SCPtr)>;
 
-  Channel(std::string const& channel_name);
-  static std::shared_ptr<Channel> Create(std::string const& channel_name);
+  Message(std::string const& channel_name);
+  static std::shared_ptr<Message> Create(std::string const& channel_name);
 
   std::string to_json() const override;
 
 public:
   double t0() const override { return msg_.t0_; }
-  _Message msg_;
+  _Sensor msg_;
 };
-
 
 #include "message_impl.h"

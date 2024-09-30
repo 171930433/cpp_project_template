@@ -13,7 +13,8 @@ public:
   }
   virtual void Init() = 0;
   virtual ~AppBase() = default;
-  MesageIO* io() { return msf_->io(); }
+  Dispatcher* dispatcher() { return &msf_->dispatcher_; }
+  ChannelConfigs* io_cfg() { return &msf_->cm_.io_; }
 
   void WriteMessage(MessageBase::SCPtr frame);
 
@@ -25,12 +26,12 @@ private:
 
 inline void AppBase::WriteMessage(MessageBase::SCPtr frame) {
   // 先给所有订阅的module一份
-  auto& reader = io()->reader_;
+  auto& reader = dispatcher()->reader_;
   if (reader.contains(frame->channel_name_)) {
     for (auto& cbk : reader[frame->channel_name_]) { cbk(frame); }
   }
   // 写出到外部回调
-  auto& writer = io()->writer_;
+  auto& writer = dispatcher()->writer_;
   if (writer.contains(frame->channel_name_)) {
     for (auto& cbk : writer[frame->channel_name_]) { cbk(frame); }
   }

@@ -12,17 +12,16 @@ public:
   void Init() override {
     LOG(INFO) << "DemoModule init done";
 
-    msf_->io()->RegisterReader("/imu", &DemoModule::ProcessImu, this);
-    msf_->io()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
+    io()->RegisterReader("/imu", &DemoModule::ProcessImu, this);
+    io()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
 
-    //
   }
   virtual void ProcessImu(std::shared_ptr<const ChannelMsg<Imu>> frame) = 0;
   virtual void ProcessGnss(std::shared_ptr<const ChannelMsg<Gnss>> frame) = 0;
   void Write() {
     auto state = ChannelMsg<State>::Create("/state");
     state->msg_.t0_ = 1;
-    this->WriteMessage(state);
+    io()->WriteMessage(state);
   }
 };
 

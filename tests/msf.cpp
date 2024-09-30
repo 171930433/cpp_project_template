@@ -58,13 +58,16 @@ TEST_F(MsfTest, module_base) {
   msf.ProcessData(gnss);
 
   State re_state;
-  auto func = [&re_state](ChannelMsg<State>::SCPtr frame) { re_state = frame->msg_; };
-  auto cbk = std::make_shared<MessageCallbackWithT<ChannelMsg<State> const>>(func);
-  msf.io()->writer_["/state"].push_back(cbk);
+  // !需要显示给定类型,否则lambda的闭包类型不支持模板参数推导
+  std::function<void(ChannelMsg<State>::SCPtr)> func = [&re_state](
+                                                         ChannelMsg<State>::SCPtr frame) { re_state = frame->msg_; };
+
+
+  msf.io()->RegisterWriter("/state", func);
 
   mock_app.Write();
 
   EXPECT_FLOAT_EQ(re_state.t0_, 1.0);
   EXPECT_EQ(msf.modules()->size(), 1);
-  EXPECT_EQ(msf.io()->reader2_.size(), 2);
+  EXPECT_EQ(msf.io()->reader_.size(), 2);
 }

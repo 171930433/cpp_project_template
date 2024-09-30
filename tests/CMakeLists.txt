@@ -1,5 +1,6 @@
 # vcpkg
 find_package(GTest CONFIG REQUIRED)
+# find_package(glog CONFIG REQUIRED)
 
 file(GLOB TEST_FILES *.cpp)
 
@@ -7,20 +8,14 @@ add_executable(main_test ${TEST_FILES})
 target_link_libraries(
   main_test
   PRIVATE ${PROJECT_NAME}
-          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> GTest::gtest
-          GTest::gmock)
+          $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>
+  PRIVATE GTest::gtest GTest::gmock)
 
 target_compile_features(main_test PRIVATE cxx_std_20)
 
-# add_test(NAME main_test COMMAND $<TARGET_FILE:main_test> ENVIRONMENT
-#                                 "--config_dir=${CMAKE_SOURCE_DIR}/config/demo")
-
 include(GoogleTest)
-gtest_add_tests(
-  TARGET main_test
-  EXTRA_ARGS --config_dir ${CMAKE_SOURCE_DIR}/config/demo
-  TEST_SUFFIX ""
-  TEST_LIST "")
+
+gtest_discover_tests(main_test EXTRA_ARGS "--config_dir=${CMAKE_SOURCE_DIR}/config/demo")
 
 option(ENABLE_USE_TARGET_TEST "enable use target tests" OFF)
 

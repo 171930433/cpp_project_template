@@ -10,11 +10,11 @@ public:
 
 public:
   void Init() override {
-    LOG(INFO) << "DemoModule init done";
+    GTEST_LOG_(INFO) << "DemoModule init done";
 
     dispatcher()->RegisterReader("/imu", &DemoModule::ProcessImu, this);
     // dispatcher()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
-    dispatcher()->RegisterReader(io_cfg()->gnss_, &DemoModule::ProcessImu, this);
+    dispatcher()->RegisterReader("/gnss", &DemoModule::ProcessImu, this);
   }
   virtual void ProcessImu(std::shared_ptr<const Message<Imu>> frame) = 0;
   virtual void ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) = 0;

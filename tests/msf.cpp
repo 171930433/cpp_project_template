@@ -28,7 +28,7 @@ protected:
   Message<Gnss>::SPtr gnss, gnss2;
 };
 
-TEST(MsfTest, units) {
+TEST_F(MsfTest, units) {
 
   using namespace units::angle;
   using namespace units::literals;

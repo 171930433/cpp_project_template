@@ -19,8 +19,8 @@ target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
-          units::units Boost::system
-  PUBLIC glog::glog yalantinglibs::yalantinglibs fmt::fmt gflags::gflags)
+          units::units Boost::system 
+  PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags glog::glog)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 

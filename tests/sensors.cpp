@@ -23,8 +23,6 @@ TEST(sensors, channel_message) {
   auto imu = Message<Imu>::Create("/imu");
   auto gnss = Message<Gnss>::Create("/gnss");
 
-  // LOG(INFO) << imu->to_json();
-  // LOG(INFO) << gnss->to_json();
 
   EXPECT_TRUE(imu);
   EXPECT_TRUE(gnss);
@@ -39,10 +37,6 @@ TEST(sensors, cache_message) {
   buffer.push_back(imu);
   buffer.push_back(gnss);
 
-  // for (auto& elem : buffer) {
-  //   LOG(INFO) << elem->channel_name_ << fmt::format(" t0 = {:.3f}",
-  //   elem->t0());
-  // }
 
   EXPECT_TRUE(buffer.size() == 2);
 }
@@ -95,7 +89,7 @@ TEST_F(MessageBufferTest, order_pushback) {
   for (auto const& elem : buffer.get<id>()) {
     test_order.push_back(elem->t0());
   }
-  LOG(INFO) << "order push_bask: "
+  GTEST_LOG_(INFO) << "order push_bask: "
             << fmt::format("{:.3f}", fmt::join(test_order, ", "));
   EXPECT_EQ(true_order, test_order);
 }
@@ -107,7 +101,7 @@ TEST_F(MessageBufferTest, order_t1) {
   std::vector<double> true_order_t1{ imu->t1_, imu2->t1_, gnss->t1_,
     gnss2->t1_ };
   for (auto const& elem : buffer.get<t1>()) { test_order.push_back(elem->t1_); }
-  LOG(INFO) << "order t1: "
+  GTEST_LOG_(INFO) << "order t1: "
             << fmt::format("{:.3f}", fmt::join(test_order, ", "));
   EXPECT_EQ(true_order_t1, test_order);
 }
@@ -120,7 +114,7 @@ TEST_F(MessageBufferTest, order_t0) {
   for (auto const& elem : buffer.get<t0>()) {
     test_order.push_back(elem->t0());
   }
-  LOG(INFO) << "order t0: "
+  GTEST_LOG_(INFO) << "order t0: "
             << fmt::format("{:.3f}", fmt::join(test_order, ", "));
   EXPECT_EQ(true_order_t0, test_order);
 }

@@ -1,6 +1,6 @@
+#include "app_mock.h"
 #include "common/eigen_units.h"
 #include "data_mock.h"
-#include "modules/demo_module.h"
 #include "mylib.h"
 #include <gtest/gtest.h>
 #include <units.h>
@@ -49,9 +49,15 @@ TEST_F(MsfTest, units) {
   EXPECT_TRUE(1);
 }
 
-TEST_F(MsfTest, create_module) {
+TEST_F(MsfTest, module_base) {
 
-  auto re = msf.CreateModule<DemoModule>();
+  auto& mock_app = *msf.CreateModule<MockDemoModule>();
+  EXPECT_CALL(mock_app, ProcessImu).Times(1);
+  EXPECT_CALL(mock_app, ProcessGnss).Times(1);
 
-  EXPECT_EQ(re->name_, "DemoModule");
+  msf.ProcessData(imu);
+  msf.ProcessData(gnss);
+
+  EXPECT_EQ(msf.modules()->size(), 1);
+  EXPECT_EQ(msf.io()->reader_.size(), 2);
 }

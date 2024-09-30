@@ -1,5 +1,5 @@
 #include "common/eigen_units.h"
-#include "data_mock.h"
+#include "mock/data_mock.h"
 #include "mylib.h"
 #include <gtest/gtest.h>
 #include <units.h>

@@ -17,6 +17,18 @@ public:
   template <typename _InnerStruct, typename _Module>
   void RegisterReader(std::string_view cn, void (_Module::*mf)(std::shared_ptr<_InnerStruct>), _Module* module);
 
+  template <typename _InnerStruct>
+  void WriteMessage(std::shared_ptr<_InnerStruct> frame) {
+    // 先给所有订阅的module一份
+    if (msf_->io_.reader_.contains(frame->channel_name_)) {
+      for (auto& cbk : msf_->io_.reader_[frame->channel_name_]) { cbk->onMessage(frame); }
+    }
+    // 调用外部注册的函数
+    if (msf_->io_.writer_.contains(frame->channel_name_)) {
+      for (auto& cbk : msf_->io_.writer_[frame->channel_name_]) { cbk->onMessage(frame); }
+    }
+  }
+
   std::string name_ = "";
 
 protected:
@@ -26,7 +38,12 @@ protected:
 template <typename _InnerStruct, typename _Module>
 inline void AppBase::RegisterReader(
   std::string_view cn, void (_Module::*mf)(std::shared_ptr<_InnerStruct>), _Module* module) {
-  auto process_func = std::bind(mf, module, std::placeholders::_1);
-  auto cbk = std::make_shared<MessageCallbackWithT<_InnerStruct>>(process_func);
-  msf_->io_.reader_[cn].push_back(cbk);
+
+  auto type_erased_cbk = [&](MessageBase::SCPtr message) {
+    std::shared_ptr<_InnerStruct> frame = std::dynamic_pointer_cast<_InnerStruct>(message);
+    assert(frame != nullptr); // 确保消息类型正确
+    (module->*mf)(frame);
+  };
+
+  msf_->io_.reader2_[cn].push_back(type_erased_cbk);
 }

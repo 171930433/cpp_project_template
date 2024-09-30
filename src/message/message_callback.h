@@ -44,6 +44,25 @@ protected:
 
 class MesageIO {
 public:
+  template <typename _InnerStruct, typename _Module>
+  void RegisterReader(std::string_view cn, void (_Module::*mf)(std::shared_ptr<_InnerStruct>), _Module* module);
+
+public:
   MessageCallbackBuffer reader_;
   MessageCallbackBuffer writer_;
+  std::unordered_map<std::string_view, std::deque<std::function<void(MessageBase::SCPtr)>>> reader2_;
 };
+
+template <typename _InnerStruct, typename _Module>
+inline void MesageIO::RegisterReader(
+  std::string_view cn, void (_Module::*mf)(std::shared_ptr<_InnerStruct>), _Module* module) {
+
+  // 需要按值拷贝走两个指针
+  auto type_erased_cbk = [mf, module](MessageBase::SCPtr message) {
+    std::shared_ptr<_InnerStruct> frame = std::dynamic_pointer_cast<_InnerStruct>(message);
+    assert(frame != nullptr); // 确保消息类型正确
+    (module->*mf)(frame);
+  };
+
+  reader2_[cn].push_back(type_erased_cbk);
+}

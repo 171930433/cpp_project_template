@@ -12,8 +12,8 @@ class MYLIB_EXPORT MultuiSensorFusion {
 public:
   void ProcessData(MessageBase::SPtr frame) {
     buffer_.Append(frame);
-    if (io_.reader_.contains(frame->channel_name_)) {
-      for (auto& cbk : io_.reader_[frame->channel_name_]) { cbk->onMessage(frame); }
+    if (io_.reader2_.contains(frame->channel_name_)) {
+      for (auto& cbk : io_.reader2_[frame->channel_name_]) { cbk(frame); }
     }
   }
 

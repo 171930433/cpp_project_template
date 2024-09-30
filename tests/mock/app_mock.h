@@ -14,14 +14,13 @@ public:
 
     io()->RegisterReader("/imu", &DemoModule::ProcessImu, this);
     io()->RegisterReader("/gnss", &DemoModule::ProcessGnss, this);
-
   }
   virtual void ProcessImu(std::shared_ptr<const Channel<Imu>> frame) = 0;
   virtual void ProcessGnss(std::shared_ptr<const Channel<Gnss>> frame) = 0;
   void Write() {
     auto state = Channel<State>::Create("/state");
     state->msg_.t0_ = 1;
-    io()->WriteMessage(state);
+    WriteMessage(state);
   }
 };
 

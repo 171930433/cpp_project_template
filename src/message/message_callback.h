@@ -9,12 +9,7 @@ public:
   template <typename _InnerStruct, typename _Module>
   void RegisterReader(std::string_view cn, void (_Module::*mf)(std::shared_ptr<_InnerStruct>), _Module* module);
 
-  // for app user
-  template <typename _InnerStruct>
-  void WriteMessage(std::shared_ptr<_InnerStruct> frame);
-
 public:
-
   // for msf user
   template <typename _InnerStruct>
   void RegisterWriter(std::string_view cn, std::function<void(std::shared_ptr<_InnerStruct>)>);
@@ -36,18 +31,6 @@ inline void MesageIO::RegisterReader(
   };
 
   reader_[cn].push_back(type_erased_cbk);
-}
-
-template <typename _InnerStruct>
-inline void MesageIO::WriteMessage(std::shared_ptr<_InnerStruct> frame) {
-  // 先给所有订阅的module一份
-  if (reader_.contains(frame->channel_name_)) {
-    for (auto& cbk : reader_[frame->channel_name_]) { cbk(frame); }
-  }
-  // 调用外部注册的函数
-  if (writer_.contains(frame->channel_name_)) {
-    for (auto& cbk : writer_[frame->channel_name_]) { cbk(frame); }
-  }
 }
 
 template <typename _InnerStruct>

@@ -2,8 +2,7 @@
 
 #include "export.h"
 #include "message/message_buffer.h"
-#include "message/message_callback.h"
-// #include "modules/app_base.h"
+#include "message/message_dispatcher.h"
 #include "config/config_manager.h"
 #include <gflags/gflags.h>
 #include <glog/logging.h>

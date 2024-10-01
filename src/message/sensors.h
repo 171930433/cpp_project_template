@@ -1,10 +1,5 @@
 #pragma once
 
-#include <Eigen/Dense>
-#include <glog/logging.h>
-#include <ylt/struct_json/json_writer.h>
-#include <ylt/struct_pb.hpp>
-
 struct Vec2d {
   double x_ = 0;
   double y_ = 0;

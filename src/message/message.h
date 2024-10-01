@@ -3,7 +3,12 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <unordered_set>
+#include <memory>
 #include <ylt/reflection/template_string.hpp>
+#include <ylt/struct_json/json_writer.h>
+#include <ylt/struct_json/json_reader.h>
+#include <ylt/struct_pb.hpp>
+
 
 struct MessageBase {
   using SPtr = std::shared_ptr<MessageBase>;

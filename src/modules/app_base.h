@@ -1,6 +1,6 @@
 #pragma once
 #include "message/message_buffer.h"
-#include "message/message_callback.h"
+#include "message/message_dispatcher.h"
 #include "mylib.h"
 
 class AppBase {

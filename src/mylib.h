@@ -21,9 +21,7 @@ public:
 public:
   void ProcessData(MessageBase::SPtr frame) {
     buffer_.Append(frame);
-    if (dispatcher_.reader_.contains(frame->channel_name_)) {
-      for (auto& cbk : dispatcher_.reader_[frame->channel_name_]) { cbk(frame); }
-    }
+    dispatcher_.ForeachReaders(frame);
   }
 
   template <typename _Module>

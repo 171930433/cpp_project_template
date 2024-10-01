@@ -5,11 +5,11 @@
 #include <unordered_set>
 #include <ylt/reflection/template_string.hpp>
 
-
-
 struct MessageBase {
   using SPtr = std::shared_ptr<MessageBase>;
   using SCPtr = std::shared_ptr<MessageBase const>;
+  using Func = std::function<void(SPtr)>;
+  using CFunc = std::function<void(SCPtr)>;
   virtual ~MessageBase() = default;
   virtual double t0() const = 0;
   virtual std::string to_json() const = 0;

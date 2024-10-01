@@ -7,7 +7,7 @@ MultuiSensorFusion::MultuiSensorFusion(std::string const& path) {
 }
 
 void MultuiSensorFusion::Init(std::string const& path = FLAGS_config_dir) {
-  CHECK(!path.empty()) << "when called MultuiSensorFusion(), you should pass --config_dir=/path/to/cm.json";
+  CHECK(!path.empty()) << "when called MultuiSensorFusion:Init(), you should pass --config_dir=/path/to/cm.json";
 
   std::string cm_path = path + "/cm.json";
   cm_.LoadFromDir(cm_path);

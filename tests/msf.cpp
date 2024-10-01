@@ -36,14 +36,26 @@ TEST_F(MsfTest, units) {
 
   Vector3<degree_t> v1{ 10.0_deg, 5_deg, 90_deg };
   Vector3<degree_t> v2{ 20.0_deg, 10_deg, 90_deg };
+  Vector3<degree_t> v12{ 30.0_deg, 15_deg, 180_deg };
 
-  GTEST_LOG_(INFO) << v1;
-  GTEST_LOG_(INFO) << v1[0] * 2;
-  GTEST_LOG_(INFO) << (v1 + v2).transpose();
-  GTEST_LOG_(INFO) << units::math::cos(v1[2]);
+  // GTEST_LOG_(INFO) << v1;
+  // GTEST_LOG_(INFO) << v1[0] * 2;
+  EXPECT_EQ(v1[0] * 2, 20.0_deg);
+  // GTEST_LOG_(INFO) << (v1 + v2).transpose();
+
+  Vector3<degree_t> v1122 = v1 + v2;
+  EXPECT_EQ(v1 + v2, v12);
+
+  // GTEST_LOG_(INFO) << units::math::cos(v1[2]);
+  EXPECT_DOUBLE_EQ(units::math::cos(v1[2]), cos(v1[2].convert<radian>()()));
 
   Vector3<double> v3 = v1.cast<radian_t>().cast<double>();
-  GTEST_LOG_(INFO) << v3.transpose();
+  // GTEST_LOG_(INFO) << v3.transpose();
+
+  // GTEST_LOG_(INFO) << " SI(v1)" << SI(v1);
+  Vector3d v4 = SI(v1);
+
+  EXPECT_TRUE(v4.isApprox(v3));
 
   EXPECT_TRUE(1);
 }

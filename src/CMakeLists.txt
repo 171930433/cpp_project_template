@@ -1,5 +1,14 @@
 file(GLOB HEADER_FILES *.h)
-file(GLOB SOURCE_FILES *.cpp)
+file(GLOB SOURCE_FILES mylib.cpp)
+
+option(ENABLE_PSINS "enable psins module" ON)
+option(ENABLE_IMGUI "enable IMGUI module" ON)
+if(ENABLE_IMGUI)
+  find_package(imgui CONFIG REQUIRED)
+  find_package(implot CONFIG REQUIRED)
+  find_package(hello-imgui CONFIG REQUIRED)
+  find_package(nlohmann_json CONFIG REQUIRED)
+endif()
 
 # vcpkg
 find_package(Eigen3 CONFIG REQUIRED)
@@ -14,8 +23,6 @@ find_package(Taskflow CONFIG REQUIRED)
 # system
 find_package(Boost REQUIRED COMPONENTS system)
 
-option(ENABLE_PSINS "enable psins module" ON)
-
 add_subdirectory(modules)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
@@ -26,10 +33,12 @@ target_link_libraries(
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
           units::units Boost::system Taskflow::Taskflow
   PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags
+         $<$<BOOL:${ENABLE_PSINS}>:implot::implot>
+         $<$<BOOL:${ENABLE_PSINS}>:imgui::imgui>
   # modules
   PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins>)
 
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 target_compile_definitions(
   ${PROJECT_NAME}
@@ -89,3 +98,9 @@ foreach(single_header ${HEADER_FILES})
   install(FILES ${single_header}
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${header_dir})
 endforeach()
+
+# my app
+if(ENABLE_IMGUI)
+  hello_imgui_add_app(my_app my_app.cpp)
+  target_link_libraries(my_app PRIVATE ${PROJECT_NAME})
+endif()

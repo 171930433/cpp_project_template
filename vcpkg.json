@@ -7,6 +7,21 @@
     "gflags",
     "fmt",
     "units",
-    "taskflow"
+    "taskflow",
+    {
+      "name": "imgui",
+      "features": [
+        "opengl3-binding"
+      ]
+    },
+    "implot",
+    {
+      "name": "hello-imgui",
+      "features": [
+        "opengl3-binding",
+        "glfw-binding"
+      ]
+    },
+    "nlohmann-json"
   ]
 }

@@ -1,4 +1,5 @@
 #include "mylib.h"
+#include "modules/app_base.h"
 
 DEFINE_string(config_dir, "", "config dir");
 

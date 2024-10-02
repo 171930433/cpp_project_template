@@ -1,5 +1,5 @@
-file(GLOB_RECURSE HEADER_FILES *.h)
-file(GLOB_RECURSE SOURCE_FILES *.cpp)
+file(GLOB HEADER_FILES *.h)
+file(GLOB SOURCE_FILES *.cpp)
 
 # vcpkg
 find_package(Eigen3 CONFIG REQUIRED)
@@ -14,6 +14,10 @@ find_package(Taskflow CONFIG REQUIRED)
 # system
 find_package(Boost REQUIRED COMPONENTS system)
 
+option(ENABLE_PSINS "enable psins module" ON)
+
+add_subdirectory(modules)
+
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 target_link_libraries(
@@ -21,7 +25,9 @@ target_link_libraries(
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
           units::units Boost::system Taskflow::Taskflow
-  PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags glog::glog)
+  PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags glog::glog
+  # modules
+  PRIVATE $<$<BOOL:${ENABLE_PSINS}>:psins>)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
@@ -46,7 +52,7 @@ generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME
 
 # install and export
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME} psins
   EXPORT ${PROJECT_NAME}-targets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin

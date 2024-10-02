@@ -27,13 +27,15 @@ target_link_libraries(
           units::units Boost::system Taskflow::Taskflow
   PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags glog::glog
   # modules
-  PRIVATE $<$<BOOL:${ENABLE_PSINS}>:psins>)
+  PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins>)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 target_compile_definitions(
-  ${PROJECT_NAME} PUBLIC $<$<BOOL:${PROTOBUF_DEMO}>:HAVE_PROTOBUF>
-                         $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:HAVE_THIRD_PARTY>)
+  ${PROJECT_NAME}
+  PUBLIC $<$<BOOL:${PROTOBUF_DEMO}>:HAVE_PROTOBUF>
+         $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:HAVE_THIRD_PARTY>
+         $<$<BOOL:${ENABLE_PSINS}>:ENABLE_PSINS>)
 
 target_include_directories(
   ${PROJECT_NAME}

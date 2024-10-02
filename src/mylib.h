@@ -9,6 +9,7 @@
 #include <taskflow/taskflow.hpp>
 
 DECLARE_string(config_dir);
+DECLARE_string(data_dir);
 
 class AppBase;
 

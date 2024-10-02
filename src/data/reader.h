@@ -3,6 +3,6 @@
 
 class IDataReader {
 public:
-  enum class State { OK, END };
-  virtual std::pair<MessageBase::SPtr, State> ReadFrame() = 0;
+  enum class IOState { OK, END };
+  virtual std::pair<MessageBase::SPtr, IOState> ReadFrame() = 0;
 };

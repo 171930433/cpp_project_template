@@ -3,5 +3,5 @@
 
 class MockDataReader : public IDataReader {
 public:
-  MOCK_METHOD((std::pair<MessageBase::SPtr, State>), ReadFrame, (), (override));
+  MOCK_METHOD((std::pair<MessageBase::SPtr, IOState>), ReadFrame, (), (override));
 };

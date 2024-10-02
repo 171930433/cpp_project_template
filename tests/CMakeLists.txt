@@ -15,7 +15,7 @@ target_compile_features(main_test PRIVATE cxx_std_20)
 
 include(GoogleTest)
 
-gtest_discover_tests(main_test EXTRA_ARGS "--config_dir=${CMAKE_SOURCE_DIR}/config/demo")
+gtest_discover_tests(main_test EXTRA_ARGS "--config_dir=${CMAKE_SOURCE_DIR}/config/demo" "--data_dir=${CMAKE_SOURCE_DIR}/data")
 
 option(ENABLE_USE_TARGET_TEST "enable use target tests" OFF)
 

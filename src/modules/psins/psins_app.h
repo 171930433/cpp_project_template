@@ -1,5 +1,54 @@
 #pragma once
-#include "PSINSCore/PSINS.h"
 #include "PSINSCore/KFApp.h"
 #include "modules/app_base.h"
+#include "psins_reader.h"
 
+class PsinsApp : public AppBase {
+public:
+  using SPtr = std::shared_ptr<PsinsApp>;
+  PsinsApp() { name_ = "PsinsApp"; }
+
+  void Init() override {
+    GTEST_LOG_(INFO) << "PsinsApp init done";
+
+    dispatcher()->RegisterReader("/imu", &PsinsApp::ProcessImu, this);
+    dispatcher()->RegisterReader("/gnss", &PsinsApp::ProcessGnss, this);
+    dispatcher()->RegisterReader("/init_state", &PsinsApp::ProcessInitState, this);
+
+    //
+    kf_app_ = std::make_unique<CKFApp>(TS);
+    // kf_app_->Init(CSINS(pDS0->att, pDS0->gpsvn, pDS0->gpspos, pDS0->t));
+  }
+  void ProcessImu(std::shared_ptr<const Message<Imu>> frame);
+  void ProcessGnss(std::shared_ptr<const Message<Gnss>> frame);
+  void ProcessInitState(std::shared_ptr<const Message<State>> frame);
+
+private:
+  std::unique_ptr<CKFApp> kf_app_;
+  std::atomic_bool inited_{ false };
+};
+
+inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
+  if (!inited_) return;
+  std::cout << frame->to_header_str() << "\n";
+
+  auto acc = convert::ToCVect3(frame->msg_.acc_);
+  auto gyr = convert::ToCVect3(frame->msg_.gyr_);
+  kf_app_->Update(&acc, &gyr, 1, TS);
+}
+inline void PsinsApp::ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) {
+  if (!inited_) return;
+
+  std::cout << frame->to_header_str() << "\n";
+  kf_app_->SetMeasGNSS(convert::ToCVect3(frame->msg_.pos_.pos), convert::ToCVect3(frame->msg_.vel_.vel));
+}
+
+inline void PsinsApp::ProcessInitState(std::shared_ptr<const Message<State>> frame) {
+  std::cout << frame->to_header_str() << "\n";
+
+  CVect3 pos = convert::ToCVect3(frame->msg_.pos_);
+  CVect3 vel = convert::ToCVect3(frame->msg_.vel_);
+  CVect3 att = convert::ToCVect3(frame->msg_.att_);
+  kf_app_->Init(CSINS(pos, vel, att, frame->t0()));
+  inited_.store(true);
+}

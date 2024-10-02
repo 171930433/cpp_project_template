@@ -2,6 +2,8 @@
 #include "modules/app_base.h"
 
 DEFINE_string(config_dir, "", "config dir");
+DEFINE_string(data_dir, "", "data dir");
+
 
 MultuiSensorFusion::MultuiSensorFusion(std::string const& path) {
   Init(path);

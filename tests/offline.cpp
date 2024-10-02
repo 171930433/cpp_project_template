@@ -4,6 +4,9 @@
 #include <gtest/gtest.h>
 #include <units.h>
 
+#include "mock/app_mock.h"
+#include "modules/psins/psins_app.h"
+
 class OfflineTest : public testing::Test {
 protected:
   OfflineTest() {
@@ -35,17 +38,37 @@ TEST_F(OfflineTest, base) {
   MockDataReader reader;
   EXPECT_CALL(reader, ReadFrame)
     .Times(5)
-    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ imu, IDataReader::State::OK }))
-    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ imu2, IDataReader::State::OK }))
-    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ gnss, IDataReader::State::OK }))
-    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ gnss2, IDataReader::State::OK }))
-    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::State>{ nullptr, IDataReader::State::END }));
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::IOState>{ imu, IDataReader::IOState::OK }))
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::IOState>{ imu2, IDataReader::IOState::OK }))
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::IOState>{ gnss, IDataReader::IOState::OK }))
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::IOState>{ gnss2, IDataReader::IOState::OK }))
+    .WillOnce(Return(std::pair<MessageBase::SPtr, IDataReader::IOState>{ nullptr, IDataReader::IOState::END }));
 
-  for (auto it = reader.ReadFrame(); it.second != IDataReader::State::END; it = reader.ReadFrame()) {
+  auto mock_app = msf.CreateModule<MockDemoModule>();
+  EXPECT_CALL(*mock_app, ProcessImu).Times(2);
+  EXPECT_CALL(*mock_app, ProcessGnss).Times(2);
+
+  for (auto it = reader.ReadFrame(); it.second != IDataReader::IOState::END; it = reader.ReadFrame()) {
     msf.ProcessData(it.first);
 
     GTEST_LOG_(INFO) << (int)it.second << " " << it.first->to_header_str();
   }
 
   EXPECT_EQ(msf.get_buffer().size(), 4);
+}
+
+TEST_F(OfflineTest, psins) {
+  msf.Init(FLAGS_config_dir);
+
+  PsinsReader reader;
+  reader.Init(FLAGS_data_dir + "/mimuattgps.bin");
+
+  msf.CreateModule<PsinsApp>();
+
+  for (int i = 0; i < 4; ++i) {
+    auto it = reader.ReadFrame();
+    msf.ProcessData(it.first);
+  }
+
+  EXPECT_TRUE(1);
 }

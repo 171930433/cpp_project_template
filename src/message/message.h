@@ -22,9 +22,9 @@ struct MessageBase {
     std::stringstream ss;
     ss << fmt::format(R"("channel_name_":"{}",)", channel_name_);
     ss << fmt::format(R"("channel_type_":"{}",)", channel_type_);
-    ss << fmt::format(R"("t0_":{},)", t0());
-    ss << fmt::format(R"("t1_":{},)", t1_);
-    ss << fmt::format(R"("t2_":{})", t2_);
+    ss << fmt::format(R"("t0_":{:.3f},)", t0());
+    ss << fmt::format(R"("t1_":{:.3f},)", t1_);
+    ss << fmt::format(R"("t2_":{:.3f})", t2_);
     return ss.str();
   }
 

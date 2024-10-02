@@ -5,7 +5,8 @@
 #include "message/message_dispatcher.h"
 #include "config/config_manager.h"
 #include <gflags/gflags.h>
-#include <glog/logging.h>
+// #include <glog/logging.h>
+#include <ylt/easylog.hpp>
 #include <taskflow/taskflow.hpp>
 
 DECLARE_string(config_dir);

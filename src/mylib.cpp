@@ -4,13 +4,18 @@
 DEFINE_string(config_dir, "", "config dir");
 DEFINE_string(data_dir, "", "data dir");
 
-
 MultuiSensorFusion::MultuiSensorFusion(std::string const& path) {
   Init(path);
 }
 
 void MultuiSensorFusion::Init(std::string const& path = FLAGS_config_dir) {
-  CHECK(!path.empty()) << "when called MultuiSensorFusion:Init(), you should pass --config_dir=/path/to/cm.json";
+  // CHECK(!path.empty()) << "when called MultuiSensorFusion:Init(), you should pass --config_dir=/path/to/cm.json";
+  // LOG_IF(INFO, path.empty()) << "when called MultuiSensorFusion:Init(), you should pass
+  // --config_dir=/path/to/cm.json";
+
+  if (path.empty()) {
+    ELOG_FATAL << "when called MultuiSensorFusion:Init(), you should pass --config_dir=/path/to/cm.json";
+  }
 
   std::string cm_path = path + "/cm.json";
   cm_.LoadFromDir(cm_path);

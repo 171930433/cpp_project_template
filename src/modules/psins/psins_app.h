@@ -2,6 +2,8 @@
 #include "PSINSCore/KFApp.h"
 #include "modules/app_base.h"
 #include "psins_reader.h"
+// #include <glog/logging.h>
+#include <ylt/easylog.hpp>
 
 /*! 1. 从暴露的接口来看,预测和量测在同一线程
 */
@@ -32,7 +34,7 @@ private:
 
 inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
   if (!inited_) return;
-  std::cout << frame->to_header_str() << "\n";
+  ELOG_DEBUG << frame->to_header_str() << "\n";
 
   auto acc = convert::ToCVect3(frame->msg_.acc_);
   auto gyr = convert::ToCVect3(frame->msg_.gyr_);
@@ -45,12 +47,12 @@ inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
 inline void PsinsApp::ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) {
   if (!inited_) return;
 
-  std::cout << frame->to_header_str() << "\n";
+  ELOG_DEBUG << frame->to_header_str() << "\n";
   kf_app_->SetMeasGNSS(convert::ToCVect3(frame->msg_.pos_.pos), convert::ToCVect3(frame->msg_.vel_.vel));
 }
 
 inline void PsinsApp::ProcessInitState(std::shared_ptr<const Message<State>> frame) {
-  std::cout << frame->to_header_str() << "\n";
+  ELOG_DEBUG << frame->to_header_str() << "\n";
 
   CVect3 pos = convert::ToCVect3(frame->msg_.pos_);
   CVect3 vel = convert::ToCVect3(frame->msg_.vel_);

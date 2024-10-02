@@ -4,7 +4,7 @@ file(GLOB SOURCE_FILES *.cpp)
 # vcpkg
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(yalantinglibs REQUIRED)
-find_package(glog CONFIG REQUIRED)
+# find_package(glog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(units CONFIG REQUIRED)
 set(GFLAGS_USE_TARGET_NAMESPACE ON)
@@ -25,7 +25,7 @@ target_link_libraries(
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
           units::units Boost::system Taskflow::Taskflow
-  PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags glog::glog
+  PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags
   # modules
   PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins>)
 

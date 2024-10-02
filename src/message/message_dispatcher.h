@@ -71,7 +71,7 @@ inline void Dispatcher::ASyncWriters(MessageBase::SCPtr frame) {
   tf::Taskflow taskflow;
 
   for (auto& cbk : writer_[frame->channel_name_]) {
-    std::string const task_name = std::string("read_task: ").append(frame->channel_name_);
+    std::string const task_name = std::string("write_task: ").append(frame->channel_name_);
     taskflow.emplace([cbk, frame]() {}).name(task_name);
   }
 

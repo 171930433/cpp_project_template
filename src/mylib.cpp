@@ -11,6 +11,8 @@ void MultuiSensorFusion::Init(std::string const& path = FLAGS_config_dir) {
 
   std::string cm_path = path + "/cm.json";
   cm_.LoadFromDir(cm_path);
+
+  dispatcher_.Init(&executor_);
 }
 
 int add(int const x, int const y) {

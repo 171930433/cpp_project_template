@@ -6,6 +6,7 @@
 #include "config/config_manager.h"
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <taskflow/taskflow.hpp>
 
 DECLARE_string(config_dir);
 
@@ -41,6 +42,7 @@ public:
   std::deque<std::shared_ptr<AppBase>> modules_;
   Dispatcher dispatcher_;
   ConfigManager cm_;
+  tf::Executor executor_;
   //
   friend AppBase;
 };

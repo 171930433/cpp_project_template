@@ -6,6 +6,7 @@
     "gtest",
     "gflags",
     "fmt",
-    "units"
+    "units",
+    "taskflow"
   ]
 }

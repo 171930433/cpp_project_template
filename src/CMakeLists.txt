@@ -9,6 +9,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(units CONFIG REQUIRED)
 set(GFLAGS_USE_TARGET_NAMESPACE ON)
 find_package(gflags CONFIG REQUIRED)
+find_package(Taskflow CONFIG REQUIRED)
 
 # system
 find_package(Boost REQUIRED COMPONENTS system)
@@ -19,7 +20,7 @@ target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
-          units::units Boost::system 
+          units::units Boost::system Taskflow::Taskflow
   PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags glog::glog)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

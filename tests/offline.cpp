@@ -65,10 +65,19 @@ TEST_F(OfflineTest, psins) {
 
   msf.CreateModule<PsinsApp>();
 
-  for (int i = 0; i < 4; ++i) {
+  // 构造输出
+  std::deque<Message<State>::SCPtr> fused_states;
+  Message<State>::CFunc cbk = [&fused_states](Message<State>::SCPtr frame) { fused_states.push_back(frame); };
+
+  msf.dispatcher()->RegisterWriter("/fused_state", cbk);
+
+  int count = 100;
+  for (int i = 0; i < count; ++i) {
     auto it = reader.ReadFrame();
     msf.ProcessData(it.first);
   }
 
+
   EXPECT_TRUE(1);
+  EXPECT_EQ(fused_states.size(), count - 1);
 }

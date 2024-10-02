@@ -3,6 +3,8 @@
 #include "modules/app_base.h"
 #include "psins_reader.h"
 
+/*! 1. 从暴露的接口来看,预测和量测在同一线程
+*/
 class PsinsApp : public AppBase {
 public:
   using SPtr = std::shared_ptr<PsinsApp>;
@@ -35,6 +37,10 @@ inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
   auto acc = convert::ToCVect3(frame->msg_.acc_);
   auto gyr = convert::ToCVect3(frame->msg_.gyr_);
   kf_app_->Update(&acc, &gyr, 1, TS);
+
+  // 构造输出
+  auto re = convert::ToState(kf_app_->sins);
+  WriteMessage(re);
 }
 inline void PsinsApp::ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) {
   if (!inited_) return;

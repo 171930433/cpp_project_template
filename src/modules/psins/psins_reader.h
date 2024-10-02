@@ -36,6 +36,15 @@ inline Message<State>::SPtr ToState(DataSensor* frame) {
   return state;
 }
 
+inline Message<State>::SPtr ToState(CSINS const& frame) {
+  auto state = Message<State>::Create("/fused_state");
+  state->msg_.t0_ = frame.tk;
+  state->msg_.pos_ = convert::ToVec3d(frame.pos);
+  state->msg_.vel_ = convert::ToVec3d(frame.vn);
+  state->msg_.att_ = convert::ToVec3d(frame.att);
+  return state;
+}
+
 }
 
 class PsinsReader : public IDataReader {
@@ -44,8 +53,7 @@ public:
     reader_ = std::make_unique<CFileRdSr>(path.c_str());
 
     // 发送初始状态消息
-    DataSensor* pDS0 = &reader_->DS0;
-    buffer_.push_back({ convert::ToState(pDS0), IOState::OK });
+    buffer_.push_back({ convert::ToState(&reader_->DS0), IOState::OK });
   }
   std::pair<MessageBase::SPtr, IOState> ReadFrame() override;
 

@@ -3,13 +3,6 @@ file(GLOB SOURCE_FILES mylib.cpp)
 
 option(ENABLE_PSINS "enable psins module" ON)
 option(ENABLE_IMGUI "enable IMGUI module" ON)
-if(ENABLE_IMGUI)
-  find_package(imgui CONFIG REQUIRED)
-  find_package(implot CONFIG REQUIRED)
-  find_package(VTK REQUIRED)
-  find_package(glfw3 CONFIG REQUIRED)
-  find_package(GLEW REQUIRED)
-endif()
 
 # vcpkg
 find_package(Eigen3 CONFIG REQUIRED)
@@ -28,14 +21,18 @@ add_subdirectory(modules)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
+if(ENABLE_IMGUI)
+  add_subdirectory(view)
+endif()
+
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
           units::units Boost::system Taskflow::Taskflow
   PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags
-         $<$<BOOL:${ENABLE_PSINS}>:implot::implot>
-         $<$<BOOL:${ENABLE_PSINS}>:imgui::imgui>
+        #  $<$<BOOL:${ENABLE_PSINS}>:implot::implot>
+        #  $<$<BOOL:${ENABLE_PSINS}>:imgui::imgui>
   # modules
   PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins>)
 
@@ -101,9 +98,4 @@ foreach(single_header ${HEADER_FILES})
 endforeach()
 
 # my app
-if(0)
-  find_package(hello-imgui CONFIG REQUIRED)
-  find_package(nlohmann_json CONFIG REQUIRED)
-  hello_imgui_add_app(my_app hello_imgui.cpp)
-  target_link_libraries(my_app PRIVATE ${PROJECT_NAME} ${VTK_LIBRARIES})
-endif()
+

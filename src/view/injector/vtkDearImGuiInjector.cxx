@@ -288,54 +288,54 @@ void vtkDearImGuiInjector::BeginDearImGuiOverlay(
   ImGui_ImplOpenGL3_NewFrame();
   ImGui::NewFrame();
   
-  // Menu Bar
-  if (ImGui::BeginMainMenuBar())
-  {
-    if (ImGui::BeginMenu("Input"))
-    {
-      ImGui::MenuItem("Grab Mouse", NULL, &this->GrabMouse);
-      ImGui::MenuItem("Grab Keyboard", NULL, &this->GrabKeyboard);
-      ImGui::MenuItem("Hardware Cursor", NULL, &io.MouseDrawCursor);
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Tools"))
-    {
-      ImGui::MenuItem("ImGui Demo", NULL, &this->ShowDemo);
-      ImGui::MenuItem("implot Demo", NULL, &this->show_plot_demo_);
-      ImGui::MenuItem("Metrics/Debugger", NULL, &this->ShowAppMetrics);
-      ImGui::MenuItem("Style Editor", NULL, &this->ShowAppStyleEditor);
-      ImGui::MenuItem("About Dear ImGui", NULL, &this->ShowAppAbout);
-      ImGui::MenuItem("Grab Mouse", NULL, &this->GrabMouse);
-      ImGui::MenuItem("Grab Keyboard", NULL, &this->GrabKeyboard);
-      ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
-  }
+  // // Menu Bar
+  // if (ImGui::BeginMainMenuBar())
+  // {
+  //   if (ImGui::BeginMenu("Input"))
+  //   {
+  //     ImGui::MenuItem("Grab Mouse", NULL, &this->GrabMouse);
+  //     ImGui::MenuItem("Grab Keyboard", NULL, &this->GrabKeyboard);
+  //     ImGui::MenuItem("Hardware Cursor", NULL, &io.MouseDrawCursor);
+  //     ImGui::EndMenu();
+  //   }
+  //   if (ImGui::BeginMenu("Tools"))
+  //   {
+  //     ImGui::MenuItem("ImGui Demo", NULL, &this->ShowDemo);
+  //     ImGui::MenuItem("implot Demo", NULL, &this->show_plot_demo_);
+  //     ImGui::MenuItem("Metrics/Debugger", NULL, &this->ShowAppMetrics);
+  //     ImGui::MenuItem("Style Editor", NULL, &this->ShowAppStyleEditor);
+  //     ImGui::MenuItem("About Dear ImGui", NULL, &this->ShowAppAbout);
+  //     ImGui::MenuItem("Grab Mouse", NULL, &this->GrabMouse);
+  //     ImGui::MenuItem("Grab Keyboard", NULL, &this->GrabKeyboard);
+  //     ImGui::EndMenu();
+  //   }
+  //   ImGui::EndMainMenuBar();
+  // }
 
-  if (this->ShowDemo)
-  {
-    ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
-    ImGui::ShowDemoWindow(&this->ShowDemo);
-  }
-  if (this->show_plot_demo_)
-  {
-    ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
-    ImPlot::ShowDemoWindow(&this->show_plot_demo_);
-  }
-  if (this->ShowAppMetrics)
-  {
-    ImGui::ShowMetricsWindow(&this->ShowAppMetrics);
-  }
-  if (this->ShowAppStyleEditor)
-  {
-    ImGui::Begin("Style editor", &this->ShowAppStyleEditor);
-    ImGui::ShowStyleEditor();
-    ImGui::End();
-  }
-  if (this->ShowAppAbout)
-  {
-    ImGui::ShowAboutWindow(&this->ShowAppAbout);
-  }
+  // if (this->ShowDemo)
+  // {
+  //   ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
+  //   ImGui::ShowDemoWindow(&this->ShowDemo);
+  // }
+  // if (this->show_plot_demo_)
+  // {
+  //   ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
+  //   ImPlot::ShowDemoWindow(&this->show_plot_demo_);
+  // }
+  // if (this->ShowAppMetrics)
+  // {
+  //   ImGui::ShowMetricsWindow(&this->ShowAppMetrics);
+  // }
+  // if (this->ShowAppStyleEditor)
+  // {
+  //   ImGui::Begin("Style editor", &this->ShowAppStyleEditor);
+  //   ImGui::ShowStyleEditor();
+  //   ImGui::End();
+  // }
+  // if (this->ShowAppAbout)
+  // {
+  //   ImGui::ShowAboutWindow(&this->ShowAppAbout);
+  // }
 
   // static ImGuiDockNodeFlags dflags = ;
   ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);

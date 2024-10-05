@@ -5,12 +5,6 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 find_path(PORTABLE_FILE_DIALOGS_INCLUDE_DIRS "portable-file-dialogs.h")
 
-# generate_export_header(vtkDearImGuiInjector)
-
-# add_subdirectory(injector)
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to be used")
-set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE STRING "C++ standard to be used")
-
 add_executable(view main.cpp injector/vtkDearImGuiInjector.cxx)
 
 target_link_libraries(view PRIVATE ${VTK_LIBRARIES} imgui::imgui implot::implot)

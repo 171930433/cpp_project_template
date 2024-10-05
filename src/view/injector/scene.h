@@ -1,7 +1,9 @@
 #pragma once
 
+#include "font/Karla-Regular.hpp"
 #include "injector/vtkDearImGuiInjector.h"
 #include <imgui.h>
+#include <implot.h>
 #include <vtkObject.h>
 #include <vtkSmartPointer.h>
 
@@ -36,20 +38,22 @@ void SimpleScene::setup(vtkObject* caller, unsigned long eventId, void* callData
     float const scale = 180.0f / 96.0f;
     io.FontGlobalScale *= scale;
     io.DisplayFramebufferScale = { scale, scale };
-    // io.Fonts->AddFontFromMemoryCompressedBase85TTF(Karla_Regular_compressed_data_base85, 16);
-    // io.Fonts->AddFontDefault();
-    // auto& style = ImGui::GetStyle();
-    // style.ChildRounding = 8;
-    // style.FrameRounding = 8;
-    // style.GrabRounding = 8;
-    // style.PopupRounding = 8;
-    // style.ScrollbarRounding = 8;
-    // style.TabRounding = 8;
-    // style.WindowRounding = 8;
-    // style.FrameBorderSize = 1.f;
+    io.Fonts->AddFontFromMemoryCompressedBase85TTF(Karla_Regular_compressed_data_base85, 16);
+    io.Fonts->AddFontDefault();
+
+    auto& style = ImGui::GetStyle();
+    style.ChildRounding = 8;
+    style.FrameRounding = 8;
+    style.GrabRounding = 8;
+    style.PopupRounding = 8;
+    style.ScrollbarRounding = 8;
+    style.TabRounding = 8;
+    style.WindowRounding = 8;
+    style.FrameBorderSize = 1.f;
   } else {
     vtkErrorWithObjectMacro(overlay_, "Failed to setup overlay UI because ImGUI failed to initialize!");
   }
 
-  //   SetupScene();
+  // enable docking
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 };

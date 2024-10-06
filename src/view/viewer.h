@@ -1,8 +1,8 @@
 #pragma once
 
 #include "injector/scene.h"
-#include "tree_view_helper.h"
 #include "mylib.h"
+#include "tree_view_helper.h"
 
 class MyViewer : public SimpleScene {
 public:
@@ -15,8 +15,6 @@ protected:
   bool imgui_demo_ = false;
   bool implot_demo_ = false;
 };
-
-
 
 void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
@@ -57,22 +55,13 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
   // 初始化
   if (!FLAGS_data_dir.empty() && !FLAGS_config_dir.empty()) {
-    if (ImGui::Button("Init##")) {
-      msf.Init();
-      // 显示配置
-      ylt::reflection::for_each(*msf.cm(), [](auto const& filed_no, auto const& filed_name, auto const& field_val) {
-        ELOGI << "filed_name " << filed_name << " field_val " << field_val;
-      });
-    }
+    if (ImGui::Button("Init##")) { msf.Init(); }
   }
-
-  ConfigManager cm;
 
   ImGuiTreeNodeFlags node_flags =
     ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 
-  std::string_view name = "ConfigManager2";
-  TreeView(name, cm, node_flags);
+  TreeView(*msf.cm(), node_flags);
 
   ImGui::End();
 }

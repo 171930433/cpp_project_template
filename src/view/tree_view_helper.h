@@ -31,12 +31,12 @@ inline void TreeViewImpl(std::string_view name, _T& field, ImGuiTreeNodeFlags no
 }
 
 template <typename _T, std::enable_if_t<iguana::ylt_refletable_v<_T>, bool> = true>
-inline void TreeView(std::string_view name, _T& field, ImGuiTreeNodeFlags node_flags) {
-  std::string const filed_name(name);
-  ImGui::PushID(filed_name.c_str());
+inline void TreeView(_T& field, ImGuiTreeNodeFlags node_flags) {
+  std::string const filed_name(ylt::reflection::type_string<_T>());
+  ImGui::PushID(&field);
 
   if (ImGui::TreeNodeEx(filed_name.c_str(), node_flags)) {
-    ylt::reflection::for_each(field, [](auto& field, auto name) { TreeViewImpl(name, field, 0); });
+    ylt::reflection::for_each(field, [node_flags](auto& field, auto name) { TreeViewImpl(name, field, node_flags); });
     ImGui::TreePop();
   }
 

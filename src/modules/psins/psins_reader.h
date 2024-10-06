@@ -1,5 +1,6 @@
 #pragma once
 #include "PSINSCore/PSINS.h"
+#include "data/reader.h"
 #include <deque>
 
 namespace convert {
@@ -49,7 +50,7 @@ inline Message<State>::SPtr ToState(CSINS const& frame) {
 
 class PsinsReader : public IDataReader {
 public:
-  void Init(std::string const& path) {
+  void Init(std::string const& path) override {
     reader_ = std::make_unique<CFileRdSr>(path.c_str());
 
     // 发送初始状态消息

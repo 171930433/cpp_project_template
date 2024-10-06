@@ -4663,7 +4663,7 @@ void CCAM::Init(const CVect3 &pva, const CVect3 &qt, double rp, double rv)
 void CCAM::Init(const CVect3 &qt, double rp, double rv)
 {
 	Qt = pow(qt,2);
-	Rpk = pow2(rp); Rvk=pow2(rv);
+	Rpk = inner_pow2(rp); Rvk=inner_pow2(rv);
 }
 
 void CCAM::Update(double an, double ts, double Zpk, double Zvk)
@@ -7199,8 +7199,8 @@ int CAligntrkang::Update(const CVect3 *pwm, const CVect3 *pvm, int nSamples, dou
 			if(fabs(Zk.dd[3])>20*DEG) {  // yaw init
 				cntYawOK = 0;
 				SetYaw(yaw); sins.vn = vnr;
-				Pset.dd[0] = Pset.dd[1] = pow2(10*DEG); Pset.dd[2] = pow2(20*DEG);
-				Pset.dd[3] = Pset.dd[4] = Pset.dd[5] = pow2(10.0);
+				Pset.dd[0] = Pset.dd[1] = inner_pow2(10*DEG); Pset.dd[2] = inner_pow2(20*DEG);
+				Pset.dd[3] = Pset.dd[4] = Pset.dd[5] = inner_pow2(10.0);
 			}
 			else {
 				cntYawOK ++;

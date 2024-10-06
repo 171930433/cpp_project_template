@@ -6,14 +6,14 @@
 #include <ylt/easylog.hpp>
 
 /*! 1. 从暴露的接口来看,预测和量测在同一线程
-*/
+ */
 class PsinsApp : public AppBase {
 public:
   using SPtr = std::shared_ptr<PsinsApp>;
   PsinsApp() { name_ = "PsinsApp"; }
 
   void Init() override {
-    GTEST_LOG_(INFO) << "PsinsApp init done";
+    ELOGI << "PsinsApp init done";
 
     dispatcher()->RegisterReader("/imu", &PsinsApp::ProcessImu, this);
     dispatcher()->RegisterReader("/gnss", &PsinsApp::ProcessGnss, this);
@@ -34,7 +34,7 @@ private:
 
 inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
   if (!inited_) return;
-  ELOG_DEBUG << frame->to_header_str() << "\n";
+  ELOG_DEBUG << frame->to_header_str();
 
   auto acc = convert::ToCVect3(frame->msg_.acc_);
   auto gyr = convert::ToCVect3(frame->msg_.gyr_);
@@ -47,12 +47,12 @@ inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
 inline void PsinsApp::ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) {
   if (!inited_) return;
 
-  ELOG_DEBUG << frame->to_header_str() << "\n";
+  ELOG_DEBUG << frame->to_header_str();
   kf_app_->SetMeasGNSS(convert::ToCVect3(frame->msg_.pos_.pos), convert::ToCVect3(frame->msg_.vel_.vel));
 }
 
 inline void PsinsApp::ProcessInitState(std::shared_ptr<const Message<State>> frame) {
-  ELOG_DEBUG << frame->to_header_str() << "\n";
+  ELOG_DEBUG << frame->to_header_str();
 
   CVect3 pos = convert::ToCVect3(frame->msg_.pos_);
   CVect3 vel = convert::ToCVect3(frame->msg_.vel_);

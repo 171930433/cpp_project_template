@@ -299,7 +299,7 @@ BYTE*	flipud(BYTE *p, int rows, int clmBytes);
 #define VADDff(vv,v1,f1,v2,f2)	{vv.i=v1.i*(f1)+v2.i*(f2), vv.j=v1.j*(f1)+v2.j*(f2), vv.k=v1.k*(f1)+v2.k*(f2);}
 #define MMULf(m,m1,f)		{m.e00=m1.e00*(f),m.e01=m1.e01*(f),m.e02=m1.e02*(f),m.e10=m1.e10*(f),m.e11=m1.e11*(f),m.e12=m1.e12*(f),m.e20=m1.e20*(f),m.e21=m1.e21*(f),m.e22=m1.e22*(f);}
 #define swapt(a, b, tpe)  { tpe tmp=a; a=b; b=tmp; };
-#define pow2(x)			((x)*(x))
+#define inner_pow2(x)			((x)*(x))
 #define asinEx(x)		asin(range(x, -1.0, 1.0))
 #define acosEx(x)		acos(range(x, -1.0, 1.0))
 #define hit0   (NULL)
@@ -563,7 +563,7 @@ public:
 	void Set2(double f, ...);
 	void SetAscend(double f0, double df);
 	void SetVect3(int i, const CVect3 &v);
-	void Set2Vect3(int i, const CVect3 &v);		// pow2
+	void Set2Vect3(int i, const CVect3 &v);		// inner_pow2
 	void SetBit(unsigned int bit, double f);	// set element to f by bit mask
 	void SetBit(unsigned int bit, const CVect3 &v);
 	void Seti2j(int i, int j=MMD-1, double val=0.0);  // dd[i]~dd[j] = val

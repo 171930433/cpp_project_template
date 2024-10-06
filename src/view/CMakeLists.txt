@@ -5,7 +5,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 find_path(PORTABLE_FILE_DIALOGS_INCLUDE_DIRS "portable-file-dialogs.h")
 
-add_executable(view main.cpp injector/vtkDearImGuiInjector.cxx)
+add_executable(view main.cpp viewer.cpp injector/vtkDearImGuiInjector.cxx)
 
 target_link_libraries(view PRIVATE ${PROJECT_NAME} ${VTK_LIBRARIES} imgui::imgui implot::implot)
 # message(VTK_LIBRARIES!!!!!!!!!!!!!!!!!!=${VTK_LIBRARIES})

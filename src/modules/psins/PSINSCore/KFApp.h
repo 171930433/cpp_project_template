@@ -13,7 +13,7 @@
 #include "PSINSCore/PSINS.h"
 
 #define FRQ	FRQ200
-#define TS	(1.0/FRQ)
+#define TS (1.0/FRQ)
 
 class CKFApp:public CSINSGNSS
 {

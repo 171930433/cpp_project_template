@@ -20,17 +20,17 @@ public:
 
 protected:
   vtkSmartPointer<vtkDearImGuiInjector> dearImGuiOverlay_;
-  vtkRenderer* render_;
+  // vtkRenderer* render_;
 };
 
-SimpleScene::SimpleScene() {
+inline SimpleScene::SimpleScene() {
   dearImGuiOverlay_ = vtkSmartPointer<vtkDearImGuiInjector>::New();
   //   dearImGuiOverlay_->DebugOn();
   dearImGuiOverlay_->AddObserver(vtkDearImGuiInjector::ImGuiSetupEvent, this, &SimpleScene::setup);
   dearImGuiOverlay_->AddObserver(vtkDearImGuiInjector::ImGuiDrawEvent, this, &SimpleScene::draw);
 }
 
-void SimpleScene::setup(vtkObject* caller, unsigned long eventId, void* callData) {
+inline void SimpleScene::setup(vtkObject* caller, unsigned long eventId, void* callData) {
 
   vtkDearImGuiInjector* overlay_ = reinterpret_cast<vtkDearImGuiInjector*>(caller);
   if (!callData) { return; }

@@ -18,7 +18,7 @@ class MYLIB_EXPORT MultuiSensorFusion {
 public:
   MultuiSensorFusion() = default;
   MultuiSensorFusion(std::string const& path);
-  void Init(std::string const& path);
+  void Init(std::string const& path = FLAGS_config_dir);
 
 public:
   void ProcessData(MessageBase::SPtr frame) {

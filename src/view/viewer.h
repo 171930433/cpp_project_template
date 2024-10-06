@@ -1,15 +1,22 @@
 #pragma once
 
 #include "injector/scene.h"
+#include "tree_view_helper.h"
+#include "mylib.h"
 
 class MyViewer : public SimpleScene {
 public:
   void draw(vtkObject* caller, unsigned long eventId, void* callData) override;
 
 protected:
+  MultuiSensorFusion msf;
+
+protected:
   bool imgui_demo_ = false;
   bool implot_demo_ = false;
 };
+
+
 
 void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
@@ -23,10 +30,49 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
     ImGui::EndMainMenuBar();
   }
 
-  if (this->imgui_demo_) {
-    ImGui::ShowDemoWindow(&this->imgui_demo_);
+  if (this->imgui_demo_) { ImGui::ShowDemoWindow(&this->imgui_demo_); }
+  if (this->implot_demo_) { ImPlot::ShowDemoWindow(&this->implot_demo_); }
+
+  // project window
+  ImGui::Begin("Project");
+  std::string data_str = FLAGS_data_dir;
+  ImGui::InputText("DataDir", &data_str);
+  ImGui::SameLine();
+  if (ImGui::SmallButton("...##1")) {
+    auto dialog = pfd::open_file("Select a file", "/home/gsk/pro/cpp_project_template/data/mimuattgps.bin",
+      { "All Files", "*", "Image Files", "*.png *.jpg *.jpeg *.bmp", "Audio Files", "*.wav *.mp3" },
+      pfd::opt::multiselect);
+    for (auto const& filename : dialog.result()) std::cout << "Selected file: " << filename << "\n";
+    if (!dialog.result().empty()) { FLAGS_data_dir = dialog.result().front(); }
   }
-  if (this->implot_demo_) {
-    ImPlot::ShowDemoWindow(&this->implot_demo_);
+
+  // config
+  std::string config_str = FLAGS_config_dir;
+  ImGui::InputText("ConfigDir", &config_str);
+  ImGui::SameLine();
+  if (ImGui::SmallButton("...##2")) {
+    auto dialog = pfd::select_folder("Select a file", "/home/gsk/pro/cpp_project_template/config/demo");
+    if (!dialog.result().empty()) { FLAGS_config_dir = dialog.result(); }
   }
+
+  // 初始化
+  if (!FLAGS_data_dir.empty() && !FLAGS_config_dir.empty()) {
+    if (ImGui::Button("Init##")) {
+      msf.Init();
+      // 显示配置
+      ylt::reflection::for_each(*msf.cm(), [](auto const& filed_no, auto const& filed_name, auto const& field_val) {
+        ELOGI << "filed_name " << filed_name << " field_val " << field_val;
+      });
+    }
+  }
+
+  ConfigManager cm;
+
+  ImGuiTreeNodeFlags node_flags =
+    ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+  std::string_view name = "ConfigManager2";
+  TreeView(name, cm, node_flags);
+
+  ImGui::End();
 }

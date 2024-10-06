@@ -7,7 +7,7 @@ find_path(PORTABLE_FILE_DIALOGS_INCLUDE_DIRS "portable-file-dialogs.h")
 
 add_executable(view main.cpp injector/vtkDearImGuiInjector.cxx)
 
-target_link_libraries(view PRIVATE ${VTK_LIBRARIES} imgui::imgui implot::implot)
+target_link_libraries(view PRIVATE ${PROJECT_NAME} ${VTK_LIBRARIES} imgui::imgui implot::implot)
 # message(VTK_LIBRARIES!!!!!!!!!!!!!!!!!!=${VTK_LIBRARIES})
 vtk_module_autoinit(TARGETS view MODULES ${VTK_LIBRARIES})
 

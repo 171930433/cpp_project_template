@@ -3,9 +3,11 @@
 #include "font/Karla-Regular.hpp"
 #include "injector/vtkDearImGuiInjector.h"
 #include <imgui.h>
+#include <imgui_stdlib.h>
 #include <implot.h>
 #include <vtkObject.h>
 #include <vtkSmartPointer.h>
+#include <portable-file-dialogs.h>
 
 class SimpleScene {
 public:

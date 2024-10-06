@@ -14,7 +14,7 @@ void MultuiSensorFusion::Init(std::string const& path = FLAGS_config_dir) {
   // --config_dir=/path/to/cm.json";
 
   if (path.empty()) {
-    ELOG_FATAL << "when called MultuiSensorFusion:Init(), you should pass --config_dir=/path/to/cm.json";
+    ELOGC<<" FLAGS_config_dir is empty. "<< "when called MultuiSensorFusion:Init(), you should pass --config_dir=/path/to/cm.json";
   }
 
   std::string cm_path = path + "/cm.json";

@@ -54,7 +54,7 @@ TEST_F(OfflineTest, base) {
     GTEST_LOG_(INFO) << (int)it.second << " " << it.first->to_header_str();
   }
 
-  EXPECT_EQ(msf.get_buffer().size(), 4);
+  EXPECT_EQ(msf.get_buffer()->size(), 4);
 }
 
 TEST_F(OfflineTest, psins) {

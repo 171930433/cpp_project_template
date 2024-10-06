@@ -1,5 +1,3 @@
-// #include "injector/vtkDearImGuiInjector.h"
-
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>

@@ -1,13 +1,13 @@
 #pragma once
 
+#include "config/config_manager.h"
 #include "export.h"
 #include "message/message_buffer.h"
 #include "message/message_dispatcher.h"
-#include "config/config_manager.h"
 #include <gflags/gflags.h>
 // #include <glog/logging.h>
-#include <ylt/easylog.hpp>
 #include <taskflow/taskflow.hpp>
+#include <ylt/easylog.hpp>
 
 DECLARE_string(config_dir);
 DECLARE_string(data_dir);
@@ -34,10 +34,10 @@ public:
     return module;
   }
 
-  TotalBuffer const& get_buffer() const { return buffer_; }
+  TotalBuffer const* get_buffer() const { return &buffer_; }
   Dispatcher* dispatcher() { return &dispatcher_; }
   ConfigManager* cm() { return &cm_; }
-  std::deque<std::shared_ptr<AppBase>>* modules() { return &modules_; }
+  std::deque<std::shared_ptr<AppBase>> const* modules() const { return &modules_; }
 
 public:
   TotalBuffer buffer_;

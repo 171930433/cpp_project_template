@@ -34,7 +34,7 @@ private:
 
 inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
   if (!inited_) return;
-  ELOG_DEBUG << frame->to_header_str();
+  // ELOG_DEBUG << frame->to_header_str();
 
   auto acc = convert::ToCVect3(frame->msg_.acc_);
   auto gyr = convert::ToCVect3(frame->msg_.gyr_);

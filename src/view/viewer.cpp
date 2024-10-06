@@ -6,6 +6,22 @@ MyViewer::MyViewer() {
   reader_ = std::make_shared<PsinsReader>();
 }
 
+MyViewer::~MyViewer() {
+  stop_ = true;
+  exit_ = true;
+};
+
+void MyViewer::Init() {
+  reader_->Init(FLAGS_data_dir);
+  msf_.Init();
+  msf_.CreateModule<PsinsApp>();
+
+  Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) { fused_states_.push_back(frame); };
+  msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
+
+  inited_ = true;
+}
+
 void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
   // Menu Bar
@@ -43,29 +59,37 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
     if (!dialog.result().empty()) { FLAGS_config_dir = dialog.result(); }
   }
 
-  // 初始化
-  if (!FLAGS_data_dir.empty() && !FLAGS_config_dir.empty()) {
-
-    if (ImGui::Button("Init##")) {
-      reader_->Init(FLAGS_data_dir);
-      msf_.Init();
-      msf_.CreateModule<PsinsApp>();
-
-      Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) { fused_states_.push_back(frame); };
-      msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
-    }
-  }
-
   ImGuiTreeNodeFlags node_flags =
     ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 
   TreeView(*msf_.cm(), node_flags);
 
+  // 初始化
+
+  if (ImGui::Button("Init##")) {
+    if (!FLAGS_data_dir.empty() && !FLAGS_config_dir.empty()) { Init(); }
+  }
+
+  ImGui::SameLine();
+
   // 运行
   if (ImGui::Button("process")) {
-    for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END; it = reader_->ReadFrame()) {
-      msf_.ProcessData(it.first);
+    if (inited_) {
+      executor_.silent_async([this] {
+        for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END && !exit_;
+             it = reader_->ReadFrame()) {
+          msf_.ProcessData(it.first);
+          while (stop_) { std::this_thread::sleep_for(std::chrono::duration(std::chrono::milliseconds(100))); }
+        }
+      });
     }
+  }
+
+  ImGui::SameLine();
+
+  if (ImGui::Button("stop")) {
+    stop_.store(!stop_);
+    ELOGD << "stop_ = " << stop_;
   }
 
   ImGui::LabelText("fused_state size", "%ld", fused_states_.size());

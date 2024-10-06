@@ -9,6 +9,8 @@ class IDataReader;
 class MyViewer : public SimpleScene {
 public:
   MyViewer();
+  ~MyViewer();
+  void Init();
   void draw(vtkObject* caller, unsigned long eventId, void* callData) override;
 
 protected:
@@ -19,5 +21,8 @@ protected:
   bool imgui_demo_ = false;
   bool implot_demo_ = false;
   std::atomic_bool stop_{ false };
+  std::atomic_bool exit_{ false };
+  std::atomic_bool inited_{ false };
   std::deque<Message<State>::SCPtr> fused_states_;
+  tf::Executor executor_;
 };

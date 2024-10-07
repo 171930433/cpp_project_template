@@ -18,7 +18,7 @@ public:
   virtual void ProcessImu(std::shared_ptr<const Message<Imu>> frame) = 0;
   virtual void ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) = 0;
   void Write() {
-    auto state = Message<State>::Create("/state");
+    auto state = CreateMessage<State>("/state");
     state->msg_.t0_ = 1;
     WriteMessage(state);
   }

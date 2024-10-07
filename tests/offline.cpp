@@ -10,14 +10,14 @@
 class OfflineTest : public testing::Test {
 protected:
   OfflineTest() {
-    imu = Message<Imu>::Create("/imu");
+    imu = CreateMessage<Imu>("/imu");
     imu->t1_ = 0.01;
-    imu2 = Message<Imu>::Create("/imu");
+    imu2 = CreateMessage<Imu>("/imu");
     imu2->msg_.t0_ = 0.01;
     imu2->t1_ = 0.02;
-    gnss = Message<Gnss>::Create("/gnss");
+    gnss = CreateMessage<Gnss>("/gnss");
     gnss->t1_ = 0.1;
-    gnss2 = Message<Gnss>::Create("/gnss");
+    gnss2 = CreateMessage<Gnss>("/gnss");
     gnss2->msg_.t0_ = 0.2;
     gnss2->t1_ = 0.3;
   }

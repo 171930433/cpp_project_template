@@ -20,8 +20,8 @@ TEST(sensors, imu) {
 
 TEST(sensors, channel_message) {
 
-  auto imu = Message<Imu>::Create("/imu");
-  auto gnss = Message<Gnss>::Create("/gnss");
+  auto imu = CreateMessage<Imu>("/imu");
+  auto gnss = CreateMessage<Gnss>("/gnss");
 
   EXPECT_TRUE(imu);
   EXPECT_TRUE(gnss);
@@ -29,8 +29,8 @@ TEST(sensors, channel_message) {
 
 TEST(sensors, cache_message) {
 
-  auto imu = Message<Imu>::Create("/imu");
-  auto gnss = Message<Gnss>::Create("/gnss");
+  auto imu = CreateMessage<Imu>("/imu");
+  auto gnss = CreateMessage<Gnss>("/gnss");
 
   std::vector<MessageBase::SPtr> buffer;
   buffer.push_back(imu);
@@ -42,17 +42,17 @@ TEST(sensors, cache_message) {
 class MessageBufferTest : public testing::Test {
 protected:
   MessageBufferTest() {
-    imu = Message<Imu>::Create("/imu");
+    imu = CreateMessage<Imu>("/imu");
     imu->t1_ = 0.01;
 
-    imu2 = Message<Imu>::Create("/imu");
+    imu2 = CreateMessage<Imu>("/imu");
     imu2->msg_.t0_ = 0.01;
     imu2->t1_ = 0.02;
 
-    gnss = Message<Gnss>::Create("/gnss");
+    gnss = CreateMessage<Gnss>("/gnss");
     gnss->t1_ = 0.1;
 
-    gnss2 = Message<Gnss>::Create("/gnss");
+    gnss2 = CreateMessage<Gnss>("/gnss");
     gnss2->msg_.t0_ = 0.2;
     gnss2->t1_ = 0.3;
   }
@@ -108,7 +108,7 @@ TEST_F(MessageBufferTest, order_t0) {
 }
 
 TEST_F(MessageBufferTest, trajectory) {
-  auto state = Message<State>::Create("/state");
+  auto state = CreateMessage<State>("/state");
   Eigen::Vector3d origin = state->rpose_.translation();
 
   EXPECT_EQ(origin.x(), 0);

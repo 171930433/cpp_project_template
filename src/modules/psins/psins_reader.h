@@ -13,7 +13,7 @@ inline CVect3 ToCVect3(Vec3d const& in) {
 }
 
 inline Message<Imu>::SPtr ToImu(DataSensor* frame) {
-  auto imu = Message<Imu>::Create("/imu");
+  auto imu = CreateMessage<Imu>("/imu");
   imu->msg_.acc_ = convert::ToVec3d(frame->vm);
   imu->msg_.gyr_ = convert::ToVec3d(frame->wm);
   imu->msg_.t0_ = frame->t;
@@ -21,7 +21,7 @@ inline Message<Imu>::SPtr ToImu(DataSensor* frame) {
 }
 
 inline Message<Gnss>::SPtr ToGnss(DataSensor* frame) {
-  auto gnss = Message<Gnss>::Create("/gnss");
+  auto gnss = CreateMessage<Gnss>("/gnss");
   gnss->msg_.t0_ = frame->t;
   gnss->msg_.pos_.pos = convert::ToVec3d(frame->gpspos);
   gnss->msg_.vel_.vel = convert::ToVec3d(frame->gpsvn);
@@ -30,7 +30,7 @@ inline Message<Gnss>::SPtr ToGnss(DataSensor* frame) {
 }
 
 inline Message<State>::SPtr ToState(DataSensor* frame) {
-  auto state = Message<State>::Create("/init_state");
+  auto state = CreateMessage<State>("/init_state");
   state->msg_.t0_ = frame->t;
   state->msg_.pos_ = convert::ToVec3d(frame->gpspos);
   state->msg_.vel_ = convert::ToVec3d(frame->gpsvn);
@@ -39,7 +39,7 @@ inline Message<State>::SPtr ToState(DataSensor* frame) {
 }
 
 inline Message<State>::SPtr ToState(CSINS const& frame) {
-  auto state = Message<State>::Create("/fused_state");
+  auto state = CreateMessage<State>("/fused_state");
   state->msg_.t0_ = frame.tk;
   state->msg_.pos_ = convert::ToVec3d(frame.pos);
   state->msg_.vel_ = convert::ToVec3d(frame.vn);

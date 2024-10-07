@@ -17,10 +17,14 @@ inline std::string Message<_Sensor, false>::to_json() const {
 template <typename _Sensor>
 inline std::string Message<_Sensor, true>::to_json() const {
   std::string msg_str = this->to_header_str();
-  // msg_str += ",origin_:";
-  // iguana::to_json(origin_, msg_str);
-  // msg_str += ",pos_xyz_:";
-  // iguana::to_json(pos_xyz_, msg_str);
+  if (origin_) {
+    msg_str += ",origin_:";
+    iguana::to_json(*origin_, msg_str);
+  } else {
+    msg_str += ",origin_:null";
+  }
+  msg_str += ",rpose_:";
+  iguana::to_json(rpose_, msg_str);
   msg_str += ",msg_:";
   iguana::to_json(this->msg_, msg_str);
 

@@ -52,7 +52,7 @@ inline void PsinsApp::ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) {
 }
 
 inline void PsinsApp::ProcessInitState(std::shared_ptr<const Message<State>> frame) {
-  ELOG_DEBUG << frame->to_header_str();
+  ELOG_DEBUG << frame->to_json();
 
   CVect3 pos = convert::ToCVect3(frame->msg_.pos_);
   CVect3 vel = convert::ToCVect3(frame->msg_.vel_);

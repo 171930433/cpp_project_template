@@ -29,6 +29,20 @@ inline Eigen::Isometry3d ToIsometry3d(State const& state) {
   return Eigen::Translation3d(pos) * att;
 }
 
+namespace Eigen {
+template <bool Is_writing_escape, typename Stream>
+IGUANA_INLINE void to_json_impl(Stream& ss, Eigen::Isometry3d const& v) {
+  double data[6] = { 0 };
+  Eigen::Map<Eigen::Vector3d> pos(data);
+  pos = v.translation();
+  Eigen::Map<Eigen::Vector3d> att(data + 3);
+  att = v.rotation().eulerAngles(2, 0, 1);
+  att = att.array() * 180 / M_PI;
+
+  iguana::detail::to_json_impl<Is_writing_escape>(ss, data);
+}
+}
+
 template <typename _T>
 struct IsTrajectory : public std::false_type {};
 

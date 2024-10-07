@@ -18,7 +18,7 @@ void MyViewer::Init() {
 
   Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) {
     fused_states_.push_back(frame);
-    // ELOGD << frame->rpose_.translation().transpose();
+    ELOGD << frame->rpose_.translation().transpose();
   };
   msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
 
@@ -96,6 +96,23 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   }
 
   ImGui::LabelText("fused_state size", "%ld", fused_states_.size());
+
+  ImGui::End();
+
+  ImGui::Begin("trj");
+
+  auto plot_flag = ImPlotFlags_Equal;
+  if (ImPlot::BeginPlot("##0", ImVec2(-1, 0), plot_flag)) {
+    auto get_data = [](int idx, void* data) {
+      auto* fused_states = static_cast<std::deque<Message<State>::SCPtr>*>(data);
+      auto state = fused_states->at(idx);
+      return ImPlotPoint(state->rpose_.translation().x(), state->rpose_.translation().y());
+    };
+
+    ImPlot::PlotLineG("pt_line", get_data, &fused_states_, fused_states_.size());
+
+    ImPlot::EndPlot();
+  }
 
   ImGui::End();
 }

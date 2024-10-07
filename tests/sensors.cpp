@@ -22,6 +22,10 @@ TEST(sensors, channel_message) {
 
   auto imu = CreateMessage<Imu>("/imu");
   auto gnss = CreateMessage<Gnss>("/gnss");
+  gnss->UpdateRelativePose();
+
+
+  GTEST_LOG_(INFO) << gnss->to_json();
 
   EXPECT_TRUE(imu);
   EXPECT_TRUE(gnss);

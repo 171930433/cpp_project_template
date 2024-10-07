@@ -109,12 +109,11 @@ TEST_F(MessageBufferTest, order_t0) {
 
 TEST_F(MessageBufferTest, trajectory) {
   auto state = Message<State>::Create("/state");
-  auto& origin = state->pos_xyz_;
-  origin = { 1, 2, 3 };
+  Eigen::Vector3d origin = state->rpose_.translation();
 
-  EXPECT_EQ(origin.x_, 1);
-  EXPECT_EQ(origin.y_, 2);
-  EXPECT_EQ(origin.z_, 3);
+  EXPECT_EQ(origin.x(), 0);
+  EXPECT_EQ(origin.y(), 0);
+  EXPECT_EQ(origin.z(), 0);
 }
 
 template <typename _T>

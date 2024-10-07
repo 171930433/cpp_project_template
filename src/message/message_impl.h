@@ -17,10 +17,10 @@ inline std::string Message<_Sensor, false>::to_json() const {
 template <typename _Sensor>
 inline std::string Message<_Sensor, true>::to_json() const {
   std::string msg_str = this->to_header_str();
-  msg_str += ",origin_:";
-  iguana::to_json(origin_, msg_str);
-  msg_str += ",pos_xyz_:";
-  iguana::to_json(pos_xyz_, msg_str);
+  // msg_str += ",origin_:";
+  // iguana::to_json(origin_, msg_str);
+  // msg_str += ",pos_xyz_:";
+  // iguana::to_json(pos_xyz_, msg_str);
   msg_str += ",msg_:";
   iguana::to_json(this->msg_, msg_str);
 
@@ -30,15 +30,14 @@ inline std::string Message<_Sensor, true>::to_json() const {
 template <typename _Sensor>
 Message<_Sensor, true>::Message(std::string const& channel_name)
   : Base(channel_name) {
-  static std::unordered_map<std::string_view, Vec3d> origins;
+  static std::unordered_map<std::string_view, Eigen::Isometry3d> origins;
+
+  Eigen::Isometry3d const Twb = ToIsometry3d(this->msg_);
 
   if (!origin_) {
     origin_ = &origins[this->channel_name_];
-    if constexpr (std::is_same_v<_Sensor, Gnss>) {
-      *origin_ = this->msg_.pos_.pos;
-    } else {
-      *origin_ = this->msg_.pos_;
-    }
+    *origin_ = Twb;
   }
-  // convert
+  
+  rpose_.linear() = origin_->linear() * Twb.linear().inverse();
 }

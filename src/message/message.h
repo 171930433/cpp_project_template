@@ -1,5 +1,8 @@
 #pragma once
 #include "message/sensors.h"
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
+#include <eigen3/unsupported/Eigen/EulerAngles>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <memory>
@@ -8,6 +11,22 @@
 #include <ylt/struct_json/json_reader.h>
 #include <ylt/struct_json/json_writer.h>
 #include <ylt/struct_pb.hpp>
+
+inline Eigen::Vector3d ToVector3d(Vec3d const& v3d) {
+  return { v3d.x_, v3d.y_, v3d.z_ };
+}
+
+inline Eigen::Isometry3d ToIsometry3d(Gnss const& gnss) {
+  Eigen::Vector3d pos = ToVector3d(gnss.pos_.pos);
+  Eigen::AngleAxisd aa(gnss.dual_antenna_.dual_antenna_angle.x_, Eigen::Vector3d::UnitZ());
+  return Eigen::Translation3d(pos) * aa;
+}
+
+inline Eigen::Isometry3d ToIsometry3d(State const& state) {
+  Eigen::Vector3d pos = ToVector3d(state.pos_);
+  Eigen::EulerAnglesZXYd att{ state.att_.z_, state.att_.x_, state.att_.y_ };
+  return Eigen::Translation3d(pos) * att;
+}
 
 template <typename _T>
 struct IsTrajectory : public std::false_type {};
@@ -82,8 +101,8 @@ struct Message<_Sensor, true> : public Message<_Sensor, false> {
   std::string to_json() const override;
 
 public:
-  Vec3d* origin_ = nullptr;
-  Vec3d pos_xyz_ = { 0, 0, 0 };
+  Eigen::Isometry3d* origin_ = nullptr;
+  Eigen::Isometry3d rpose_ = Eigen::Isometry3d::Identity();
 };
 
 #include "message_impl.h"

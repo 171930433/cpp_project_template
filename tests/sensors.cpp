@@ -108,7 +108,8 @@ TEST_F(MessageBufferTest, order_t0) {
 }
 
 TEST_F(MessageBufferTest, trajectory) {
-  auto& origin = gnss2->pos_xyz_;
+  auto state = Message<State>::Create("/state");
+  auto& origin = state->pos_xyz_;
   origin = { 1, 2, 3 };
 
   EXPECT_EQ(origin.x_, 1);

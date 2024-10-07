@@ -13,6 +13,9 @@ template <typename _T>
 struct IsTrajectory : public std::false_type {};
 
 template <>
+struct IsTrajectory<State> : public std::true_type {};
+
+template <>
 struct IsTrajectory<Gnss> : public std::true_type {};
 
 struct MessageBase {
@@ -70,7 +73,8 @@ struct Message<_Sensor, true> : public Message<_Sensor, false> {
   using CFunc = std::function<void(SCPtr)>;
   // 继承构造函数
   using Base = Message<_Sensor, false>;
-  using Base::Base;
+
+  Message(std::string const& channel_name);
 
   static std::shared_ptr<Message> Create(std::string const& channel_name) {
     return std::make_shared<Message>(channel_name);
@@ -78,7 +82,7 @@ struct Message<_Sensor, true> : public Message<_Sensor, false> {
   std::string to_json() const override;
 
 public:
-  Vec3d origin_ = { 0, 0, 0 };
+  Vec3d* origin_ = nullptr;
   Vec3d pos_xyz_ = { 0, 0, 0 };
 };
 

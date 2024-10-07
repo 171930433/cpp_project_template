@@ -67,17 +67,20 @@ TEST_F(OfflineTest, psins) {
 
   // 构造输出
   std::deque<Message<State>::SCPtr> fused_states;
-  Message<State>::CFunc cbk = [&fused_states](Message<State>::SCPtr frame) { fused_states.push_back(frame); };
+  Message<State>::CFunc cbk = [&fused_states](Message<State>::SCPtr frame) {
+    fused_states.push_back(frame);
+    ELOGD << frame->to_json();
+  };
 
   msf.dispatcher()->RegisterWriter("/fused_state", cbk);
 
-  int count = 100;
+  int count = 200 * 10;
   for (int i = 0; i < count; ++i) {
     auto it = reader.ReadFrame();
     msf.ProcessData(it.first);
   }
 
-
   EXPECT_TRUE(1);
-  EXPECT_EQ(fused_states.size(), count - 1);
+  // 数据有丢帧
+  EXPECT_GE(fused_states.size(), count * 0.99);
 }

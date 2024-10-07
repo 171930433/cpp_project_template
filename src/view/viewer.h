@@ -25,4 +25,5 @@ protected:
   std::atomic_bool inited_{ false };
   std::deque<Message<State>::SCPtr> fused_states_;
   tf::Executor executor_;
+  Buffers buffer_;
 };

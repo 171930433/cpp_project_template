@@ -42,6 +42,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
   // project window
   ImGui::Begin("Project");
+  if (FLAGS_data_dir.empty()) { FLAGS_data_dir = "/home/gsk/pro/cpp_project_template/data/mimuattgps.bin"; }
   std::string data_str = FLAGS_data_dir;
   ImGui::InputText("DataDir", &data_str);
   ImGui::SameLine();
@@ -54,6 +55,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   }
 
   // config
+  if (FLAGS_config_dir.empty()) { FLAGS_config_dir = "/home/gsk/pro/cpp_project_template/config/demo"; }
   std::string config_str = FLAGS_config_dir;
   ImGui::InputText("ConfigDir", &config_str);
   ImGui::SameLine();
@@ -81,6 +83,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
       executor_.silent_async([this] {
         for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END && !exit_;
              it = reader_->ReadFrame()) {
+          buffer_.Append(it.first);
           msf_.ProcessData(it.first);
           while (stop_) { std::this_thread::sleep_for(std::chrono::duration(std::chrono::milliseconds(100))); }
         }
@@ -104,12 +107,13 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   auto plot_flag = ImPlotFlags_Equal;
   if (ImPlot::BeginPlot("##0", ImVec2(-1, 0), plot_flag)) {
     auto get_data = [](int idx, void* data) {
-      auto* fused_states = static_cast<std::deque<Message<State>::SCPtr>*>(data);
-      auto state = fused_states->at(idx);
-      return ImPlotPoint(state->rpose_.translation().x(), state->rpose_.translation().y());
+      auto* buffer = static_cast<MessageBuffer*>(data);
+      auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(buffer->at(idx));
+      return ImPlotPoint(frame->rpose_.translation().x(), frame->rpose_.translation().y());
     };
 
-    ImPlot::PlotLineG("pt_line", get_data, &fused_states_, fused_states_.size());
+    ImPlot::PlotLineG("pt_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+    ImPlot::PlotScatterG("pt_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
 
     ImPlot::EndPlot();
   }

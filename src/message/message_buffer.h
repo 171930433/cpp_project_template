@@ -37,13 +37,25 @@ typedef multi_index_container<MessageBase::SPtr,
 }
 }
 
-// class SingleBuffer : public boost::multi_index::SingleMIC {
-// public:
-//   std::string channle_name_ = "";
-//   uint32_t rate_hz_ = 0;
-//   std::string device_name_ = "";
-//   double duration_s_ = 1;
-// };
+class MessageBuffer : public boost::multi_index::SingleMIC {
+public:
+  std::string channle_name_ = "";
+  uint32_t rate_hz_ = 0;
+  std::string device_name_ = "";
+  double duration_s_ = 1;
+};
+
+class Buffers : public std::unordered_map<std::string_view, MessageBuffer> {
+public:
+  void Append(MessageBase::SPtr frame) {
+    channel_types_.insert(frame->channel_type_);
+    (*this)[frame->channel_name_].push_back(frame);
+  }
+
+public:
+  std::unordered_set<std::string_view> channel_names_;
+  std::unordered_set<std::string_view> channel_types_;
+};
 
 class TotalBuffer : public boost::multi_index::TotalMIC {
 public:
@@ -68,9 +80,6 @@ inline void TotalBuffer::Append(MessageBase::SPtr frame) {
 
   // 限定区间的缓存
   std::lock_guard<std::mutex> lg(mtx_);
-  if (!this->empty()
-    && (this->back()->t1_ - this->front()->t1_) >= duration_s_) {
-    this->pop_front();
-  }
+  if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
   this->push_back(frame);
 }

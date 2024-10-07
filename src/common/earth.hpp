@@ -2,8 +2,8 @@
 
 #include <eigen3/Eigen/Dense>
 
-constexpr double WGS84_ELLIPSE_RE = 6378137.0;
-constexpr double WGS84_ELLIPSE_F = (1.0 / 298.257223563);
+constexpr double WGS84_ELLIPSOID_RE = 6378137.0;
+constexpr double WGS84_ELLIPSOID_F = (1.0 / 298.257223563);
 
 template <double _Re, double _F>
 struct Earth {
@@ -100,4 +100,4 @@ public:
   static constexpr double N(const double B_) { return _c / V(B_); }         // 卯酉曲率半径
 };
 
-using WGS84 = Earth<WGS84_ELLIPSE_RE, WGS84_ELLIPSE_F>;
+using WGS84 = Earth<WGS84_ELLIPSOID_RE, WGS84_ELLIPSOID_F>;

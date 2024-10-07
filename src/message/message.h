@@ -1,4 +1,5 @@
 #pragma once
+#include "common/earth.hpp"
 #include "message/sensors.h"
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>

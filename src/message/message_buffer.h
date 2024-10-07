@@ -37,25 +37,28 @@ typedef multi_index_container<MessageBase::SPtr,
 }
 }
 
-class MessageBuffer : public boost::multi_index::SingleMIC {
-public:
-  std::string channle_name_ = "";
-  uint32_t rate_hz_ = 0;
-  std::string device_name_ = "";
-  double duration_s_ = 1;
-};
+// class MessageBuffer : public boost::multi_index::SingleMIC {
+// public:
+//   std::string channle_name_ = "";
+//   uint32_t rate_hz_ = 0;
+//   std::string device_name_ = "";
+//   double duration_s_ = 1;
+// };
 
-class Buffers : public std::unordered_map<std::string_view, MessageBuffer> {
-public:
-  void Append(MessageBase::SPtr frame) {
-    channel_types_.insert(frame->channel_type_);
-    (*this)[frame->channel_name_].push_back(frame);
-  }
+// class Buffers : public std::unordered_map<std::string_view, MessageBuffer> {
+// public:
+//   void Append(MessageBase::SPtr frame) {
+//     channel_types_.insert(frame->channel_type_);
+//     (*this)[frame->channel_name_].push_back(frame);
+//   }
 
-public:
-  std::unordered_set<std::string_view> channel_names_;
-  std::unordered_set<std::string_view> channel_types_;
-};
+// public:
+//   std::unordered_set<std::string_view> channel_names_;
+//   std::unordered_set<std::string_view> channel_types_;
+// };
+
+using MessageBuffer = boost::multi_index::SingleMIC;
+using Buffers = std::unordered_map<std::string_view, MessageBuffer>;
 
 class TotalBuffer : public boost::multi_index::TotalMIC {
 public:

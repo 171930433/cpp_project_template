@@ -83,7 +83,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
       executor_.silent_async([this] {
         for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END && !exit_;
              it = reader_->ReadFrame()) {
-          buffer_.Append(it.first);
+          buffer_[it.first->channel_name_].push_back(it.first);
           msf_.ProcessData(it.first);
           while (stop_) { std::this_thread::sleep_for(std::chrono::duration(std::chrono::milliseconds(100))); }
         }
@@ -105,7 +105,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::Begin("trj");
 
   auto plot_flag = ImPlotFlags_Equal;
-  if (ImPlot::BeginPlot("##0", ImVec2(-1, 0), plot_flag)) {
+  if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
     auto get_data = [](int idx, void* data) {
       auto* buffer = static_cast<MessageBuffer*>(data);
       auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(buffer->at(idx));
@@ -113,7 +113,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
     };
 
     ImPlot::PlotLineG("pt_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
-    ImPlot::PlotScatterG("pt_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+    ImPlot::PlotScatterG("pt_scatter", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
 
     ImPlot::EndPlot();
   }

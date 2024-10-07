@@ -13,6 +13,7 @@ find_package(units CONFIG REQUIRED)
 set(GFLAGS_USE_TARGET_NAMESPACE ON)
 find_package(gflags CONFIG REQUIRED)
 find_package(Taskflow CONFIG REQUIRED)
+# find_package(PROJ CONFIG REQUIRED)
 
 # system
 find_package(Boost REQUIRED COMPONENTS system)
@@ -29,7 +30,8 @@ target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
-          units::units Boost::system Taskflow::Taskflow
+          units::units Boost::system Taskflow::Taskflow 
+          # PROJ::proj
   PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags
         #  $<$<BOOL:${ENABLE_PSINS}>:implot::implot>
         #  $<$<BOOL:${ENABLE_PSINS}>:imgui::imgui>

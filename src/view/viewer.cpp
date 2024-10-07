@@ -16,7 +16,10 @@ void MyViewer::Init() {
   msf_.Init();
   msf_.CreateModule<PsinsApp>();
 
-  Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) { fused_states_.push_back(frame); };
+  Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) {
+    fused_states_.push_back(frame);
+    // ELOGD << frame->rpose_.translation().transpose();
+  };
   msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
 
   inited_ = true;

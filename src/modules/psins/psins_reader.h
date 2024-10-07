@@ -25,6 +25,7 @@ inline Message<Gnss>::SPtr ToGnss(DataSensor* frame) {
   gnss->msg_.t0_ = frame->t;
   gnss->msg_.pos_.pos = convert::ToVec3d(frame->gpspos);
   gnss->msg_.vel_.vel = convert::ToVec3d(frame->gpsvn);
+  gnss->UpdateRelativePose();
   return gnss;
 }
 
@@ -43,6 +44,7 @@ inline Message<State>::SPtr ToState(CSINS const& frame) {
   state->msg_.pos_ = convert::ToVec3d(frame.pos);
   state->msg_.vel_ = convert::ToVec3d(frame.vn);
   state->msg_.att_ = convert::ToVec3d(frame.att);
+  state->UpdateRelativePose();
   return state;
 }
 

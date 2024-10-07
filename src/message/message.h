@@ -94,16 +94,23 @@ struct Message<_Sensor, true> : public Message<_Sensor, false> {
   // 继承构造函数
   using Base = Message<_Sensor, false>;
 
-  Message(std::string const& channel_name);
+  Message(std::string const& channel_name)
+    : Base(channel_name) {}
 
   static std::shared_ptr<Message> Create(std::string const& channel_name) {
     return std::make_shared<Message>(channel_name);
   }
   std::string to_json() const override;
+  void UpdateRelativePose();
 
 public:
   Eigen::Isometry3d* origin_ = nullptr;
   Eigen::Isometry3d rpose_ = Eigen::Isometry3d::Identity();
 };
+
+// template <typename _Sensor>
+// inline std::shared_ptr<Message<_Sensor>> CreateMessage(std::string const& channel_name, _Sensor const& data) {
+//   return std::make_shared<Message<_Sensor>>(channel_name);
+// }
 
 #include "message_impl.h"

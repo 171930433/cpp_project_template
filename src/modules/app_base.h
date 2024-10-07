@@ -1,6 +1,7 @@
 #pragma once
 #include "message/message_buffer.h"
 #include "message/message_dispatcher.h"
+#include "common/earth.hpp"
 #include "mylib.h"
 
 class AppBase {

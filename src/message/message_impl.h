@@ -28,19 +28,19 @@ inline std::string Message<_Sensor, true>::to_json() const {
 }
 
 template <typename _Sensor>
-Message<_Sensor, true>::Message(std::string const& channel_name)
-  : Base(channel_name) {
+void Message<_Sensor, true>::UpdateRelativePose() {
   static std::unordered_map<std::string_view, Eigen::Isometry3d> origins;
   static std::unordered_map<std::string_view, WGS84> wgs84_ellipsoids;
 
   Eigen::Isometry3d const Twb = ToIsometry3d(this->msg_);
   WGS84& ellipsoid = wgs84_ellipsoids[this->channel_name_];
 
-  if (!origin_) {
-    origin_ = &origins[this->channel_name_];
-    *origin_ = Twb;
+  if (!origins.contains(this->channel_name_)) {
+    origins[this->channel_name_] = Twb;
     ellipsoid.SetOrigin(Twb.translation());
   }
+
+  origin_ = &origins[this->channel_name_];
 
   rpose_.linear() = origin_->linear() * Twb.linear().inverse();
   rpose_.translation() = ellipsoid.LLH2ENU(Twb.translation());

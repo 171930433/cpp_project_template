@@ -107,6 +107,15 @@ TEST_F(MessageBufferTest, order_t0) {
   EXPECT_EQ(true_order_t0, test_order);
 }
 
+TEST_F(MessageBufferTest, trajectory) {
+  auto& origin = gnss2->pos_xyz_;
+  origin = { 1, 2, 3 };
+
+  EXPECT_EQ(origin.x_, 1);
+  EXPECT_EQ(origin.y_, 2);
+  EXPECT_EQ(origin.z_, 3);
+}
+
 template <typename _T>
 struct IsTraject : public std::false_type {};
 
@@ -126,7 +135,7 @@ struct InnerMessage<_T, true> : public InnerMessage<_T, false> {
   int b_ = 0;
 };
 
-TEST(sensors, trajectory) {
+TEST(sensors, trajectory_demo) {
 
   InnerMessage<Imu> i1;
 

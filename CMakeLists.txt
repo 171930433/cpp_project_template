@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(
   mylib
   VERSION 1.0.0
-  LANGUAGES CXX)
+  LANGUAGES CXX C)
 
 option(FETCH_THIRD_PARTY_DEMO "demo of use protobuf" ON)
 if(FETCH_THIRD_PARTY_DEMO)
@@ -51,3 +51,4 @@ if(ENABLE_CPACK)
   set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
   include(CPack)
 endif()
+

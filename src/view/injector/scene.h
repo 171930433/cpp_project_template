@@ -37,7 +37,8 @@ inline void SimpleScene::setup(vtkObject* caller, unsigned long eventId, void* c
   bool imguiInitStatus = *(reinterpret_cast<bool*>(callData));
   if (imguiInitStatus) {
     auto& io = ImGui::GetIO();
-    float const scale = 180.0f / 96.0f;
+    // float const scale = 180.0f / 96.0f;
+    float const scale = 96.0f / 96.0f;
     io.FontGlobalScale *= scale;
     io.DisplayFramebufferScale = { scale, scale };
     io.Fonts->AddFontFromMemoryCompressedBase85TTF(Karla_Regular_compressed_data_base85, 16);

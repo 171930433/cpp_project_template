@@ -1,8 +1,8 @@
 find_package(imgui CONFIG REQUIRED)
 find_package(implot CONFIG REQUIRED)
 find_package(VTK CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(GLEW REQUIRED)
+# find_package(glfw3 CONFIG REQUIRED)
+# find_package(GLEW REQUIRED)
 find_path(PORTABLE_FILE_DIALOGS_INCLUDE_DIRS "portable-file-dialogs.h")
 
 add_executable(view main.cpp viewer.cpp injector/vtkDearImGuiInjector.cxx)
@@ -24,3 +24,13 @@ if(0)
   hello_imgui_add_app(my_app hello_imgui.cpp)
   target_link_libraries(my_app PRIVATE ${PROJECT_NAME} ${VTK_LIBRARIES})
 endif()
+
+
+# 获取主显示器的分辨率
+# sudo apt-get install x11-xserver-utils
+# execute_process(
+#   COMMAND sh -c "xrandr | grep '*' | awk 'NR==1 {print \$1}'"
+#   OUTPUT_VARIABLE SCREEN_RESOLUTION
+#   OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# message(STATUS "Primary screen resolution: ${SCREEN_RESOLUTION}")

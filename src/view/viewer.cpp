@@ -1,4 +1,5 @@
 #include "viewer.h"
+#include "lttb.h"
 #include "modules/psins/psins_app.h"
 #include "tree_view_helper.h"
 
@@ -99,7 +100,7 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
     ELOGD << "stop_ = " << stop_;
   }
 
-  ImGui::LabelText("fused_state size", "%ld", fused_states_.size());
+  ImGui::LabelText("fused_state size", "%ld", buffer_["/fused_state"].size());
 
   ImGui::End();
 
@@ -120,14 +121,59 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
       return ImPlotPoint(rpose->translation().x(), rpose->translation().y());
     };
 
-    ImPlot::PlotLineG("gnss_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
-    ImPlot::PlotScatterG("gnss_scatter", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+    // 1 获得视口范围
+    // 获取视口范围
+    // auto& pts = buffer_["/gnss"];
+    auto& pts = buffer_["/fused_state"];
 
-    ImPlot::PlotLineG("fused_state_line", get_data, &buffer_["/fused_state"], buffer_["/fused_state"].size());
-    ImPlot::PlotScatterG("fused_state_scatter", get_data, &buffer_["/fused_state"], buffer_["/fused_state"].size());
+    std::vector<ImPlotPoint> pts_all;
+    pts_all.reserve(pts.size());
+
+    for (auto const& pt : pts) {
+      Eigen::Isometry3d const* rpose = nullptr;
+      if (pt->channel_type_ == ylt::reflection::type_string<Gnss>()) {
+        auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(pt);
+        rpose = &frame->rpose_;
+      } else if (pt->channel_type_ == ylt::reflection::type_string<State>()) {
+        auto frame = std::dynamic_pointer_cast<Message<State> const>(pt);
+        rpose = &frame->rpose_;
+      }
+      pts_all.emplace_back(ImPlotPoint{ rpose->translation().x(), rpose->translation().y() });
+    }
+
+    // 降采样
+    std::vector<ImPlotPoint> pts_downsample;
+    int const size_10hz = pts_all.size() / 20;
+    pts_downsample.reserve(size_10hz);
+    PointLttb::Downsample(pts_all.begin(), pts_all.size(), std::back_inserter(pts_downsample), size_10hz);
+
+    // 视口范围内
+    std::vector<ImPlotPoint> pts_viewport;
+    pts_viewport.reserve(1000);
+
+    auto range = ImPlot::GetPlotLimits();
+    for (auto const& pt : pts_downsample) {
+      if (pt.x < range.X.Min || pt.x > range.X.Max) continue;
+      if (pt.y < range.Y.Min || pt.y > range.Y.Max) continue;
+      pts_viewport.emplace_back(pt);
+    }
+
+    ImPlot::PlotLine("line", &pts_viewport[0].x, &pts_viewport[0].y, pts_viewport.size(), 0, 0, sizeof(ImPlotPoint));
+    ImPlot::PlotScatter(
+      "scatter", &pts_viewport[0].x, &pts_viewport[0].y, pts_viewport.size(), 0, 0, sizeof(ImPlotPoint));
+
+    // ImPlot::PlotLineG("gnss_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+    // ImPlot::PlotScatterG("gnss_scatter", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+
+    // ImPlot::PlotLineG("fused_state_line", get_data, &buffer_["/fused_state"], buffer_["/fused_state"].size());
+    // ImPlot::PlotScatterG("fused_state_scatter", get_data, &buffer_["/fused_state"], buffer_["/fused_state"].size());
 
     ImPlot::EndPlot();
   }
 
   ImGui::End();
+}
+
+void MyViewer::DrawTrajectory(MessageBuffer const& single_buffer) {
+  static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
 }

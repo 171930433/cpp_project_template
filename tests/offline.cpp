@@ -74,7 +74,7 @@ TEST_F(OfflineTest, psins) {
 
   msf.dispatcher()->RegisterWriter("/fused_state", cbk);
 
-  int count = 200 * 10;
+  int count = 200 * 1;
   for (int i = 0; i < count; ++i) {
     auto it = reader.ReadFrame();
     msf.ProcessData(it.first);

@@ -18,6 +18,9 @@ protected:
   std::shared_ptr<IDataReader> reader_;
 
 protected:
+  void DrawTrajectory(MessageBuffer const& single_buffer);
+
+protected:
   bool imgui_demo_ = false;
   bool implot_demo_ = false;
   std::atomic_bool stop_{ false };

@@ -17,8 +17,9 @@ void MyViewer::Init() {
   msf_.CreateModule<PsinsApp>();
 
   Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) {
-    fused_states_.push_back(frame);
-    ELOGD << frame->rpose_.translation().transpose();
+    buffer_[frame->channel_name_].push_back(frame);
+    // fused_states_.push_back(frame);
+    // ELOGD << frame->rpose_.translation().transpose();
   };
   msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
 
@@ -108,12 +109,22 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
     auto get_data = [](int idx, void* data) {
       auto* buffer = static_cast<MessageBuffer*>(data);
-      auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(buffer->at(idx));
-      return ImPlotPoint(frame->rpose_.translation().x(), frame->rpose_.translation().y());
+      Eigen::Isometry3d const* rpose = nullptr;
+      if (buffer->at(idx)->channel_type_ == ylt::reflection::type_string<Gnss>()) {
+        auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(buffer->at(idx));
+        rpose = &frame->rpose_;
+      } else if (buffer->at(idx)->channel_type_ == ylt::reflection::type_string<State>()) {
+        auto frame = std::dynamic_pointer_cast<Message<State> const>(buffer->at(idx));
+        rpose = &frame->rpose_;
+      }
+      return ImPlotPoint(rpose->translation().x(), rpose->translation().y());
     };
 
-    ImPlot::PlotLineG("pt_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
-    ImPlot::PlotScatterG("pt_scatter", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+    ImPlot::PlotLineG("gnss_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+    ImPlot::PlotScatterG("gnss_scatter", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
+
+    ImPlot::PlotLineG("fused_state_line", get_data, &buffer_["/fused_state"], buffer_["/fused_state"].size());
+    ImPlot::PlotScatterG("fused_state_scatter", get_data, &buffer_["/fused_state"], buffer_["/fused_state"].size());
 
     ImPlot::EndPlot();
   }

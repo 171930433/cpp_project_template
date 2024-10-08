@@ -38,7 +38,7 @@ inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
 
   auto acc = convert::ToCVect3(frame->msg_.acc_);
   auto gyr = convert::ToCVect3(frame->msg_.gyr_);
-  kf_app_->Update(&acc, &gyr, 1, TS);
+  kf_app_->Update(&gyr, &acc, 1, TS);
 
   // 构造输出
   auto re = convert::ToState(kf_app_->sins);
@@ -57,6 +57,6 @@ inline void PsinsApp::ProcessInitState(std::shared_ptr<const Message<State>> fra
   CVect3 pos = convert::ToCVect3(frame->msg_.pos_);
   CVect3 vel = convert::ToCVect3(frame->msg_.vel_);
   CVect3 att = convert::ToCVect3(frame->msg_.att_);
-  kf_app_->Init(CSINS(pos, vel, att, frame->t0()));
+  kf_app_->Init(CSINS(att, vel, pos, frame->t0()));
   inited_.store(true);
 }

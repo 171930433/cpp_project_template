@@ -84,6 +84,7 @@ struct LargestTriangleThreeBuckets {
   }
 };
 
+
 using PointLttb = LargestTriangleThreeBuckets<ImPlotPoint, double, &ImPlotPoint::x, &ImPlotPoint::y>;
 
 #endif

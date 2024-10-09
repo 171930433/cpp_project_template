@@ -108,28 +108,42 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
   auto plot_flag = ImPlotFlags_Equal;
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
-    auto get_data = [](int idx, void* data) {
-      auto* buffer = static_cast<MessageBuffer*>(data);
-      Eigen::Isometry3d const* rpose = nullptr;
-      if (buffer->at(idx)->channel_type_ == ylt::reflection::type_string<Gnss>()) {
-        auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(buffer->at(idx));
-        rpose = &frame->rpose_;
-      } else if (buffer->at(idx)->channel_type_ == ylt::reflection::type_string<State>()) {
-        auto frame = std::dynamic_pointer_cast<Message<State> const>(buffer->at(idx));
-        rpose = &frame->rpose_;
-      }
-      return ImPlotPoint(rpose->translation().x(), rpose->translation().y());
-    };
+    // auto get_data = [](int idx, void* data) {
+    //   auto* buffer = static_cast<MessageBuffer*>(data);
+    //   Eigen::Isometry3d const* rpose = nullptr;
+    //   if (buffer->at(idx)->channel_type_ == ylt::reflection::type_string<Gnss>()) {
+    //     auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(buffer->at(idx));
+    //     rpose = &frame->rpose_;
+    //   } else if (buffer->at(idx)->channel_type_ == ylt::reflection::type_string<State>()) {
+    //     auto frame = std::dynamic_pointer_cast<Message<State> const>(buffer->at(idx));
+    //     rpose = &frame->rpose_;
+    //   }
+    //   return ImPlotPoint(rpose->translation().x(), rpose->translation().y());
+    // };
 
     // 1 获得视口范围
+    auto range = ImPlot::GetPlotLimits();
+    // 获取绘图区域的起始位置和大小（像素单位）
+    ImVec2 plot_pos = ImPlot::GetPlotPos();          // 左上角的位置（像素单位）
+    ImVec2 plot_size = ImPlot::GetPlotSize();        // 绘图区的大小（像素单位）
+    double scale_mpp = plot_size.x / range.X.Size(); // meter per pixel
+    double scale_ppm = range.X.Size() / plot_size.x; // pixel per meter
     // 获取视口范围
     // auto& pts = buffer_["/gnss"];
     auto& pts = buffer_["/fused_state"];
 
-    std::vector<ImPlotPoint> pts_all;
-    pts_all.reserve(pts.size());
+    // std::vector<ImPlotPoint> pts_viewport;
+    std::vector<ImPlotPoint> pts_downsample;
 
-    for (auto const& pt : pts) {
+    // pts_viewport.reserve(pts.size());
+    pts_downsample.reserve(pts.size());
+
+    int last_index = 0;
+    ImPlotPoint last_pt = { 0, 0 };
+
+    int const rate = 200;
+    for (auto i = 0; i < pts.size(); i += rate) {
+      auto& pt = pts[i];
       Eigen::Isometry3d const* rpose = nullptr;
       if (pt->channel_type_ == ylt::reflection::type_string<Gnss>()) {
         auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(pt);
@@ -138,29 +152,31 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
         auto frame = std::dynamic_pointer_cast<Message<State> const>(pt);
         rpose = &frame->rpose_;
       }
-      pts_all.emplace_back(ImPlotPoint{ rpose->translation().x(), rpose->translation().y() });
+      auto& trans = rpose->translation();
+      if (!range.Contains(trans.x(), trans.y())) continue;
+
+      if (i == 0) {
+        pts_downsample.emplace_back(ImPlotPoint{ trans.x(), trans.y() });
+        last_pt = { trans.x(), trans.y() };
+        last_index = 0;
+        continue;
+      }
+      // 如果未发生覆盖,从lasti到i开始采样
+      double const dx = std::abs(trans.x() - last_pt.x);
+      double const dy = std::abs(trans.y() - last_pt.y);
+      if (dx >= scale_ppm || dy >= scale_ppm) {
+        // 需要这么些个点
+        double pixel_n = std::hypotf(dx, dy);
+        pixel_n = std::min(1.0 * (i - last_index) * rate, pixel_n);
+        // 获得这个区间的点
+        // PointLttb::Downsample(&pts[last_index], (i - last_index) * rate, std::back_inserter(pts_downsample), pixel_n);
+      }
     }
 
-    // 降采样
-    std::vector<ImPlotPoint> pts_downsample;
-    int const size_10hz = pts_all.size() / 20;
-    pts_downsample.reserve(size_10hz);
-    PointLttb::Downsample(pts_all.begin(), pts_all.size(), std::back_inserter(pts_downsample), size_10hz);
-
-    // 视口范围内
-    std::vector<ImPlotPoint> pts_viewport;
-    pts_viewport.reserve(1000);
-
-    auto range = ImPlot::GetPlotLimits();
-    for (auto const& pt : pts_downsample) {
-      if (pt.x < range.X.Min || pt.x > range.X.Max) continue;
-      if (pt.y < range.Y.Min || pt.y > range.Y.Max) continue;
-      pts_viewport.emplace_back(pt);
-    }
-
-    ImPlot::PlotLine("line", &pts_viewport[0].x, &pts_viewport[0].y, pts_viewport.size(), 0, 0, sizeof(ImPlotPoint));
-    ImPlot::PlotScatter(
-      "scatter", &pts_viewport[0].x, &pts_viewport[0].y, pts_viewport.size(), 0, 0, sizeof(ImPlotPoint));
+    // ImPlot::PlotLine(
+    //   "line", &pts_downsample[0].x, &pts_downsample[0].y, pts_downsample.size(), 0, 0, sizeof(ImPlotPoint));
+    // ImPlot::PlotScatter(
+    //   "scatter", &pts_downsample[0].x, &pts_downsample[0].y, pts_downsample.size(), 0, 0, sizeof(ImPlotPoint));
 
     // ImPlot::PlotLineG("gnss_line", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
     // ImPlot::PlotScatterG("gnss_scatter", get_data, &buffer_["/gnss"], buffer_["/gnss"].size());
@@ -174,6 +190,6 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::End();
 }
 
-void MyViewer::DrawTrajectory(MessageBuffer const& single_buffer) {
+void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer) {
   static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
 }

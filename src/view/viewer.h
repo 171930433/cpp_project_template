@@ -18,7 +18,7 @@ protected:
   std::shared_ptr<IDataReader> reader_;
 
 protected:
-  void DrawTrajectory(MessageBuffer const& single_buffer);
+  void DownSampleTrajectory(MessageBuffer const& single_buffer);
 
 protected:
   bool imgui_demo_ = false;

@@ -17,7 +17,7 @@ target_include_directories(
          $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
          $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>)
 
-target_compile_options(view PRIVATE -Wno-deprecated-declarations)
+target_compile_options(view PRIVATE -Wno-deprecated-declarations -DBOOST_ALLOW_DEPRECATED_HEADERS)
 
 # hello-imgui与vtk的集成没有研究明白
 if(0)

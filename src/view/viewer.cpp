@@ -3,6 +3,15 @@
 #include "modules/psins/psins_app.h"
 #include "tree_view_helper.h"
 
+#ifdef FF
+#undef FF
+#endif
+
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/segment.hpp>
+
 MyViewer::MyViewer() {
   reader_ = std::make_shared<PsinsReader>();
 }
@@ -123,6 +132,11 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 }
 
 void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
+  namespace bg = boost::geometry;
+  using Point_t = bg::model::d2::point_xy<double>;
+  using Segmnet_t = bg::model::segment<Point_t>;
+  using Box_t = bg::model::box<Point_t>;
+
   //
   if (single_buffer.empty()) return;
   std::string_view channel_name = single_buffer.front()->channel_name_;
@@ -152,6 +166,7 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
 
   // 1 获得视口范围,比例尺
   auto range = ImPlot::GetPlotLimits();
+  Box_t box{ Point_t{ range.X.Min, range.Y.Min }, Point_t{ range.X.Max, range.Y.Max } };
   // 获取绘图区域的起始位置和大小（像素单位）
   ImVec2 plot_pos = ImPlot::GetPlotPos();          // 左上角的位置（像素单位）
   ImVec2 plot_size = ImPlot::GetPlotSize();        // 绘图区的大小（像素单位）
@@ -165,45 +180,41 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
   int const rate = 200;
   int last_index = 0; // 上一个被采样索引
   pts_downsample.push_back(raw_pts[0]);
-  int i = 0;
+  int i = rate;
   for (; i < raw_pts.size(); i += rate) {
     auto& pt = raw_pts[i];
 
     // 如果未发生覆盖,从 [last_index,i)
     double const dx = std::abs(pt.x - pts_downsample.back().x);
     double const dy = std::abs(pt.y - pts_downsample.back().y);
+    int pixel_n = std::min(rate, (int)(std::hypotf(dx, dy) * scale_ppm)); // 需要这么些个点
 
     // 视口外，忽略
-    if (!range.Contains(pt.x, pt.y)) {
+    // 判断last和当前是否在视口内
+    auto& last_pt = raw_pts[i - rate];
+    Segmnet_t segment{ Point_t{ last_pt.x, last_pt.y }, Point_t{ pt.x, pt.y } };
 
-      // 上一个点在范围内
-      if (last_index == i - rate) {
-        int pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
-        pixel_n = std::min(rate, pixel_n);
-        PointLttb::Downsample(&raw_pts[last_index], rate, std::back_inserter(pts_downsample), pixel_n);
-      }
-
+    if (!bg::intersects(segment, box)) {
+      // PointLttb::Downsample(&raw_pts[last_index], rate, std::back_inserter(pts_downsample), pixel_n);
       continue;
     }
 
     // 在范围且与上一个点的pixel差异在1以上
-    if (dx >= scale_mpp || dy >= scale_mpp) {
-      int pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
-      pixel_n = std::min(rate, pixel_n);
+    if (pixel_n >= 1) {
       PointLttb::Downsample(&raw_pts[i - rate], rate, std::back_inserter(pts_downsample), pixel_n);
       last_index = i;
     }
   }
-  // 最后一段尾巴特殊处理，如果前一个点在范围内或者最后一个点在范围
-  auto& pt = raw_pts.back();
-  if (last_index == i || range.Contains(pt.x, pt.y)) {
-    int size = (int)raw_pts.size() - last_index;
-    double const dx = std::abs(pt.x - pts_downsample.back().x);
-    double const dy = std::abs(pt.y - pts_downsample.back().y);
-    int pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
-    pixel_n = std::min(size, pixel_n);
-    PointLttb::Downsample(&raw_pts[i], size, std::back_inserter(pts_downsample), pixel_n);
-  }
+  //! 暂不处理 最后一段尾巴特殊处理，如果前一个点在范围内或者最后一个点在范围
+  // auto& pt = raw_pts.back();
+  // int size = (int)raw_pts.size() - last_index;
+  // auto& mid_pt = raw_pts[i + size / 2];
+  // if (last_index == i || range.Contains(pt) || range.Contains(mid_pt)) {
+  //   double const dx = std::abs(pt.x - pts_downsample.back().x);
+  //   double const dy = std::abs(pt.y - pts_downsample.back().y);
+  //   int pixel_n = std::min(rate, (int)(std::hypotf(dx, dy) * scale_ppm)); // 需要这么些个点
+  //   PointLttb::Downsample(&raw_pts[i], size, std::back_inserter(pts_downsample), pixel_n);
+  // }
 
   ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();
 }

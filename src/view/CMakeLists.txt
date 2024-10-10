@@ -17,6 +17,8 @@ target_include_directories(
          $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
          $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>)
 
+target_compile_options(view PRIVATE -Wno-deprecated-declarations)
+
 # hello-imgui与vtk的集成没有研究明白
 if(0)
   find_package(hello-imgui CONFIG REQUIRED)

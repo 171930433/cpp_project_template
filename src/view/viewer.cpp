@@ -163,29 +163,35 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
   pts_downsample.reserve(raw_pts.size());
 
   int const rate = 200;
-  int last_index = 0;
+  int last_index = 0; // 上一个被采样索引
   pts_downsample.push_back(raw_pts[0]);
-  for (int i = 1; i < raw_pts.size(); i += rate) {
+  for (int i = 0; i < raw_pts.size(); i += rate) {
     auto& pt = raw_pts[i];
-
-    // 视口外，忽略
-    if (!range.Contains(pt.x, pt.y)) {
-      last_index = i;
-      continue;
-    }
 
     // 如果未发生覆盖,从 [last_index,i)
     double const dx = std::abs(pt.x - pts_downsample.back().x);
     double const dy = std::abs(pt.y - pts_downsample.back().y);
 
-    if (dx >= scale_mpp || dy >= scale_mpp) {
-      // 需要这么些个点
-      double pixel_n = std::hypotf(dx, dy) * scale_ppm;
-      pixel_n = std::min((i - last_index), (int)pixel_n);
-      // 获得这个区间的点
-      PointLttb::Downsample(&raw_pts[last_index], (i - last_index), std::back_inserter(pts_downsample), pixel_n);
+    // 视口外，忽略
+    if (!range.Contains(pt.x, pt.y)) {
+
+      // 上一个点在范围内
+      if (last_index == i - 1) {
+        double pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
+        pixel_n = std::min(rate, (int)pixel_n);
+        PointLttb::Downsample(&raw_pts[i - rate], rate, std::back_inserter(pts_downsample), pixel_n);
+      }
+
+      continue;
     }
-    last_index = i;
+
+    if (dx >= scale_mpp || dy >= scale_mpp) {
+
+      double pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
+      pixel_n = std::min(rate, (int)pixel_n);
+      PointLttb::Downsample(&raw_pts[i - rate], rate, std::back_inserter(pts_downsample), pixel_n);
+      last_index = i;
+    }
   }
 
   ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();

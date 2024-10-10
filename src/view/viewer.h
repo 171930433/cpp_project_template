@@ -18,7 +18,7 @@ protected:
   std::shared_ptr<IDataReader> reader_;
 
 protected:
-  void DownSampleTrajectory(MessageBuffer const& single_buffer);
+  void DownSampleTrajectory(MessageBuffer const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
 
 protected:
   bool imgui_demo_ = false;

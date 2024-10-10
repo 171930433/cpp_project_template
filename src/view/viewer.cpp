@@ -165,7 +165,8 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
   int const rate = 200;
   int last_index = 0; // 上一个被采样索引
   pts_downsample.push_back(raw_pts[0]);
-  for (int i = 0; i < raw_pts.size(); i += rate) {
+  int i = 0;
+  for (; i < raw_pts.size(); i += rate) {
     auto& pt = raw_pts[i];
 
     // 如果未发生覆盖,从 [last_index,i)
@@ -176,22 +177,32 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
     if (!range.Contains(pt.x, pt.y)) {
 
       // 上一个点在范围内
-      if (last_index == i - 1) {
-        double pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
-        pixel_n = std::min(rate, (int)pixel_n);
-        PointLttb::Downsample(&raw_pts[i - rate], rate, std::back_inserter(pts_downsample), pixel_n);
+      if (last_index == i - rate) {
+        int pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
+        pixel_n = std::min(rate, pixel_n);
+        PointLttb::Downsample(&raw_pts[last_index], rate, std::back_inserter(pts_downsample), pixel_n);
       }
 
       continue;
     }
 
+    // 在范围且与上一个点的pixel差异在1以上
     if (dx >= scale_mpp || dy >= scale_mpp) {
-
-      double pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
-      pixel_n = std::min(rate, (int)pixel_n);
+      int pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
+      pixel_n = std::min(rate, pixel_n);
       PointLttb::Downsample(&raw_pts[i - rate], rate, std::back_inserter(pts_downsample), pixel_n);
       last_index = i;
     }
+  }
+  // 最后一段尾巴特殊处理，如果前一个点在范围内或者最后一个点在范围
+  auto& pt = raw_pts.back();
+  if (last_index == i || range.Contains(pt.x, pt.y)) {
+    int size = (int)raw_pts.size() - last_index;
+    double const dx = std::abs(pt.x - pts_downsample.back().x);
+    double const dy = std::abs(pt.y - pts_downsample.back().y);
+    int pixel_n = std::hypotf(dx, dy) * scale_ppm; // 需要这么些个点
+    pixel_n = std::min(size, pixel_n);
+    PointLttb::Downsample(&raw_pts[i], size, std::back_inserter(pts_downsample), pixel_n);
   }
 
   ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();

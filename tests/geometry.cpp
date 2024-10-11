@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
+
 struct MyPoint {
   double x;
   double y;
@@ -196,4 +199,69 @@ TEST(geometry, Distance3) {
   EXPECT_TRUE((std::is_same_v<decltype(dis2), float>));
 
   EXPECT_EQ(dis2, 2);
+}
+
+struct PointTag {};
+struct LineTag {};
+
+namespace traits {
+template <typename _T>
+struct tag {};
+
+template <typename _Scalar>
+struct tag<MyPoint2<_Scalar>> {
+  using type = PointTag;
+};
+
+}
+
+template <typename _T>
+struct tag : public traits::tag<_T> {};
+
+namespace dispatch {
+template <typename _Tag1, typename _Tag2, typename _G1, typename _G2>
+struct distance;
+
+template <typename _G1, typename _G2>
+struct distance<PointTag, PointTag, _G1, _G2> {
+  static auto apply(_G1 const& g1, _G2 const& g2) {
+    static_assert(dimension<_G1>::value == dimension<_G2>::value);
+    return pythagoras2<_G1, _G2, dimension<_G1>::value>::apply(g1, g2);
+  }
+};
+
+template <typename _G1, typename _G2>
+struct distance<PointTag, LineTag, _G1, _G2> {
+  static auto apply(_G1 const& g1, _G2 const& g2) {
+    return g2.distance(Eigen::Vector2d{ get<_G1, 0>(g1), get<_G1, 1>(g1) });
+  }
+};
+
+}
+
+template <typename _G1, typename _G2>
+auto Distance4(_G1 const& g1, _G2 const& g2) {
+  return dispatch::distance<typename tag<_G1>::type, typename tag<_G2>::type, _G1, _G2>::apply(g1, g2);
+}
+
+namespace traits {
+
+template <typename _Scalar, int _dim>
+struct tag<Eigen::ParametrizedLine<_Scalar, _dim>> {
+  using type = LineTag;
+};
+}
+
+// Different Geometries
+TEST(geometry, Distance4) {
+  MyPoint2d p1{ 0, 0 };
+  MyPoint2d p2{ 1, 1 };
+
+  auto dis1 = Distance4(p1, p2);
+
+  EXPECT_EQ(dis1, 2);
+
+  Eigen::ParametrizedLine<double, 2> line{ Eigen::Vector2d::Zero(), Eigen::Vector2d::UnitY() };
+  auto dis2 = Distance4(p1, line);
+  EXPECT_EQ(dis2, 0);
 }

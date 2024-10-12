@@ -9,6 +9,7 @@ public:
   virtual ~FunctionalBridge() = default;
   virtual FunctionalBridge* Clone() const = 0;
   virtual _R Invoke(_Args...) const = 0;
+  virtual bool Equal(FunctionalBridge<_R, _Args...> const* fb) = 0;
 };
 
 // functor bridge
@@ -23,6 +24,13 @@ public:
   //! 返回值类型不同也能重载么?
   SpecificFunctorBridge* Clone() const override { return new SpecificFunctorBridge(functor_); }
   _R Invoke(_Args... args) const override { return functor_(std::forward<_Args>(args)...); }
+  bool Equal(FunctionalBridge<_R, _Args...> const* fb) override {
+    if (auto spec_fb = dynamic_cast<SpecificFunctorBridge const*>(fb); spec_fb) {
+    //   return functor_ == spec_fb->functor_;
+      return true;
+    }
+    return false;
+  }
 };
 
 // ------------------------------------------------------------------------------------------
@@ -75,6 +83,13 @@ public:
   friend void Swap(FunctionalPtr& fp1, FunctionalPtr& fp2) { std::swap(fp1.bridge_, fp2.bridge_); }
   explicit operator bool() const { return bridge_ != nullptr; }
   _R operator()(_Args... args) const { return bridge_->Invoke(std::forward<_Args>(args)...); }
+
+  friend bool operator==(FunctionalPtr const& f1, FunctionalPtr const& f2) {
+    if (!f1 || !f2) { return !f1 && !f2; }
+    return f1.bridge_->Equal(f2.bridge_);
+  }
+
+  friend bool operator!=(FunctionalPtr const& f1, FunctionalPtr const& f2) { return !(f1 == f2); }
 };
 
 template <typename _R, typename... _Args>

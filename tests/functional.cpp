@@ -12,6 +12,33 @@ public:
   virtual bool Equal(FunctionalBridge<_R, _Args...> const* fb) = 0;
 };
 
+template <typename _T>
+class IsEqualityComparable {
+private:
+  static void conv(bool);
+  template <typename _U>
+  static std::true_type test(decltype(conv(std::declval<_U const&>() == std::declval<_U const&>())),
+    decltype(conv(!std::declval<_U const&>() == std::declval<_U const&>())));
+
+  template <typename _U>
+  static std::false_type test(...);
+
+public:
+  static constexpr bool value = decltype(test<_T>(nullptr, nullptr))::value;
+};
+
+template <typename _T, bool HasEqual = IsEqualityComparable<_T>::value>
+struct TryEqual {
+  static bool Equals(_T const& x1, _T const& x2) { return x1 == x2; }
+};
+
+class NotEqualityComparable : public std::exception {};
+
+template <typename _T>
+struct TryEqual<_T, false> {
+  static bool Equals(_T const& x1, _T const& x2) { throw NotEqualityComparable(); }
+};
+
 // functor bridge
 template <typename _Functor, typename _R, typename... _Args>
 class SpecificFunctorBridge : public FunctionalBridge<_R, _Args...> {
@@ -26,8 +53,8 @@ public:
   _R Invoke(_Args... args) const override { return functor_(std::forward<_Args>(args)...); }
   bool Equal(FunctionalBridge<_R, _Args...> const* fb) override {
     if (auto spec_fb = dynamic_cast<SpecificFunctorBridge const*>(fb); spec_fb) {
-    //   return functor_ == spec_fb->functor_;
-      return true;
+      //   return functor_ == spec_fb->functor_; // 需要菜类型擦除前,确定是否可以 ==
+      return TryEqual<_Functor>::Equals(functor_, spec_fb->functor_);
     }
     return false;
   }

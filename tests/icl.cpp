@@ -40,14 +40,22 @@ TEST(icl, base) {
 
 TEST(icl, map_join) {
 
-  interval_map<int, int> segments;
-  segments += std::make_pair(interval<int>::right_open(1, 3), 1);
-  segments += std::make_pair(interval<int>::right_open(2, 4), 2);
-  segments += std::make_pair(interval<int>::right_open(4, 5), 4);
+  interval_map<double, double> segments;
+  segments += std::make_pair(interval<double>::right_open(1, 3), 1.0);
+  segments += std::make_pair(interval<double>::right_open(2, 4), 2.0);
+  segments += std::make_pair(interval<double>::right_open(4, 5), 4.0);
 
   for (auto it = segments.begin(); it != segments.end(); ++it) {
     GTEST_LOG_(INFO) << it->first << " guset: " << it->second;
   }
+
+  // 根据指定区间查找值
+  auto its = segments.equal_range(interval<double>::closed(1.5, 1.6));
+  for (auto it = its.first; it != its.second; ++it) { GTEST_LOG_(INFO) << it->first << " val = " << it->second; }
+
+  // 根据时刻查找区间
+  auto it = segments.find(2.0);
+  if (it != segments.end()) { GTEST_LOG_(INFO) << it->first << " " << it->second; }
 };
 
 TEST(icl, set_join) {

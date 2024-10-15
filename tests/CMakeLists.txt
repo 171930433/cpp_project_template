@@ -2,6 +2,7 @@
 file(GLOB TEST_FILES *.cpp)
 
 find_package(GTest CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS timer)
 # find_package(glog CONFIG REQUIRED) set(GFLAGS_USE_TARGET_NAMESPACE ON)
 # find_package(gflags CONFIG REQUIRED)
 
@@ -10,7 +11,7 @@ target_link_libraries(
   main_test
   PRIVATE ${PROJECT_NAME}
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>
-  PRIVATE GTest::gtest GTest::gmock)
+  PRIVATE GTest::gtest GTest::gmock Boost::timer)
 
 target_compile_features(main_test PRIVATE cxx_std_20)
 

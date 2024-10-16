@@ -80,10 +80,11 @@ inline std::pair<MessageBase::SPtr, IDataReader::IOState> PsinsReader::ReadFrame
   auto imu = convert::ToImu(frame);
 
   //   gnss
-  if (frame->gpspos.i > 0.1) {
+  if (frame->gpspos.i > 0.1 /* && !hit3(frame->t,500,600,900,1000,2000,2100) */) {
     auto gnss = convert::ToGnss(frame);
 
-    buffer_.push_back({ gnss, IOState::OK });
+    buffer_.push_back({ imu, state });
+    return { gnss, IOState::OK };
   }
 
   return { imu, state };

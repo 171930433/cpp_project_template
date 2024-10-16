@@ -116,14 +116,22 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::Begin("trj");
 
   auto plot_flag = ImPlotFlags_Equal;
+  static MessageBuffer psins_results;
+  if (ImGui::Button("load pins results")) {
+    if (psins_results.empty()) {
+      psins_results = PsinsReader::LoadResult("/home/gsk/pro/cpp_project_template/data/ins.bin");
+    }
+    ELOGD << "psins_results size = " << psins_results.size();
+  }
   if (stop_ && ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
-    std::vector<ImPlotPoint> downsampled_pts;
+    std::vector<ImPlotPoint> pts1;
+    DownSampleTrajectory(buffer_["/fused_state"], pts1);
+    ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
 
-    DownSampleTrajectory(buffer_["/fused_state"], downsampled_pts);
-
-    ImPlot::PlotScatter(
-      "scatter", &downsampled_pts[0].x, &downsampled_pts[0].y, downsampled_pts.size(), 0, 0, sizeof(ImPlotPoint));
+    std::vector<ImPlotPoint> pts2;
+    DownSampleTrajectory(psins_results, pts2);
+    ImPlot::PlotScatter("psins_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
 
     ImPlot::EndPlot();
   }

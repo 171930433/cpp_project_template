@@ -59,6 +59,7 @@ public:
     buffer_.push_back({ convert::ToState(&reader_->DS0), IOState::OK });
   }
   std::pair<MessageBase::SPtr, IOState> ReadFrame() override;
+  static MessageBuffer LoadResult(std::string const& path);
 
 private:
   std::unique_ptr<CFileRdSr> reader_;
@@ -88,4 +89,29 @@ inline std::pair<MessageBase::SPtr, IDataReader::IOState> PsinsReader::ReadFrame
   }
 
   return { imu, state };
+}
+
+MessageBuffer PsinsReader::LoadResult(std::string const& path) {
+  MessageBuffer result;
+  FILE* fp = fopen(path.c_str(), "rb"); // must use binary mode
+
+  int const size = 19;
+  double buffer[19] = { 0 };
+
+  while (!feof(fp)) {
+    const size_t ret_code = fread(buffer, sizeof(double), size, fp); // reads an array of doubles
+    // ELOG_DEBUG << "ret_code = " << ret_code;
+    if (ret_code != size) { break; }
+
+    // return *this<<sins.att<<sins.vn<<sins.pos<<sins.eb<<sins.db<<sins.tk << pDS->att;
+    auto state = CreateMessage<State>("/psins/state");
+    state->msg_.t0_ = buffer[15];
+    state->msg_.att_ = { buffer[0], buffer[1], buffer[2] };
+    state->msg_.vel_ = { buffer[3], buffer[4], buffer[5] };
+    state->msg_.pos_ = { buffer[6], buffer[7], buffer[8] };
+    state->UpdateRelativePose();
+
+    result.push_back(state);
+  }
+  return result;
 }

@@ -123,11 +123,17 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
     }
     ELOGD << "psins_results size = " << psins_results.size();
   }
-  if (stop_ && ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
+  if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
-    std::vector<ImPlotPoint> pts1;
-    DownSampleTrajectory(buffer_["/fused_state"], pts1);
-    ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
+    if (stop_) {
+      std::vector<ImPlotPoint> pts1;
+      DownSampleTrajectory(buffer_["/fused_state"], pts1);
+      ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
+
+      std::vector<ImPlotPoint> pts2;
+      DownSampleTrajectory(buffer_["/gnss"], pts2);
+      ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
+    }
 
     std::vector<ImPlotPoint> pts2;
     DownSampleTrajectory(psins_results, pts2);

@@ -11,6 +11,9 @@
 #include <boost/geometry/geometries/box.hpp>
 #include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
+// 兼容ImPlotPoint
+#include <boost/geometry/geometries/register/point.hpp>
+BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
 
 MyViewer::MyViewer() {
   reader_ = std::make_shared<PsinsReader>();
@@ -194,23 +197,38 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
   int const rate = 200;
   int last_index = 0; // 上一个被采样索引
   pts_downsample.push_back(raw_pts[0]);
-  for (int i = 0; i < raw_pts.size(); i += rate) {
-    auto& pt = raw_pts[i];
-    int actual_size = (i + rate < raw_pts.size() ? rate : (raw_pts.size() - i));
-    auto& last_pt = raw_pts[i + actual_size];
+  // for (int i = 0; i < raw_pts.size(); i += rate) {
+  //   auto& pt = raw_pts[i];
+  //   int actual_size = (i + rate < raw_pts.size() ? rate : (raw_pts.size() - i));
+  //   auto& last_pt = raw_pts[i + actual_size];
 
-    // 如果未发生覆盖,从 [last_index,i)
+  //   // 如果未发生覆盖,从 [last_index,i)
+  //   double const dx = std::abs(pt.x - last_pt.x);
+  //   double const dy = std::abs(pt.y - last_pt.y);
+  //   int pixel_n = std::min(actual_size, (int)(std::hypotf(dx, dy) * scale_ppm)); // 需要这么些个点
+
+  //   // 判断last和当前是否在视口内
+  //   Segmnet_t segment{ Point_t{ last_pt.x, last_pt.y }, Point_t{ pt.x, pt.y } };
+
+  //   if (!bg::intersects(segment, box)) { continue; }
+
+  //   // 在范围且与上一个点的pixel差异在1以上
+  //   if (pixel_n >= 1) { PointLttb::Downsample(&raw_pts[i], actual_size, std::back_inserter(pts_downsample), pixel_n);
+  //   }
+  // }
+
+  for (int i = 0; i < raw_pts.size(); ++i) {
+    auto& pt = raw_pts[i];
+    auto& last_pt = pts_downsample.back();
+
+    if (!bg::within(pt, box)) { continue; }
+
     double const dx = std::abs(pt.x - last_pt.x);
     double const dy = std::abs(pt.y - last_pt.y);
-    int pixel_n = std::min(actual_size, (int)(std::hypotf(dx, dy) * scale_ppm)); // 需要这么些个点
 
-    // 判断last和当前是否在视口内
-    Segmnet_t segment{ Point_t{ last_pt.x, last_pt.y }, Point_t{ pt.x, pt.y } };
+    if (dx < scale_mpp && dy < scale_mpp) { continue; }
 
-    if (!bg::intersects(segment, box)) { continue; }
-
-    // 在范围且与上一个点的pixel差异在1以上
-    if (pixel_n >= 1) { PointLttb::Downsample(&raw_pts[i], actual_size, std::back_inserter(pts_downsample), pixel_n); }
+    pts_downsample.push_back(pt);
   }
 
   ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();

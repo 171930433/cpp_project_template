@@ -132,3 +132,67 @@ TEST(geometry_eigen, MySegment) {
   ref_seg.first = { 3, 3, 3 };
   EXPECT_TRUE(seg.first.isApprox(ref_seg.first));
 }
+
+template <typename _Scalar, int _dim>
+using MyBox = boost::geometry::model::box<Eigen::Vector<_Scalar, _dim>>;
+
+TEST(geometry_eigen, MyBox) {
+
+  MyBox<double, 2> box(Eigen::Vector2d{ 1, 1 }, Eigen::Vector2d{ 2, 2 });
+
+  auto area = bg::area(box);
+  EXPECT_DOUBLE_EQ(area, 1);
+
+  Eigen::Vector2d pt{ 1.5, 1.5 };
+  EXPECT_TRUE(bg::within(pt, box));
+}
+
+template <typename _Scalar, int _dim, bool _clockWise = true, bool _closed = true>
+using MyRing = boost::geometry::model::ring<Eigen::Vector<_Scalar, _dim>, _clockWise, _closed>;
+
+TEST(geometry_eigen, MyRing) {
+
+  MyRing<double, 2> ring;
+
+  ring.push_back({ 0, 0 });
+  ring.push_back({ 0, 1 });
+  ring.push_back({ 1, 1 });
+  ring.push_back({ 1, 0 });
+  ring.push_back({ 0, 0 });
+
+  auto area = bg::area(ring);
+  EXPECT_DOUBLE_EQ(area, 1);
+
+  Eigen::Vector2d pt{ 0.5, 0.5 };
+  EXPECT_TRUE(bg::within(pt, ring));
+}
+
+template <typename _Scalar, int _dim, bool _clockWise = true, bool _closed = true>
+using MyPolygon = boost::geometry::model::polygon<Eigen::Vector<_Scalar, _dim>, _clockWise, _closed>;
+
+TEST(geometry_eigen, MyPolygon) {
+  MyPolygon<double, 2> polygon;
+
+  polygon.outer().push_back({ -2, -2 });
+  polygon.outer().push_back({ -2, 2 });
+  polygon.outer().push_back({ 2, 2 });
+  polygon.outer().push_back({ 2, -2 });
+  polygon.outer().push_back({ -2, -2 });
+
+  polygon.inners().resize(1);
+  auto& inner = polygon.inners().front();
+  inner.push_back({ -1, -1 });
+  inner.push_back({ -1, 1 });
+  inner.push_back({ 1, 1 });
+  inner.push_back({ 1, -1 });
+  inner.push_back({ -1, -1 });
+  bg::reverse(inner);
+
+  // 面积，顺时针是正数，逆时针是负数
+  auto area0 = bg::area(polygon.outer());
+  auto area1 = bg::area(polygon.inners().front());
+  auto area2 = bg::area(polygon);
+  EXPECT_DOUBLE_EQ(area0, 16);
+  EXPECT_DOUBLE_EQ(area1, -4);
+  EXPECT_DOUBLE_EQ(area2, 16 - 4);
+}

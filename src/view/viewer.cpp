@@ -231,5 +231,5 @@ void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vec
     pts_downsample.push_back(pt);
   }
 
-  ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();
+  // ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();
 }

@@ -196,3 +196,50 @@ TEST(geometry_eigen, MyPolygon) {
   EXPECT_DOUBLE_EQ(area1, -4);
   EXPECT_DOUBLE_EQ(area2, 16 - 4);
 }
+
+template <typename _Scalar, int _dim, bool _clockWise = true, bool _closed = true>
+using MyMultiPolygon = boost::geometry::model::multi_polygon<MyPolygon<_Scalar, _dim, _clockWise, _closed>>;
+
+TEST(geometry_eigen, MyMultiPolygon) {
+
+  MyMultiPolygon<double, 2> ppolygon;
+  ppolygon.resize(2);
+
+  // ploygon1
+  auto& polygon = ppolygon.front();
+  polygon.outer().push_back({ -2, -2 });
+  polygon.outer().push_back({ -2, 2 });
+  polygon.outer().push_back({ 2, 2 });
+  polygon.outer().push_back({ 2, -2 });
+  polygon.outer().push_back({ -2, -2 });
+
+  polygon.inners().resize(1);
+  auto& inner = polygon.inners().front();
+  inner.push_back({ -1, -1 });
+  inner.push_back({ -1, 1 });
+  inner.push_back({ 1, 1 });
+  inner.push_back({ 1, -1 });
+  inner.push_back({ -1, -1 });
+  bg::reverse(inner);
+
+  // ploygon1
+  auto& polygon2 = ppolygon.back();
+  polygon2.outer().push_back({ -3, -3 });
+  polygon2.outer().push_back({ -3, 3 });
+  polygon2.outer().push_back({ 3, 3 });
+  polygon2.outer().push_back({ 3, -3 });
+  polygon2.outer().push_back({ -3, -3 });
+
+  polygon2.inners().resize(1);
+  auto& inner2 = polygon2.inners().front();
+  inner2.push_back({ -1, -1 });
+  inner2.push_back({ -1, 1 });
+  inner2.push_back({ 1, 1 });
+  inner2.push_back({ 1, -1 });
+  inner2.push_back({ -1, -1 });
+  bg::reverse(inner2);
+
+  auto area = bg::area(ppolygon);
+
+  EXPECT_DOUBLE_EQ(area, (16 - 4) + (36 - 4));
+}

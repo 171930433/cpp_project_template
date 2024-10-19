@@ -146,6 +146,21 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   }
 
   ImGui::End();
+
+  ImGui::Begin("plot 2d");
+
+  if (ImPlot::BeginPlot("##CustomRend", ImVec2(-1, -1), plot_flag)) {
+    ImVec2 cntr = ImPlot::PlotToPixels(ImPlotPoint(0.5f, 0.5f));
+    ImVec2 rmin = ImPlot::PlotToPixels(ImPlotPoint(0.25f, 0.75f));
+    ImVec2 rmax = ImPlot::PlotToPixels(ImPlotPoint(0.75f, 0.25f));
+    ImPlot::PushPlotClipRect();
+    ImPlot::GetPlotDrawList()->AddCircleFilled(cntr, 20, IM_COL32(255, 255, 0, 255), 20);
+    ImPlot::GetPlotDrawList()->AddRect(rmin, rmax, IM_COL32(128, 0, 255, 255));
+    ImPlot::PopPlotClipRect();
+    ImPlot::EndPlot();
+  }
+
+  ImGui::End();
 }
 
 void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {

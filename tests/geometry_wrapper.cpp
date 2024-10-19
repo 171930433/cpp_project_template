@@ -1,55 +1,7 @@
-#include <boost/geometry/geometry.hpp>
-#include <eigen3/Eigen/Dense>
+#include "common/geometry_register.h"
 #include <gtest/gtest.h>
 
 namespace bg = boost::geometry;
-
-// adapter
-namespace boost {
-namespace geometry {
-namespace traits {
-
-template <typename _Scalar, int _dim>
-struct tag<Eigen::Vector<_Scalar, _dim>> {
-  typedef point_tag type;
-};
-
-template <typename _Scalar, int _dim>
-struct coordinate_type<Eigen::Vector<_Scalar, _dim>> {
-  typedef _Scalar type;
-};
-
-template <typename _Scalar, int _dim>
-struct coordinate_system<Eigen::Vector<_Scalar, _dim>> {
-  typedef cs::cartesian type;
-};
-
-template <typename _Scalar, int _dim>
-struct dimension<Eigen::Vector<_Scalar, _dim>> : boost::mpl::int_<_dim> {};
-
-template <typename _Scalar, int _dim>
-struct access<Eigen::Vector<_Scalar, _dim>, 0> {
-  static _Scalar get(Eigen::Vector<_Scalar, _dim> const& p) { return p.x(); }
-
-  static void set(Eigen::Vector<_Scalar, _dim>& p, _Scalar const& value) { p.x() = value; }
-};
-
-template <typename _Scalar, int _dim>
-struct access<Eigen::Vector<_Scalar, _dim>, 1> {
-  static _Scalar get(Eigen::Vector<_Scalar, _dim> const& p) { return p.y(); }
-
-  static void set(Eigen::Vector<_Scalar, _dim>& p, _Scalar const& value) { p.y() = value; }
-};
-
-template <typename _Scalar, int _dim>
-struct access<Eigen::Vector<_Scalar, _dim>, 2> {
-  static _Scalar get(Eigen::Vector<_Scalar, _dim> const& p) { return p.z(); }
-
-  static void set(Eigen::Vector<_Scalar, _dim>& p, _Scalar const& value) { p.z() = value; }
-};
-}
-}
-} // namespace boost::geometry::traits
 
 template <typename _Scalar, int _dim>
 using MyMultiPoint = boost::geometry::model::multi_point<Eigen::Vector<_Scalar, _dim>>;
@@ -244,48 +196,6 @@ TEST(geometry_eigen, MyMultiPolygon) {
   EXPECT_DOUBLE_EQ(area, (16 - 4) + (36 - 4));
 }
 
-#include <boost/qvm.hpp>
-
-namespace boost {
-namespace qvm {
-
-template <typename _Scalar, int _dim, int _mode>
-struct mat_traits<Eigen::Transform<_Scalar, _dim, _mode>>
-  : mat_traits_defaults<Eigen::Transform<_Scalar, _dim, _mode>, _Scalar, _dim + 1, _dim + 1> {
-
-  using EigenType = Eigen::Transform<_Scalar, _dim, _mode>;
-
-  template <int R, int C>
-  static inline _Scalar& write_element(EigenType& m) {
-    return m.matrix()(R, C);
-  }
-
-  static inline _Scalar& write_element_idx(int r, int c, EigenType& m) { return m.matrix(r, c); }
-};
-
-}
-}
-
-//
-template <typename _Transform, typename _Geometry,
-  typename = std::enable_if_t<!std::is_same_v<typename bg::traits::tag<_Geometry>::type, void>>>
-static _Geometry operator*(_Transform const& transform, _Geometry const& geometry) {
-  boost::geometry::concepts::check<_Geometry>();
-
-  using _PointType = typename bg::traits::point_type<_Geometry>::type;
-  using _PointScalar = typename _PointType::Scalar;
-  static constexpr int _point_dimension = Eigen::internal::traits<_PointType>::RowsAtCompileTime;
-  static constexpr int _trans_dimension = Eigen::internal::transform_traits<_Transform>::Dim;
-
-  static_assert(std::is_same_v<_PointScalar, typename _Transform::Scalar>, "Scalar type mismatch");
-  static_assert(_point_dimension == _trans_dimension, "dimentation mismatch");
-
-  _Geometry result;
-  bg::strategy::transform::matrix_transformer<_PointScalar, _point_dimension, _point_dimension> transformer(transform);
-  bg::transform(geometry, result, transformer);
-  return result;
-}
-
 TEST(geometry_eigen, transform) {
   using boost::geometry::dsv;
   MySegment<double, 3> seg;
@@ -296,7 +206,7 @@ TEST(geometry_eigen, transform) {
 
   MySegment<double, 3> seg2 = transform * seg;
 
-  MySegment<double, 3> seg3{ { 2, 2, 2 }, { 3, 3, 3 } };
+  bgm::segment<Eigen::Vector3d> seg3{ { 2, 2, 2 }, { 3, 3, 3 } };
 
   GTEST_LOG_(INFO) << dsv(seg2);
 

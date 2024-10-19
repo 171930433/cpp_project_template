@@ -266,17 +266,22 @@ struct mat_traits<Eigen::Transform<_Scalar, _dim, _mode>>
 }
 }
 
-template <typename _Transform, template <typename> typename _Geometry, typename _PointType>
-static _Geometry<_PointType> operator*(_Transform const& transform, _Geometry<_PointType> const& geometry) {
-  boost::geometry::concepts::check<_Geometry<_PointType>>();
+//
+template <typename _Transform, typename _Geometry,
+  typename = std::enable_if_t<!std::is_same_v<typename bg::traits::tag<_Geometry>::type, void>>>
+static _Geometry operator*(_Transform const& transform, _Geometry const& geometry) {
+  boost::geometry::concepts::check<_Geometry>();
 
-  static_assert(std::is_same_v<typename _PointType::Scalar, typename _Transform::Scalar>, "Scalar type mismatch");
-  static_assert((int)Eigen::internal::traits<_PointType>::RowsAtCompileTime
-      == (int)Eigen::internal::transform_traits<_Transform>::Dim,
-    "dimentation mismatch");
+  using _PointType = typename bg::traits::point_type<_Geometry>::type;
+  using _PointScalar = typename _PointType::Scalar;
+  static constexpr int _point_dimension = Eigen::internal::traits<_PointType>::RowsAtCompileTime;
+  static constexpr int _trans_dimension = Eigen::internal::transform_traits<_Transform>::Dim;
 
-  _Geometry<_PointType> result;
-  bg::strategy::transform::matrix_transformer<double, 3, 3> transformer(transform);
+  static_assert(std::is_same_v<_PointScalar, typename _Transform::Scalar>, "Scalar type mismatch");
+  static_assert(_point_dimension == _trans_dimension, "dimentation mismatch");
+
+  _Geometry result;
+  bg::strategy::transform::matrix_transformer<_PointScalar, _point_dimension, _point_dimension> transformer(transform);
   bg::transform(geometry, result, transformer);
   return result;
 }
@@ -287,17 +292,13 @@ TEST(geometry_eigen, transform) {
   seg.first = { 1, 1, 1 };
   seg.second = { 2, 2, 2 };
 
-  Eigen::Isometry3d transform = Eigen::Isometry3d::Identity();
-  transform.translation() = Eigen::Vector3d{ 1, 1, 1 };
+  Eigen::Isometry3d transform = Eigen::Translation3d(1, 1, 1) * Eigen::Quaterniond::Identity();
 
-  bg::strategy::transform::matrix_transformer<double, 3, 3> transformer(transform);
+  MySegment<double, 3> seg2 = transform * seg;
 
-  MySegment<double, 3> seg2;
-
-  bg::transform(seg, seg2, transformer);
+  MySegment<double, 3> seg3{ { 2, 2, 2 }, { 3, 3, 3 } };
 
   GTEST_LOG_(INFO) << dsv(seg2);
 
-  auto seg3 = transform * seg;
-  GTEST_LOG_(INFO) << dsv(seg3);
+  EXPECT_EQ(seg2, seg3);
 }

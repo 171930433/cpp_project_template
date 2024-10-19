@@ -243,3 +243,61 @@ TEST(geometry_eigen, MyMultiPolygon) {
 
   EXPECT_DOUBLE_EQ(area, (16 - 4) + (36 - 4));
 }
+
+#include <boost/qvm.hpp>
+
+namespace boost {
+namespace qvm {
+
+template <typename _Scalar, int _dim, int _mode>
+struct mat_traits<Eigen::Transform<_Scalar, _dim, _mode>>
+  : mat_traits_defaults<Eigen::Transform<_Scalar, _dim, _mode>, _Scalar, _dim + 1, _dim + 1> {
+
+  using EigenType = Eigen::Transform<_Scalar, _dim, _mode>;
+
+  template <int R, int C>
+  static inline _Scalar& write_element(EigenType& m) {
+    return m.matrix()(R, C);
+  }
+
+  static inline _Scalar& write_element_idx(int r, int c, EigenType& m) { return m.matrix(r, c); }
+};
+
+}
+}
+
+template <typename _Transform, template <typename> typename _Geometry, typename _PointType>
+static _Geometry<_PointType> operator*(_Transform const& transform, _Geometry<_PointType> const& geometry) {
+  boost::geometry::concepts::check<_Geometry<_PointType>>();
+
+  static_assert(std::is_same_v<typename _PointType::Scalar, typename _Transform::Scalar>, "Scalar type mismatch");
+  static_assert((int)Eigen::internal::traits<_PointType>::RowsAtCompileTime
+      == (int)Eigen::internal::transform_traits<_Transform>::Dim,
+    "dimentation mismatch");
+
+  _Geometry<_PointType> result;
+  bg::strategy::transform::matrix_transformer<double, 3, 3> transformer(transform);
+  bg::transform(geometry, result, transformer);
+  return result;
+}
+
+TEST(geometry_eigen, transform) {
+  using boost::geometry::dsv;
+  MySegment<double, 3> seg;
+  seg.first = { 1, 1, 1 };
+  seg.second = { 2, 2, 2 };
+
+  Eigen::Isometry3d transform = Eigen::Isometry3d::Identity();
+  transform.translation() = Eigen::Vector3d{ 1, 1, 1 };
+
+  bg::strategy::transform::matrix_transformer<double, 3, 3> transformer(transform);
+
+  MySegment<double, 3> seg2;
+
+  bg::transform(seg, seg2, transformer);
+
+  GTEST_LOG_(INFO) << dsv(seg2);
+
+  auto seg3 = transform * seg;
+  GTEST_LOG_(INFO) << dsv(seg3);
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "message/message.h"
+#include <unordered_map>
 
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/key.hpp>
@@ -13,8 +14,7 @@ struct id {};
 struct t0 {};
 struct t1 {};
 
-namespace boost {
-namespace multi_index {
+namespace boost::multi_index {
 
 // clang-format off
 typedef multi_index_container<MessageBase::SCPtr,
@@ -32,10 +32,33 @@ typedef multi_index_container<MessageBase::SPtr,
     >
 >TotalMIC;
 
+
+template <typename _Sensor>
+using MICSensor = multi_index_container<typename Message<_Sensor>::SCPtr,
+    indexed_by<
+        random_access<tag<id>>,
+        ordered_unique<tag<t0>, key<&Message<_Sensor>::t0>> 
+    >
+>;
+
 // clang-format on
 
 }
-}
+
+namespace bm = boost::multi_index;
+
+template <typename _Sensor>
+class MICBuffer : public std::unordered_map<std::string_view, bm::MICSensor<_Sensor>> {
+public:
+  static constexpr const std::string_view channel_type_ = ylt::reflection::type_string<_Sensor>();
+  void Append(MessageBase::SCPtr frame) {
+    if (!frame || frame->channel_type_ != channel_type_) return;
+    (*this)[frame->channel_name_].push_back(std::dynamic_pointer_cast<Message<_Sensor> const>(frame));
+  }
+};
+
+// template <typename _Sensor>
+// using MICBuffer = std::unordered_map<std::string_view, MICSensor2<_Sensor>>;
 
 // class MessageBuffer : public boost::multi_index::SingleMIC {
 // public:
@@ -85,4 +108,39 @@ inline void TotalBuffer::Append(MessageBase::SPtr frame) {
   std::lock_guard<std::mutex> lg(mtx_);
   if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
   this->push_back(frame);
+}
+
+class TotalBuffer2 : public boost::multi_index::TotalMIC {
+public:
+  void Append(MessageBase::SPtr frame);
+  double duration_s_ = 1;
+
+public:
+  MICBuffer<Gnss> gnss_;
+  MICBuffer<Imu> imu_;
+  MICBuffer<State> state_;
+  std::unordered_set<std::string_view> channel_names_;
+  std::unordered_set<std::string_view> channel_types_;
+
+protected:
+  std::mutex mtx_;
+};
+
+inline void TotalBuffer2::Append(MessageBase::SPtr frame) {
+  static std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appenders{
+    { gnss_.channel_type_, std::bind(&MICBuffer<Gnss>::Append, &gnss_, std::placeholders::_1) },
+    { imu_.channel_type_, std::bind(&MICBuffer<Imu>::Append, &imu_, std::placeholders::_1) },
+    { state_.channel_type_, std::bind(&MICBuffer<State>::Append, &state_, std::placeholders::_1) }
+  };
+
+  // 缓存通道与类型消息
+  channel_types_.insert(frame->channel_type_);
+  channel_names_.insert(frame->channel_name_);
+
+  // 限定区间的缓存
+  std::lock_guard<std::mutex> lg(mtx_);
+  if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
+  this->push_back(frame);
+
+  if (appenders.contains(frame->channel_type_)) { appenders[frame->channel_type_](frame); }
 }

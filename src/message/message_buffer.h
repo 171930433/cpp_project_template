@@ -127,11 +127,18 @@ protected:
 };
 
 inline void TotalBuffer2::Append(MessageBase::SPtr frame) {
-  static std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appenders{
-    { gnss_.channel_type_, std::bind(&MICBuffer<Gnss>::Append, &gnss_, std::placeholders::_1) },
-    { imu_.channel_type_, std::bind(&MICBuffer<Imu>::Append, &imu_, std::placeholders::_1) },
-    { state_.channel_type_, std::bind(&MICBuffer<State>::Append, &state_, std::placeholders::_1) }
-  };
+
+  static auto tuple_buffer = std::make_tuple(gnss_, imu_, state_);
+  using _TupleBuffer = decltype(tuple_buffer);
+  static std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appenders =
+    []<size_t... _I>(std::index_sequence<_I...>) {
+      std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appender{
+        { { std::get<_I>(tuple_buffer).channel_type_,
+          std::bind(
+            &std::tuple_element_t<_I, _TupleBuffer>::Append, &std::get<_I>(tuple_buffer), std::placeholders::_1) }... },
+      };
+      return appender;
+    }(std::make_index_sequence<std::tuple_size_v<_TupleBuffer>>{});
 
   // 缓存通道与类型消息
   channel_types_.insert(frame->channel_type_);

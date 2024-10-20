@@ -24,7 +24,6 @@ TEST(sensors, channel_message) {
   auto gnss = CreateMessage<Gnss>("/gnss");
   gnss->UpdateRelativePose();
 
-
   GTEST_LOG_(INFO) << gnss->to_json();
 
   EXPECT_TRUE(imu);
@@ -148,4 +147,26 @@ TEST(sensors, trajectory_demo) {
   EXPECT_EQ(i1.a_, 0);
   EXPECT_EQ(g2.b_, 0);
   EXPECT_EQ(g2.a_, 0);
+}
+
+TEST_F(MessageBufferTest, total_buffer3) {
+  using SensorBuffer = TotalBuffer3<Gnss, Imu, State>;
+  SensorBuffer buffer;
+
+  std::string_view imu_channel_name = imu->channel_name_;
+  std::string_view gnss_channel_name = gnss->channel_name_;
+
+  buffer.Append(imu);
+  buffer.Append(gnss);
+
+  EXPECT_EQ(buffer.msgs_.size(), 2);
+  EXPECT_EQ(buffer.Get<Gnss>(gnss_channel_name).size(), 1);
+  EXPECT_EQ(buffer.Get<Imu>(imu_channel_name).size(), 1);
+
+  buffer.Append(imu2);
+  buffer.Append(gnss2);
+
+  EXPECT_EQ(buffer.msgs_.size(), 4);
+  EXPECT_EQ(buffer.Get<Gnss>(gnss_channel_name).size(), 2);
+  EXPECT_EQ(buffer.Get<Imu>(imu_channel_name).size(), 2);
 }

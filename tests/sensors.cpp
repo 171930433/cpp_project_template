@@ -163,14 +163,14 @@ TEST_F(MessageBufferTest, total_buffer3) {
   buffer.Append(imu);
   buffer.Append(gnss);
 
-  EXPECT_EQ(buffer.msgs_.size(), 2);
+  EXPECT_EQ(buffer.size(), 2);
   EXPECT_EQ(buffer.Get<Gnss>(gnss_channel_name).size(), 1);
   EXPECT_EQ(buffer.Get<Imu>(imu_channel_name).size(), 1);
 
   buffer.Append(imu2);
   buffer.Append(gnss2);
 
-  EXPECT_EQ(buffer.msgs_.size(), 4);
+  EXPECT_EQ(buffer.size(), 4);
   EXPECT_EQ(buffer.Get<Gnss>(gnss_channel_name).size(), 2);
   EXPECT_EQ(buffer.Get<Imu>(imu_channel_name).size(), 2);
 }

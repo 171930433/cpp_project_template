@@ -30,7 +30,7 @@ typedef multi_index_container<MessageBase::SCPtr,
         ordered_non_unique<tag<t1>, key<&MessageBase::t1>>,
         ordered_non_unique<tag<t0>, key<&MessageBase::t0>>
     >
->TotalMIC;
+>MessageBaseConstSPContainer;
 
 
 template <typename _Sensor>
@@ -83,7 +83,7 @@ public:
 using MessageBuffer = boost::multi_index::SingleMIC;
 using Buffers = std::unordered_map<std::string_view, MessageBuffer>;
 
-class TotalBuffer : public boost::multi_index::TotalMIC {
+class TotalBuffer : public boost::multi_index::MessageBaseConstSPContainer {
 public:
   // template <typename _Message>
   // void Append(std::shared_ptr<ChannelMsg<_Message>> frame);
@@ -110,48 +110,11 @@ inline void TotalBuffer::Append(MessageBase::SCPtr frame) {
   this->push_back(frame);
 }
 
-// class TotalBuffer2 : public boost::multi_index::TotalMIC {
-// public:
-//   void Append(MessageBase::SCPtr frame);
-//   double duration_s_ = 1;
-
-// public:
-//   SensorMap<Gnss> gnss_;
-//   SensorMap<Imu> imu_;
-//   SensorMap<State> state_;
-//   std::unordered_set<std::string_view> channel_names_;
-//   std::unordered_set<std::string_view> channel_types_;
-
-// protected:
-//   std::mutex mtx_;
-// };
-
-// inline void TotalBuffer2::Append(MessageBase::SCPtr frame) {
-
-//   static auto tuple_buffer = std::forward_as_tuple(gnss_, imu_, state_);
-//   using _TupleBuffer = decltype(tuple_buffer);
-//   static auto appenders = []<size_t... _I>(std::index_sequence<_I...>) {
-//     return std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>>{
-//       { { std::get<_I>(tuple_buffer).channel_type_,
-//         std::bind(&std::remove_reference_t<std::tuple_element_t<_I, _TupleBuffer>>::Append, &std::get<_I>(tuple_buffer),
-//           std::placeholders::_1) }... },
-//     };
-//   }(std::make_index_sequence<std::tuple_size_v<_TupleBuffer>>{});
-
-//   // 缓存通道与类型消息
-//   channel_types_.insert(frame->channel_type_);
-//   channel_names_.insert(frame->channel_name_);
-
-//   // 限定区间的缓存
-//   std::lock_guard<std::mutex> lg(mtx_);
-//   if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
-//   // this->push_back(frame);
-
-//   if (appenders.contains(frame->channel_type_)) { appenders[frame->channel_type_](frame); }
-// }
 
 template <typename... _Sensors>
-class TotalBuffer3 : public std::tuple<SensorMap<_Sensors>...> {
+class TotalBuffer3
+  : public boost::multi_index::MessageBaseConstSPContainer
+  , public std::tuple<SensorMap<_Sensors>...> {
   using _Base = std::tuple<SensorMap<_Sensors>...>;
 
 public:
@@ -166,7 +129,6 @@ public:
           std::bind(&std::remove_reference_t<decltype(args)>::Append, &args, std::placeholders::_1) }... };
       },
       *static_cast<_Base*>(this));
-
   }
 
   void Append(MessageBase::SCPtr frame) {
@@ -176,8 +138,8 @@ public:
 
     // 限定区间的缓存
     std::lock_guard<std::mutex> lg(mtx_);
-    if (!msgs_.empty() && (msgs_.back()->t1_ - msgs_.front()->t1_) >= duration_s_) { msgs_.pop_front(); }
-    msgs_.push_back(frame);
+    if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
+    this->push_back(frame);
 
     if (appenders_.contains(frame->channel_type_)) { appenders_[frame->channel_type_](frame); }
   }
@@ -188,7 +150,6 @@ public:
   }
 
   double duration_s_ = 1;
-  boost::multi_index::TotalMIC msgs_;
   std::unordered_set<std::string_view> channel_names_;
   std::unordered_set<std::string_view> channel_types_;
 

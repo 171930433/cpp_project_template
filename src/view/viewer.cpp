@@ -168,7 +168,7 @@ template <typename _Sensor>
 void DownSampleTrajectory(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
   if (single_buffer.empty()) return;
 
-  std::string_view channel_name = single_buffer.front()->channel_name_;
+  std::string_view channel_name = single_buffer.channel_name_;
   static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
 
   auto& raw_pts = down_pts[channel_name];

@@ -16,8 +16,8 @@ BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
 namespace bg = boost::geometry;
 namespace bgm = boost::geometry::model;
 
-template <typename _Sensor>
-void DownSampleTrajectory(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
+template <typename _Sensor, typename = std::enable_if_t<IsTrajectory_v<_Sensor>>>
+void DownSample(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
 
 MyViewer::MyViewer() {
   reader_ = std::make_shared<PsinsReader>();
@@ -131,16 +131,16 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
     if (stop_) {
       std::vector<ImPlotPoint> pts1;
-      DownSampleTrajectory(buffer3_.Get<State>("/fused_state"), pts1);
+      DownSample(buffer3_.Get<State>("/fused_state"), pts1);
       ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
 
       std::vector<ImPlotPoint> pts2;
-      DownSampleTrajectory(buffer3_.Get<Gnss>("/gnss"), pts2);
+      DownSample(buffer3_.Get<Gnss>("/gnss"), pts2);
       ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
     }
 
     std::vector<ImPlotPoint> pts2;
-    DownSampleTrajectory(buffer3_.Get<State>("/psins/state"), pts2);
+    DownSample(buffer3_.Get<State>("/psins/state"), pts2);
     ImPlot::PlotScatter("psins_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
 
     ImPlot::EndPlot();
@@ -164,8 +164,8 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::End();
 }
 
-template <typename _Sensor>
-void DownSampleTrajectory(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
+template <typename _Sensor, typename = std::enable_if_t<IsTrajectory_v<_Sensor>>>
+void DownSample(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
   if (single_buffer.empty()) return;
 
   std::string_view channel_name = single_buffer.channel_name_;

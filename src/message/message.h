@@ -52,6 +52,9 @@ struct IsTrajectory<State> : public std::true_type {};
 template <>
 struct IsTrajectory<Gnss> : public std::true_type {};
 
+template <typename _T>
+constexpr bool IsTrajectory_v = IsTrajectory<_T>::value;
+
 struct MessageBase {
   using SPtr = std::shared_ptr<MessageBase>;
   using SCPtr = std::shared_ptr<MessageBase const>;

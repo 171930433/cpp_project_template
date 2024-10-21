@@ -12,8 +12,8 @@
 #include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
 // 兼容ImPlotPoint
-#include <boost/geometry/geometries/register/point.hpp>
-BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
+// #include <boost/geometry/geometries/register/point.hpp>
+// BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
 
 MyViewer::MyViewer() {
   reader_ = std::make_shared<PsinsReader>();
@@ -30,9 +30,8 @@ void MyViewer::Init() {
   msf_.CreateModule<PsinsApp>();
 
   Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) {
-    buffer_[frame->channel_name_].push_back(frame);
-    // fused_states_.push_back(frame);
-    // ELOGD << frame->rpose_.translation().transpose();
+    // buffer_[frame->channel_name_].push_back(frame);
+    buffer3_.Append(frame);
   };
   msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
 
@@ -97,7 +96,8 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
       executor_.silent_async([this] {
         for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END && !exit_;
              it = reader_->ReadFrame()) {
-          buffer_[it.first->channel_name_].push_back(it.first);
+          // buffer_[it.first->channel_name_].push_back(it.first);
+          buffer3_.Append(it.first);
           msf_.ProcessData(it.first);
           while (stop_) { std::this_thread::sleep_for(std::chrono::duration(std::chrono::milliseconds(100))); }
         }
@@ -112,7 +112,8 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
     ELOGD << "stop_ = " << stop_;
   }
 
-  ImGui::LabelText("fused_state size", "%ld", buffer_["/fused_state"].size());
+  // ImGui::LabelText("fused_state size", "%ld", buffer_["/fused_state"].size());
+  ImGui::LabelText("fused_state size", "%ld", buffer3_.Get<State>("/fused_state").size());
 
   ImGui::End();
 
@@ -133,8 +134,12 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
       DownSampleTrajectory(buffer_["/fused_state"], pts1);
       ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
 
+      // std::vector<ImPlotPoint> pts2;
+      // DownSampleTrajectory(buffer_["/gnss"], pts2);
+      // ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
+
       std::vector<ImPlotPoint> pts2;
-      DownSampleTrajectory(buffer_["/gnss"], pts2);
+      DownSampleTrajectory2(buffer3_.Get<Gnss>("/gnss"), pts2);
       ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
     }
 

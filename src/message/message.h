@@ -59,6 +59,7 @@ struct MessageBase {
   using CFunc = std::function<void(SCPtr)>;
   virtual ~MessageBase() = default;
   virtual double t0() const = 0;
+  double t1() const { return t1_; };
   virtual std::string to_json() const = 0;
   std::string to_header_str() const {
     std::stringstream ss;

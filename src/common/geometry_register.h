@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/geometry/geometry.hpp>
-#include <boost/qvm.hpp>
+#include <boost/qvm/all.hpp>
 #include <eigen3/Eigen/Geometry>
 
 namespace bg = boost::geometry;

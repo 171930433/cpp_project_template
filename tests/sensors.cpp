@@ -153,6 +153,10 @@ TEST_F(MessageBufferTest, total_buffer3) {
   using SensorBuffer = TotalBuffer3<Gnss, Imu, State>;
   SensorBuffer buffer;
 
+  EXPECT_EQ(buffer.channel_types_.size(), 3);
+  auto channel_types_ = std::unordered_set<std::string_view>{ "Gnss", "Imu", "State" };
+  EXPECT_EQ(buffer.channel_types_, channel_types_);
+
   std::string_view imu_channel_name = imu->channel_name_;
   std::string_view gnss_channel_name = gnss->channel_name_;
 

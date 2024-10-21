@@ -155,17 +155,22 @@ class TotalBuffer3 : public std::tuple<MICBuffer<_Sensors>...> {
   using _Base = std::tuple<MICBuffer<_Sensors>...>;
 
 public:
+  TotalBuffer3() {
+    this->channel_types_ =
+      std::apply([this](auto&&... args) { return std::unordered_set<std::string_view>{ { args.channel_type_ }... }; },
+        *static_cast<_Base*>(this));
+
+    this->appenders_ = std::apply(
+      [](auto&&... args) {
+        return std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>>{ { args.channel_type_,
+          std::bind(&std::remove_reference_t<decltype(args)>::Append, &args, std::placeholders::_1) }... };
+      },
+      *static_cast<_Base*>(this));
+  }
+
   void Append(MessageBase::SPtr frame) {
-    constexpr static size_t _N = sizeof...(_Sensors);
-    static auto appenders = [this]<size_t... _I>(std::index_sequence<_I...>) {
-      return std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>>{
-        { { std::get<_I>(*this).channel_type_,
-          std::bind(&std::tuple_element_t<_I, _Base>::Append, &std::get<_I>(*this), std::placeholders::_1) }... }
-      };
-    }(std::make_index_sequence<_N>{});
 
     // 缓存通道与类型消息
-    channel_types_.insert(frame->channel_type_);
     channel_names_.insert(frame->channel_name_);
 
     // 限定区间的缓存
@@ -173,11 +178,11 @@ public:
     if (!msgs_.empty() && (msgs_.back()->t1_ - msgs_.front()->t1_) >= duration_s_) { msgs_.pop_front(); }
     msgs_.push_back(frame);
 
-    if (appenders.contains(frame->channel_type_)) { appenders[frame->channel_type_](frame); }
+    if (appenders_.contains(frame->channel_type_)) { appenders_[frame->channel_type_](frame); }
   }
 
-  template<typename _Sensor>
-  auto& Get(std::string_view channel_name) { 
+  template <typename _Sensor>
+  auto& Get(std::string_view channel_name) {
     return std::get<MICBuffer<_Sensor>>(*this)[channel_name];
   }
 
@@ -188,4 +193,5 @@ public:
 
 protected:
   std::mutex mtx_;
+  std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appenders_;
 };

@@ -68,7 +68,7 @@ protected:
   }
 
   void TearDown() override {}
-  TotalBuffer buffer;
+  TotalBuffer<Gnss, Imu, State> buffer;
   Message<Imu>::SPtr imu;
   Message<Imu>::SPtr imu2;
   Message<Gnss>::SPtr gnss;
@@ -76,9 +76,9 @@ protected:
 };
 
 TEST_F(MessageBufferTest, base) {
-  EXPECT_TRUE(buffer.size() == 4);
-  EXPECT_TRUE(buffer.channel_types_.size() == 2);
-  EXPECT_TRUE(buffer.channel_names_.size() == 2);
+  EXPECT_EQ(buffer.size(), 4);
+  EXPECT_EQ(buffer.channel_types_.size(), 3);
+  EXPECT_EQ(buffer.channel_names_.size(), 2);
 }
 
 TEST_F(MessageBufferTest, order_pushback) {
@@ -150,7 +150,7 @@ TEST(sensors, trajectory_demo) {
 }
 
 TEST_F(MessageBufferTest, total_buffer3) {
-  using SensorBuffer = TotalBuffer3<Gnss, Imu, State>;
+  using SensorBuffer = TotalBuffer<Gnss, Imu, State>;
   SensorBuffer buffer;
 
   EXPECT_EQ(buffer.channel_types_.size(), 3);

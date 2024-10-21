@@ -21,7 +21,7 @@ protected:
   std::shared_ptr<IDataReader> reader_;
 
 protected:
-  void DownSampleTrajectory(MessageBuffer const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
+  // void DownSampleTrajectory(MessageBuffer const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
   template <typename _Sensor>
   void DownSampleTrajectory2(bm::SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
 
@@ -33,8 +33,7 @@ protected:
   std::atomic_bool inited_{ false };
   std::deque<Message<State>::SCPtr> fused_states_;
   tf::Executor executor_;
-  Buffers buffer_;
-  TotalBuffer3<Gnss, Imu, State> buffer3_;
+  TotalBuffer<Gnss, Imu, State> buffer3_;
 };
 
 namespace bg = boost::geometry;

@@ -34,13 +34,13 @@ public:
     return module;
   }
 
-  TotalBuffer const* get_buffer() const { return &buffer_; }
+  SensorsBuffer const* get_buffer() const { return &buffer_; }
   Dispatcher* dispatcher() { return &dispatcher_; }
   ConfigManager* cm() { return &cm_; }
   std::deque<std::shared_ptr<AppBase>> const* modules() const { return &modules_; }
 
 public:
-  TotalBuffer buffer_;
+  SensorsBuffer buffer_;
   std::deque<std::shared_ptr<AppBase>> modules_;
   Dispatcher dispatcher_;
   ConfigManager cm_;

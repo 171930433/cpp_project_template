@@ -47,6 +47,8 @@ class SensorContainer : public multi_index_container<typename Message<_Sensor>::
 
 namespace bm = boost::multi_index;
 
+using bm::SensorContainer;
+
 template <typename _Sensor>
 class SensorMap : public std::unordered_map<std::string_view, bm::SensorContainer<_Sensor>> {
 public:
@@ -57,68 +59,45 @@ public:
   }
 };
 
-// template <typename _Sensor>
-// using MICBuffer = std::unordered_map<std::string_view, MICSensor2<_Sensor>>;
+// using MessageBuffer = boost::multi_index::SingleMIC;
+// using Buffers = std::unordered_map<std::string_view, MessageBuffer>;
 
-// class MessageBuffer : public boost::multi_index::SingleMIC {
+// class TotalBuffer : public boost::multi_index::MessageBaseConstSPContainer {
 // public:
-//   std::string channle_name_ = "";
-//   uint32_t rate_hz_ = 0;
-//   std::string device_name_ = "";
+//   // template <typename _Message>
+//   // void Append(std::shared_ptr<ChannelMsg<_Message>> frame);
+//   void Append(MessageBase::SCPtr frame);
 //   double duration_s_ = 1;
-// };
 
-// class Buffers : public std::unordered_map<std::string_view, MessageBuffer> {
-// public:
-//   void Append(MessageBase::SPtr frame) {
-//     channel_types_.insert(frame->channel_type_);
-//     (*this)[frame->channel_name_].push_back(frame);
-//   }
+// protected:
+//   std::mutex mtx_;
 
 // public:
 //   std::unordered_set<std::string_view> channel_names_;
 //   std::unordered_set<std::string_view> channel_types_;
 // };
 
-using MessageBuffer = boost::multi_index::SingleMIC;
-using Buffers = std::unordered_map<std::string_view, MessageBuffer>;
+// // template <typename _Message>
+// inline void TotalBuffer::Append(MessageBase::SCPtr frame) {
+//   // 缓存通道与类型消息
+//   channel_types_.insert(frame->channel_type_);
+//   channel_names_.insert(frame->channel_name_);
 
-class TotalBuffer : public boost::multi_index::MessageBaseConstSPContainer {
-public:
-  // template <typename _Message>
-  // void Append(std::shared_ptr<ChannelMsg<_Message>> frame);
-  void Append(MessageBase::SCPtr frame);
-  double duration_s_ = 1;
-
-protected:
-  std::mutex mtx_;
-
-public:
-  std::unordered_set<std::string_view> channel_names_;
-  std::unordered_set<std::string_view> channel_types_;
-};
-
-// template <typename _Message>
-inline void TotalBuffer::Append(MessageBase::SCPtr frame) {
-  // 缓存通道与类型消息
-  channel_types_.insert(frame->channel_type_);
-  channel_names_.insert(frame->channel_name_);
-
-  // 限定区间的缓存
-  std::lock_guard<std::mutex> lg(mtx_);
-  if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
-  this->push_back(frame);
-}
+//   // 限定区间的缓存
+//   std::lock_guard<std::mutex> lg(mtx_);
+//   if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
+//   this->push_back(frame);
+// }
 
 
 template <typename... _Sensors>
-class TotalBuffer3
+class TotalBuffer
   : public boost::multi_index::MessageBaseConstSPContainer
   , public std::tuple<SensorMap<_Sensors>...> {
   using _Base = std::tuple<SensorMap<_Sensors>...>;
 
 public:
-  TotalBuffer3() {
+  TotalBuffer() {
     this->channel_types_ =
       std::apply([this](auto&&... args) { return std::unordered_set<std::string_view>{ { args.channel_type_ }... }; },
         *static_cast<_Base*>(this));
@@ -157,3 +136,5 @@ protected:
   std::mutex mtx_;
   std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appenders_;
 };
+
+using SensorsBuffer = TotalBuffer<Gnss,Imu,State>;

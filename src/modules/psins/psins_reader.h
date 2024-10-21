@@ -59,7 +59,7 @@ public:
     buffer_.push_back({ convert::ToState(&reader_->DS0), IOState::OK });
   }
   std::pair<MessageBase::SPtr, IOState> ReadFrame() override;
-  static SensorContainer<State> LoadResult(std::string const& path);
+  static void LoadResult(std::string const& path,SensorContainer<State>& result);
 
 private:
   std::unique_ptr<CFileRdSr> reader_;
@@ -91,8 +91,7 @@ inline std::pair<MessageBase::SPtr, IDataReader::IOState> PsinsReader::ReadFrame
   return { imu, state };
 }
 
-SensorContainer<State> PsinsReader::LoadResult(std::string const& path) {
-  SensorContainer<State> result;
+void PsinsReader::LoadResult(std::string const& path,SensorContainer<State>& result) {
   FILE* fp = fopen(path.c_str(), "rb"); // must use binary mode
 
   int const size = 19;
@@ -113,5 +112,5 @@ SensorContainer<State> PsinsReader::LoadResult(std::string const& path) {
 
     result.push_back(state);
   }
-  return result;
+  ELOGD << "load " << result.size() << "msgs.";
 }

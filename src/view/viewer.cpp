@@ -10,10 +10,14 @@
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/box.hpp>
 #include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
-// 兼容ImPlotPoint
-// #include <boost/geometry/geometries/register/point.hpp>
-// BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
+BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
+namespace bg = boost::geometry;
+namespace bgm = boost::geometry::model;
+
+template <typename _Sensor>
+void DownSampleTrajectory(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample);
 
 MyViewer::MyViewer() {
   reader_ = std::make_shared<PsinsReader>();
@@ -96,7 +100,6 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
       executor_.silent_async([this] {
         for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END && !exit_;
              it = reader_->ReadFrame()) {
-          // buffer_[it.first->channel_name_].push_back(it.first);
           buffer3_.Append(it.first);
           msf_.ProcessData(it.first);
           while (stop_) { std::this_thread::sleep_for(std::chrono::duration(std::chrono::milliseconds(100))); }
@@ -120,32 +123,25 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::Begin("trj");
 
   auto plot_flag = ImPlotFlags_Equal;
-  static SensorContainer<State> psins_results;
   if (ImGui::Button("load pins results")) {
-    if (psins_results.empty()) {
-      psins_results = PsinsReader::LoadResult("/home/gsk/pro/cpp_project_template/data/ins.bin");
-    }
-    ELOGD << "psins_results size = " << psins_results.size();
+    auto& pins_re = buffer3_.Get<State>("/psins/state");
+    if (pins_re.empty()) { PsinsReader::LoadResult("/home/gsk/pro/cpp_project_template/data/ins.bin", pins_re); }
   }
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
     if (stop_) {
-      // std::vector<ImPlotPoint> pts1;
-      // DownSampleTrajectory(buffer_["/fused_state"], pts1);
-      // ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
-
-      // std::vector<ImPlotPoint> pts2;
-      // DownSampleTrajectory(buffer_["/gnss"], pts2);
-      // ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
+      std::vector<ImPlotPoint> pts1;
+      DownSampleTrajectory(buffer3_.Get<State>("/fused_state"), pts1);
+      ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
 
       std::vector<ImPlotPoint> pts2;
-      DownSampleTrajectory2(buffer3_.Get<Gnss>("/gnss"), pts2);
+      DownSampleTrajectory(buffer3_.Get<Gnss>("/gnss"), pts2);
       ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
     }
 
-    // std::vector<ImPlotPoint> pts2;
-    // DownSampleTrajectory(psins_results, pts2);
-    // ImPlot::PlotScatter("psins_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
+    std::vector<ImPlotPoint> pts2;
+    DownSampleTrajectory(buffer3_.Get<State>("/psins/state"), pts2);
+    ImPlot::PlotScatter("psins_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
 
     ImPlot::EndPlot();
   }
@@ -168,88 +164,51 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::End();
 }
 
-// void MyViewer::DownSampleTrajectory(MessageBuffer const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
-//   namespace bg = boost::geometry;
-//   using Point_t = bg::model::d2::point_xy<double>;
-//   using Segmnet_t = bg::model::segment<Point_t>;
-//   using Box_t = bg::model::box<Point_t>;
+template <typename _Sensor>
+void DownSampleTrajectory(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
+  if (single_buffer.empty()) return;
 
-//   //
-//   if (single_buffer.empty()) return;
-//   std::string_view channel_name = single_buffer.front()->channel_name_;
-//   static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
+  std::string_view channel_name = single_buffer.front()->channel_name_;
+  static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
 
-//   auto& raw_pts = down_pts[channel_name];
+  auto& raw_pts = down_pts[channel_name];
 
-//   int raw_pts_size = raw_pts.size();
-//   if (raw_pts_size < single_buffer.size()) {
-//     raw_pts.resize(single_buffer.size());
+  int raw_pts_size = raw_pts.size();
+  if (raw_pts_size < single_buffer.size()) {
+    raw_pts.resize(single_buffer.size());
 
-//     // 拷贝出所有点
-//     for (int i = raw_pts_size; i < single_buffer.size(); ++i) {
-//       auto& pt = single_buffer[i];
-//       Eigen::Isometry3d const* rpose = nullptr;
-//       if (pt->channel_type_ == ylt::reflection::type_string<Gnss>()) {
-//         auto frame = std::dynamic_pointer_cast<Message<Gnss> const>(pt);
-//         rpose = &frame->rpose_;
-//       } else if (pt->channel_type_ == ylt::reflection::type_string<State>()) {
-//         auto frame = std::dynamic_pointer_cast<Message<State> const>(pt);
-//         rpose = &frame->rpose_;
-//       }
-//       auto& trans = rpose->translation();
-//       raw_pts[i] = { trans.x(), trans.y() };
-//     }
-//   }
+    // 拷贝出所有点
+    for (int i = raw_pts_size; i < single_buffer.size(); ++i) {
+      auto const& pose = single_buffer[i]->rpose_;
+      raw_pts[i] = { pose(0, 3), pose(1, 3) };
+    }
+  }
 
-//   // 1 获得视口范围,比例尺
-//   auto range = ImPlot::GetPlotLimits();
-//   Box_t box{ Point_t{ range.X.Min, range.Y.Min }, Point_t{ range.X.Max, range.Y.Max } };
-//   // 获取绘图区域的起始位置和大小（像素单位）
-//   ImVec2 plot_pos = ImPlot::GetPlotPos();          // 左上角的位置（像素单位）
-//   ImVec2 plot_size = ImPlot::GetPlotSize();        // 绘图区的大小（像素单位）
-//   double scale_ppm = plot_size.x / range.X.Size(); // pixel per meter
-//   double scale_mpp = range.X.Size() / plot_size.x; // meter per pixel
+  // 1 获得视口范围,比例尺
+  auto range = ImPlot::GetPlotLimits();
+  bgm::box<ImPlotPoint> box{ range.Min(), range.Max() };
+  // 获取绘图区域的起始位置和大小（像素单位）
+  ImVec2 plot_pos = ImPlot::GetPlotPos();          // 左上角的位置（像素单位）
+  ImVec2 plot_size = ImPlot::GetPlotSize();        // 绘图区的大小（像素单位）
+  double scale_ppm = plot_size.x / range.X.Size(); // pixel per meter
+  double scale_mpp = range.X.Size() / plot_size.x; // meter per pixel
 
-//   // 最终结果
-//   // std::vector<ImPlotPoint> pts_downsample;
-//   pts_downsample.reserve(raw_pts.size());
+  // 最终结果
+  pts_downsample.reserve(raw_pts.size());
 
-//   int const rate = 200;
-//   int last_index = 0; // 上一个被采样索引
-//   pts_downsample.push_back(raw_pts[0]);
-//   // for (int i = 0; i < raw_pts.size(); i += rate) {
-//   //   auto& pt = raw_pts[i];
-//   //   int actual_size = (i + rate < raw_pts.size() ? rate : (raw_pts.size() - i));
-//   //   auto& last_pt = raw_pts[i + actual_size];
+  pts_downsample.push_back(raw_pts[0]);
 
-//   //   // 如果未发生覆盖,从 [last_index,i)
-//   //   double const dx = std::abs(pt.x - last_pt.x);
-//   //   double const dy = std::abs(pt.y - last_pt.y);
-//   //   int pixel_n = std::min(actual_size, (int)(std::hypotf(dx, dy) * scale_ppm)); // 需要这么些个点
+  for (int i = 0; i < raw_pts.size(); ++i) {
+    auto& pt = raw_pts[i];
+    auto& last_pt = pts_downsample.back();
 
-//   //   // 判断last和当前是否在视口内
-//   //   Segmnet_t segment{ Point_t{ last_pt.x, last_pt.y }, Point_t{ pt.x, pt.y } };
+    if (!bg::within(pt, box)) { continue; }
 
-//   //   if (!bg::intersects(segment, box)) { continue; }
+    double const dx = std::abs(pt.x - last_pt.x);
+    double const dy = std::abs(pt.y - last_pt.y);
 
-//   //   // 在范围且与上一个点的pixel差异在1以上
-//   //   if (pixel_n >= 1) { PointLttb::Downsample(&raw_pts[i], actual_size, std::back_inserter(pts_downsample), pixel_n);
-//   //   }
-//   // }
+    if (dx < scale_mpp && dy < scale_mpp) { continue; }
 
-//   for (int i = 0; i < raw_pts.size(); ++i) {
-//     auto& pt = raw_pts[i];
-//     auto& last_pt = pts_downsample.back();
-
-//     if (!bg::within(pt, box)) { continue; }
-
-//     double const dx = std::abs(pt.x - last_pt.x);
-//     double const dy = std::abs(pt.y - last_pt.y);
-
-//     if (dx < scale_mpp && dy < scale_mpp) { continue; }
-
-//     pts_downsample.push_back(pt);
-//   }
-
-//   // ELOGD << "raw raw_pts = " << single_buffer.size() << " downsample pts = " << pts_downsample.size();
-// }
+    pts_downsample.push_back(pt);
+  }
+}

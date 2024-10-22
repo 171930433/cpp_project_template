@@ -11,7 +11,7 @@ BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
 namespace bg = boost::geometry;
 namespace bgm = boost::geometry::model;
 
-template <typename _Sensor, typename = std::enable_if_t<IsTrajectory_v<_Sensor>>>
+template <typename _Sensor, std::enable_if_t<IsTrajectory_v<_Sensor>>* = nullptr>
 void DownSample(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
   if (single_buffer.empty()) return;
 

@@ -67,31 +67,9 @@ class TotalBuffer
   using _Base = std::tuple<SensorMap<_Sensors>...>;
 
 public:
-  TotalBuffer() {
-    this->channel_types_ =
-      std::apply([this](auto&&... args) { return std::unordered_set<std::string_view>{ { args.channel_type_ }... }; },
-        *static_cast<_Base*>(this));
+  TotalBuffer();
 
-    this->appenders_ = std::apply(
-      [](auto&&... args) {
-        return std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>>{ { args.channel_type_,
-          std::bind(&std::remove_reference_t<decltype(args)>::Append, &args, std::placeholders::_1) }... };
-      },
-      *static_cast<_Base*>(this));
-  }
-
-  void Append(MessageBase::SCPtr frame) {
-
-    // 缓存通道与类型消息
-    channel_names_.insert(frame->channel_name_);
-
-    // 限定区间的缓存
-    std::lock_guard<std::mutex> lg(mtx_);
-    if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
-    this->push_back(frame);
-
-    if (appenders_.contains(frame->channel_type_)) { appenders_[frame->channel_type_](frame); }
-  }
+  void Append(MessageBase::SCPtr frame);
 
   template <typename _Sensor>
   auto& Get(std::string_view channel_name) {
@@ -106,6 +84,32 @@ protected:
   std::mutex mtx_;
   std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>> appenders_;
 };
+
+template <typename... _Sensors>
+inline void TotalBuffer<_Sensors...>::Append(MessageBase::SCPtr frame) {
+  channel_names_.insert(frame->channel_name_);
+
+  // 限定区间的缓存
+  std::lock_guard<std::mutex> lg(mtx_);
+  if (!this->empty() && (this->back()->t1_ - this->front()->t1_) >= duration_s_) { this->pop_front(); }
+  this->push_back(frame);
+
+  if (appenders_.contains(frame->channel_type_)) { appenders_[frame->channel_type_](frame); }
+}
+
+template <typename... _Sensors>
+inline TotalBuffer<_Sensors...>::TotalBuffer() {
+  this->channel_types_ =
+    std::apply([this](auto&&... args) { return std::unordered_set<std::string_view>{ { args.channel_type_ }... }; },
+      *static_cast<_Base*>(this));
+
+  this->appenders_ = std::apply(
+    [](auto&&... args) {
+      return std::unordered_map<std::string_view, std::function<void(MessageBase::SCPtr)>>{ { args.channel_type_,
+        std::bind(&std::remove_reference_t<decltype(args)>::Append, &args, std::placeholders::_1) }... };
+    },
+    *static_cast<_Base*>(this));
+}
 
 using SensorsBuffer = TotalBuffer<Gnss, Imu, State>;
 

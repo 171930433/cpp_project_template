@@ -12,45 +12,80 @@ TEST(format, base) {
   EXPECT_EQ(fmt::format("[{}]", fmt::join(ints, ",")), "[1,2,3]");
 }
 
-namespace ns1 {
 enum class film { house_of_cards, american_beauty, se7en = 7 };
-
-auto format_as(film f) {
-  return fmt::underlying(f);
-}
-
 enum class Color { red, green, blue };
+auto format_as(film f) { return fmt::underlying(f); }
 
-}
 template <>
-struct fmt::formatter<ns1::Color> : formatter<string_view> {
+struct fmt::formatter<Color> : formatter<string_view> {
   // using namespace ns1;
-  auto format(ns1::Color color, format_context& ctx) const {
+  auto format(Color color, format_context& ctx) const {
     string_view name = "unknown";
     switch (color) {
-      case ns1::Color::red: name = "red"; break;
-      case ns1::Color::green: name = "green"; break;
-      case ns1::Color::blue: name = "blue"; break;
+      case Color::red: name = "red"; break;
+      case Color::green: name = "green"; break;
+      case Color::blue: name = "blue"; break;
     }
     return formatter<string_view>::format(name, ctx);
   }
 };
 
 TEST(format, enum) {
-  ns1::film fm = ns1::film::se7en;
+  film fm = film::se7en;
   EXPECT_EQ(fmt::format("{}", fm), "7");
 
-  ns1::Color color = ns1::Color::blue;
+  Color color = Color::blue;
   EXPECT_EQ(fmt::format("{}", color), "blue");
 }
 
-template <typename _Scalar, int _row, int _col>
-struct fmt::formatter<Eigen::Matrix<_Scalar, _row, _col>, std::enable_if_t<(_row != 1 && _col != 1), char>>
-  : ostream_formatter {
-  auto format(Eigen::Matrix<_Scalar, _row, _col> const& value, format_context& ctx) const {
-    return ostream_formatter::format(value.reshaped(1, value.size()), ctx);
-  }
+struct AS {
+  virtual ~AS() = default;
+  virtual std::string name() const { return "A"; }
 };
+
+struct BS : AS {
+  virtual std::string name() const { return "B"; }
+};
+
+template <typename _T>
+struct fmt::formatter<_T, std::enable_if_t<std::is_base_of_v<AS, _T>, char>> : formatter<std::string> {
+  auto format(AS const& elem, format_context& ctx) const { return formatter<std::string>::format(elem.name(), ctx); }
+};
+
+template <typename _T>
+struct fmt::formatter<_T,
+  std::enable_if_t<std::is_base_of_v<Eigen::DenseBase<_T>, _T>
+      && (Eigen::internal::traits<_T>::RowsAtCompileTime != 1 && Eigen::internal::traits<_T>::ColsAtCompileTime != 1),
+    char>> : ostream_formatter {
+
+  enum class EigenFmt { None, Clean };
+
+  constexpr auto parse(format_parse_context& ctx) {
+    auto it = ctx.begin();
+    while (it != ctx.end() && *it != '}') {
+      if (*it == 'c') { fmt_ = EigenFmt::Clean; }
+      ++it;
+    }
+    return it;
+  }
+
+  auto format(_T const& elem, format_context& ctx) const {
+    Eigen::IOFormat io{};
+
+    switch (fmt_) {
+      case EigenFmt::Clean: io = Eigen::IOFormat(4, 0, ", ", "\n", "[", "]"); break;
+    }
+    return ostream_formatter::format(elem.reshaped(1, elem.size()).format(io), ctx);
+  }
+  EigenFmt fmt_ = EigenFmt::None;
+};
+
+TEST(format, type) {
+  AS a;
+  BS b;
+  EXPECT_EQ(fmt::format("{}", a), "A");
+  EXPECT_EQ(fmt::format("{}", b), "B");
+}
 
 TEST(format, eigen) {
 
@@ -61,4 +96,5 @@ TEST(format, eigen) {
   Eigen::Matrix2i mat22;
   mat22 << 1, 2, 3, 4;
   EXPECT_EQ(fmt::format("[{}]", mat22), "[1 3 2 4]");
+  EXPECT_EQ(fmt::format("{:c}", mat22), "[1, 3, 2, 4]");
 }

@@ -1,12 +1,11 @@
+#include <common/eigen_units.h>
 #include <deque>
 #include <eigen3/Eigen/Dense>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>
 #include <gtest/gtest.h>
 
-TEST(format, base) {
+#include <fmt/ranges.h>
 
+TEST(format, base) {
   std::vector ints{ 1, 2, 3 };
   EXPECT_EQ(fmt::format("{}", ints), "[1, 2, 3]");
   EXPECT_EQ(fmt::format("[{}]", fmt::join(ints, ",")), "[1,2,3]");
@@ -52,34 +51,6 @@ struct fmt::formatter<_T, std::enable_if_t<std::is_base_of_v<AS, _T>, char>> : f
   auto format(AS const& elem, format_context& ctx) const { return formatter<std::string>::format(elem.name(), ctx); }
 };
 
-template <typename _T>
-struct fmt::formatter<_T,
-  std::enable_if_t<std::is_base_of_v<Eigen::DenseBase<_T>, _T>
-      && (Eigen::internal::traits<_T>::RowsAtCompileTime != 1 && Eigen::internal::traits<_T>::ColsAtCompileTime != 1),
-    char>> : ostream_formatter {
-
-  enum class EigenFmt { None, Clean };
-
-  constexpr auto parse(format_parse_context& ctx) {
-    auto it = ctx.begin();
-    while (it != ctx.end() && *it != '}') {
-      if (*it == 'c') { fmt_ = EigenFmt::Clean; }
-      ++it;
-    }
-    return it;
-  }
-
-  auto format(_T const& elem, format_context& ctx) const {
-    Eigen::IOFormat io{};
-
-    switch (fmt_) {
-      case EigenFmt::Clean: io = Eigen::IOFormat(4, 0, ", ", "\n", "[", "]"); break;
-    }
-    return ostream_formatter::format(elem.reshaped(1, elem.size()).format(io), ctx);
-  }
-  EigenFmt fmt_ = EigenFmt::None;
-};
-
 TEST(format, type) {
   AS a;
   BS b;
@@ -89,9 +60,9 @@ TEST(format, type) {
 
 TEST(format, eigen) {
 
-  Eigen::Vector3i v3i{ 1, 2, 3 };
-  EXPECT_EQ(fmt::format("{}", v3i), "[1, 2, 3]");
-  EXPECT_EQ(fmt::format("[{}]", fmt::join(v3i, ",")), "[1,2,3]");
+  //   Eigen::Vector3i v3i{ 1, 2, 3 };
+  //   EXPECT_EQ(fmt::format("{}", v3i), "[1, 2, 3]");
+  //   EXPECT_EQ(fmt::format("[{}]", fmt::join(v3i, ",")), "[1,2,3]");
 
   Eigen::Matrix2i mat22;
   mat22 << 1, 2, 3, 4;

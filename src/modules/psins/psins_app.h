@@ -20,7 +20,8 @@ public:
     dispatcher()->RegisterReader("/init_state", &PsinsApp::ProcessInitState, this);
 
     //
-    kf_app_ = std::make_unique<CKFApp>(TS);
+    dt_ = 1.0 / 125;
+    kf_app_ = std::make_unique<CKFApp>(dt_);
     // kf_app_->Init(CSINS(pDS0->att, pDS0->gpsvn, pDS0->gpspos, pDS0->t));
   }
   void ProcessImu(std::shared_ptr<const Message<Imu>> frame);
@@ -30,6 +31,7 @@ public:
 private:
   std::unique_ptr<CKFApp> kf_app_;
   std::atomic_bool inited_{ false };
+  double dt_ = 0.01;
 };
 
 inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
@@ -38,7 +40,7 @@ inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
 
   auto acc = convert::ToCVect3(frame->msg_.acc_);
   auto gyr = convert::ToCVect3(frame->msg_.gyr_);
-  kf_app_->Update(&gyr, &acc, 1, TS);
+  kf_app_->Update(&gyr, &acc, 1, dt_);
 
   // 构造输出
   auto re = convert::ToState(kf_app_->sins);

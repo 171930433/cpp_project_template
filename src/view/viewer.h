@@ -14,7 +14,7 @@ public:
 
 protected:
   MultuiSensorFusion msf_;
-  std::shared_ptr<IDataReader> reader_;
+  std::unique_ptr<IDataReader> reader_;
 
 protected:
 

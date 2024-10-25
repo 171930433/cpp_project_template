@@ -9,7 +9,7 @@
 
 #include "down_sample.h"
 
-MyViewer::MyViewer() { reader_ = std::make_shared<PsinsReader>(); }
+MyViewer::MyViewer() { reader_ = std::make_unique<PsinsReader>(); }
 
 MyViewer::~MyViewer() {
   stop_ = false;

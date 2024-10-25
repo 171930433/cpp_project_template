@@ -24,7 +24,7 @@ void MyViewer::Init() {
 
   Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) {
     // buffer_[frame->channel_name_].push_back(frame);
-    buffer3_.Append(frame);
+    buffers_.Append(frame);
   };
   msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
 
@@ -96,7 +96,7 @@ void MyViewer::ProjectWindow() {
       executor_.silent_async([this] {
         for (auto it = reader_->ReadFrame(); it.second != IDataReader::IOState::END && !exit_;
              it = reader_->ReadFrame()) {
-          buffer3_.Append(it.first);
+          buffers_.Append(it.first);
           msf_.ProcessData(it.first);
           while (stop_) { std::this_thread::sleep_for(std::chrono::duration(std::chrono::milliseconds(100))); }
         }
@@ -112,7 +112,7 @@ void MyViewer::ProjectWindow() {
   }
 
   // ImGui::LabelText("fused_state size", "%ld", buffer_["/fused_state"].size());
-  ImGui::LabelText("fused_state size", "%ld", buffer3_.Get<State>("/fused_state").size());
+  ImGui::LabelText("fused_state size", "%ld", buffers_.Get<State>("/fused_state").size());
 
   ImGui::End();
 }
@@ -120,6 +120,7 @@ void MyViewer::ProjectWindow() {
 template <typename _Sensor, std::enable_if_t<IsTrajectory_v<_Sensor>>* = nullptr>
 void PlotTrajectory(SensorContainer<_Sensor> const& single_buffer) {
   auto const& pts = DownSample(single_buffer);
+  if (pts.empty()) return;
   ImPlot::PlotScatter(single_buffer.channel_name_.data(), &pts[0].x, &pts[0].y, pts.size(), 0, 0, sizeof(ImPlotPoint));
 }
 
@@ -128,18 +129,15 @@ void MyViewer::TrajectoryWindow() {
 
   auto plot_flag = ImPlotFlags_Equal;
   if (ImGui::Button("load pins results")) {
-    auto& pins_re = buffer3_.Get<State>("/psins/state");
+    auto& pins_re = buffers_.Get<State>("/psins/state");
     if (pins_re.empty()) { PsinsReader::LoadResult("/home/gsk/pro/cpp_project_template/data/ins.bin", pins_re); }
   }
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
-    PlotTrajectory(buffer3_.Get<State>("/fused_state"));
+    PlotTrajectory(buffers_.Get<State>("/fused_state"));
+    PlotTrajectory(buffers_.Get<Gnss>("/gnss"));
 
-    auto const& pts2 = DownSample(buffer3_.Get<Gnss>("/gnss"));
-    ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
-
-    auto const& pts3 = DownSample(buffer3_.Get<State>("/psins/state"));
-    ImPlot::PlotScatter("psins_scatter", &pts3[0].x, &pts3[0].y, pts3.size(), 0, 0, sizeof(ImPlotPoint));
+    PlotTrajectory(buffers_.Get<State>("/psins/state"));
 
     ImPlot::EndPlot();
   }

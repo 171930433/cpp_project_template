@@ -6,21 +6,29 @@
 #include <boost/geometry/geometries/register/point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
 #include <implot.h>
+#include <message/message.h>
+
+inline bool operator==(ImPlotRect const& r1, ImPlotRect const& r2) {
+  return r1.Contains(r2.Min()) && r1.Contains(r2.Max()) && r2.Contains(r1.Min()) && r2.Contains(r1.Max());
+}
 
 BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
 namespace bg = boost::geometry;
 namespace bgm = boost::geometry::model;
 
 template <typename _Sensor, std::enable_if_t<IsTrajectory_v<_Sensor>>* = nullptr>
-std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& single_buffer) {
+inline std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& single_buffer) {
   std::vector<ImPlotPoint> pts_downsample;
 
   if (single_buffer.empty()) return {};
 
   std::string_view channel_name = single_buffer.channel_name_;
+  static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> all_pts;
   static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
 
-  auto& raw_pts = down_pts[channel_name];
+  // 判断待显示点是否发生改变
+  bool raw_pts_changed = false;
+  auto& raw_pts = all_pts[channel_name];
 
   int raw_pts_size = raw_pts.size();
   {
@@ -35,13 +43,24 @@ std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& single_buffe
         auto const& pose = single_buffer[i]->rpose_;
         raw_pts[i] = { pose(0, 3), pose(1, 3) };
       }
+
+      raw_pts_changed = true;
     }
   }
 
-  // 1 获得视口范围,比例尺
-  auto range = ImPlot::GetPlotLimits();
-  bgm::box<ImPlotPoint> box{ range.Min(), range.Max() };
-  // 获取绘图区域的起始位置和大小（像素单位）
+  // 判断plot显示区域是否改变
+  bool viewport_changed = false;
+  static ImPlotRect last_viewpor{};
+  auto range = ImPlot::GetPlotLimits(); // 1 获得视口范围,比例尺
+
+  if (last_viewpor != range) {
+    viewport_changed = true;
+    last_viewpor = range;
+  }
+
+  if (!raw_pts_changed && !viewport_changed) { return down_pts[channel_name]; }
+
+  // bgm::box<ImPlotPoint> box{ range.Min(), range.Max() };
   ImVec2 plot_pos = ImPlot::GetPlotPos();          // 左上角的位置（像素单位）
   ImVec2 plot_size = ImPlot::GetPlotSize();        // 绘图区的大小（像素单位）
   double scale_ppm = plot_size.x / range.X.Size(); // pixel per meter
@@ -56,7 +75,8 @@ std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& single_buffe
     auto& pt = raw_pts[i];
     auto& last_pt = pts_downsample.back();
 
-    if (!bg::within(pt, box)) { continue; }
+    // if (!bg::within(pt, box)) { continue; }
+    if (!range.Contains(pt)) { continue; }
 
     double const dx = std::abs(pt.x - last_pt.x);
     double const dy = std::abs(pt.y - last_pt.y);
@@ -65,6 +85,8 @@ std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& single_buffe
 
     pts_downsample.push_back(pt);
   }
+
+  down_pts[channel_name] = pts_downsample;
 
   return pts_downsample;
 }

@@ -27,6 +27,6 @@ protected:
   std::atomic_bool stop_{ false };
   std::atomic_bool exit_{ false };
   std::atomic_bool inited_{ false };
-  TotalBuffer<Gnss, Imu, State> buffer3_;
+  TotalBuffer<Gnss, Imu, State> buffers_;
   tf::Executor executor_;
 };

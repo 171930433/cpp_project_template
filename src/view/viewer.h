@@ -1,11 +1,7 @@
 #pragma once
 
-// #include "data/reader.h"
 #include "injector/scene.h"
 #include "mylib.h"
-
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/register/point.hpp>
 
 class IDataReader;
 

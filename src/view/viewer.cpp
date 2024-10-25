@@ -46,7 +46,14 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   if (this->imgui_demo_) { ImGui::ShowDemoWindow(&this->imgui_demo_); }
   if (this->implot_demo_) { ImPlot::ShowDemoWindow(&this->implot_demo_); }
 
-  // project window
+  ProjectWindow();
+
+  TrajectoryWindow();
+
+  Plot2dWindow();
+}
+
+void MyViewer::ProjectWindow() {
   ImGui::Begin("Project");
   if (FLAGS_data_dir.empty()) { FLAGS_data_dir = "/home/gsk/pro/cpp_project_template/data/mimuattgps.bin"; }
   std::string data_str = FLAGS_data_dir;
@@ -108,7 +115,9 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   ImGui::LabelText("fused_state size", "%ld", buffer3_.Get<State>("/fused_state").size());
 
   ImGui::End();
+}
 
+void MyViewer::TrajectoryWindow() {
   ImGui::Begin("trj");
 
   auto plot_flag = ImPlotFlags_Equal;
@@ -131,10 +140,12 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   }
 
   ImGui::End();
+}
 
+void MyViewer::Plot2dWindow() {
   ImGui::Begin("plot 2d");
 
-  if (ImPlot::BeginPlot("##CustomRend", ImVec2(-1, -1), plot_flag)) {
+  if (ImPlot::BeginPlot("##CustomRend", ImVec2(-1, -1), ImPlotFlags_Equal)) {
     ImVec2 cntr = ImPlot::PlotToPixels(ImPlotPoint(0.5f, 0.5f));
     ImVec2 rmin = ImPlot::PlotToPixels(ImPlotPoint(0.25f, 0.75f));
     ImVec2 rmax = ImPlot::PlotToPixels(ImPlotPoint(0.75f, 0.25f));

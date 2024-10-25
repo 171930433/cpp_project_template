@@ -17,6 +17,9 @@ protected:
   std::unique_ptr<IDataReader> reader_;
 
 protected:
+  void ProjectWindow();
+  void TrajectoryWindow();
+  void Plot2dWindow();
 
 protected:
   bool imgui_demo_ = false;

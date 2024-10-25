@@ -117,6 +117,12 @@ void MyViewer::ProjectWindow() {
   ImGui::End();
 }
 
+template <typename _Sensor, std::enable_if_t<IsTrajectory_v<_Sensor>>* = nullptr>
+void PlotTrajectory(SensorContainer<_Sensor> const& single_buffer) {
+  auto const& pts = DownSample(single_buffer);
+  ImPlot::PlotScatter(single_buffer.channel_name_.data(), &pts[0].x, &pts[0].y, pts.size(), 0, 0, sizeof(ImPlotPoint));
+}
+
 void MyViewer::TrajectoryWindow() {
   ImGui::Begin("trj");
 
@@ -127,8 +133,7 @@ void MyViewer::TrajectoryWindow() {
   }
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
-    auto const& pts1 = DownSample(buffer3_.Get<State>("/fused_state"));
-    ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
+    PlotTrajectory(buffer3_.Get<State>("/fused_state"));
 
     auto const& pts2 = DownSample(buffer3_.Get<Gnss>("/gnss"));
     ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));

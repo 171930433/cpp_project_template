@@ -9,14 +9,12 @@
 
 #include "down_sample.h"
 
-
-MyViewer::MyViewer() {
-  reader_ = std::make_shared<PsinsReader>();
-}
+MyViewer::MyViewer() { reader_ = std::make_shared<PsinsReader>(); }
 
 MyViewer::~MyViewer() {
-  stop_ = true;
+  stop_ = false;
   exit_ = true;
+  executor_.wait_for_all();
 };
 
 void MyViewer::Init() {
@@ -120,19 +118,14 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
   }
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
-    if (stop_) {
-      std::vector<ImPlotPoint> pts1;
-      DownSample(buffer3_.Get<State>("/fused_state"), pts1);
-      ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
+    auto const& pts1 = DownSample(buffer3_.Get<State>("/fused_state"));
+    ImPlot::PlotScatter("scatter", &pts1[0].x, &pts1[0].y, pts1.size(), 0, 0, sizeof(ImPlotPoint));
 
-      std::vector<ImPlotPoint> pts2;
-      DownSample(buffer3_.Get<Gnss>("/gnss"), pts2);
-      ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
-    }
+    auto const& pts2 = DownSample(buffer3_.Get<Gnss>("/gnss"));
+    ImPlot::PlotScatter("gnss_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
 
-    std::vector<ImPlotPoint> pts2;
-    DownSample(buffer3_.Get<State>("/psins/state"), pts2);
-    ImPlot::PlotScatter("psins_scatter", &pts2[0].x, &pts2[0].y, pts2.size(), 0, 0, sizeof(ImPlotPoint));
+    auto const& pts3 = DownSample(buffer3_.Get<State>("/psins/state"));
+    ImPlot::PlotScatter("psins_scatter", &pts3[0].x, &pts3[0].y, pts3.size(), 0, 0, sizeof(ImPlotPoint));
 
     ImPlot::EndPlot();
   }
@@ -154,4 +147,3 @@ void MyViewer::draw(vtkObject* caller, unsigned long eventId, void* callData) {
 
   ImGui::End();
 }
-

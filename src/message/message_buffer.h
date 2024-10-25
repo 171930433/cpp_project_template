@@ -37,6 +37,7 @@ class SensorContainer : public multi_index_container<typename Message<_Sensor>::
 public:
   std::string_view channel_name_;
   static constexpr const std::string_view channel_type_ = ylt::reflection::type_string<_Sensor>();
+  mutable std::shared_mutex mtx_;
 };
 
 // clang-format on
@@ -56,7 +57,11 @@ public:
 
     auto& container = (*this)[frame->channel_name_];
     if (container.empty()) { container.channel_name_ = frame->channel_name_; }
-    container.push_back(std::dynamic_pointer_cast<Message<_Sensor> const>(frame));
+
+    {
+      std::lock_guard<std::shared_mutex> lg(container.mtx_);
+      container.push_back(std::dynamic_pointer_cast<Message<_Sensor> const>(frame));
+    }
   }
 };
 

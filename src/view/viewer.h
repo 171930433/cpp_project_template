@@ -28,7 +28,6 @@ protected:
   std::atomic_bool stop_{ false };
   std::atomic_bool exit_{ false };
   std::atomic_bool inited_{ false };
-  std::deque<Message<State>::SCPtr> fused_states_;
-  tf::Executor executor_;
   TotalBuffer<Gnss, Imu, State> buffer3_;
+  tf::Executor executor_;
 };

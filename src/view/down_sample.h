@@ -12,8 +12,10 @@ namespace bg = boost::geometry;
 namespace bgm = boost::geometry::model;
 
 template <typename _Sensor, std::enable_if_t<IsTrajectory_v<_Sensor>>* = nullptr>
-void DownSample(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlotPoint>& pts_downsample) {
-  if (single_buffer.empty()) return;
+std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& single_buffer) {
+  std::vector<ImPlotPoint> pts_downsample;
+
+  if (single_buffer.empty()) return {};
 
   std::string_view channel_name = single_buffer.channel_name_;
   static std::unordered_map<std::string_view, std::vector<ImPlotPoint>> down_pts;
@@ -21,13 +23,18 @@ void DownSample(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlo
   auto& raw_pts = down_pts[channel_name];
 
   int raw_pts_size = raw_pts.size();
-  if (raw_pts_size < single_buffer.size()) {
-    raw_pts.resize(single_buffer.size());
+  {
+    // size的获取也需要枷锁，因为size的计算依赖迭代器，而去size的过程中，有添加的话会导致迭代器失效
+    std::shared_lock<std::shared_mutex> lg(single_buffer.mtx_);
+    int single_buffer_size = single_buffer.size();
 
-    // 拷贝出所有点
-    for (int i = raw_pts_size; i < single_buffer.size(); ++i) {
-      auto const& pose = single_buffer[i]->rpose_;
-      raw_pts[i] = { pose(0, 3), pose(1, 3) };
+    if (raw_pts_size < single_buffer.size()) {
+      raw_pts.resize(single_buffer.size());
+
+      for (int i = raw_pts_size; i < single_buffer.size(); ++i) {
+        auto const& pose = single_buffer[i]->rpose_;
+        raw_pts[i] = { pose(0, 3), pose(1, 3) };
+      }
     }
   }
 
@@ -58,4 +65,6 @@ void DownSample(SensorContainer<_Sensor> const& single_buffer, std::vector<ImPlo
 
     pts_downsample.push_back(pt);
   }
+
+  return pts_downsample;
 }

@@ -49,7 +49,7 @@ inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
 inline void PsinsApp::ProcessGnss(std::shared_ptr<const Message<Gnss>> frame) {
   if (!inited_) return;
 
-  ELOG_DEBUG << frame->to_header_str() << " " << frame->rpose_.translation().transpose();
+  // ELOG_DEBUG << frame->to_header_str() << " " << frame->rpose_.translation().transpose();
   kf_app_->SetMeasGNSS(convert::ToCVect3(frame->msg_.pos_.pos), convert::ToCVect3(frame->msg_.vel_.vel));
 }
 

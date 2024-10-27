@@ -299,14 +299,28 @@ struct AccumulateImpl<_List, _Func, _InitType, true> : Wrapper<_InitType> {};
 
 template <typename _List, template <typename, typename> typename _Func, typename _InitType>
 struct AccumulateImpl<_List, _Func, _InitType, false>
-  : AccumulateT<PopFront_t<_List>, _Func, typename _Func<Front_t<_List>, _InitType>::type> {};
+  : AccumulateT<PopFront_t<_List>, _Func, typename _Func<_InitType, Front_t<_List>>::Type> {};
 
 // _Func is largest
 template <typename _T1, typename _T2>
-using LargerType = std::conditional<sizeof(_T1) >= sizeof(_T2), _T1, _T2>;
+using LargerType = Wrapper<std::conditional_t<(sizeof(_T1) > sizeof(_T2)), _T1, _T2>>;
+
+template <typename _List>
+using Reverse3_t = Accumulate_t<_List, PushFrontT, Typelist<>>;
+
+template <typename _List, bool is_empty = IsEmpty_v<_List>>
+struct LargestType3T : AccumulateT<_List, LargerType, bool> {};
+
+template <typename _List>
+struct LargestType3T<_List, true> {};
+
+template <typename _List>
+using LargestType3_t = typename LargestType3T<_List>::Type;
 
 // .6 累加类型列表
 TEST(typelist, _24_2_6) {
+  using TL0 = Typelist<>;
+  using TL1 = Typelist<bool>;
   using TL2 = Typelist<bool, short>;
   using TL3 = Typelist<bool, short, int>;
 
@@ -315,6 +329,15 @@ TEST(typelist, _24_2_6) {
   static_assert(std::is_same_v<Accumulate_t<TL3, LargerType, bool>, int>);
   static_assert(std::is_same_v<Accumulate_t<TL3, LargerType, int>, int>);
   static_assert(std::is_same_v<Accumulate_t<TL3, LargerType, long>, long>);
+
+  static_assert(std::is_same_v<Reverse3_t<TL1>, Typelist<bool>>);
+  static_assert(std::is_same_v<Reverse3_t<TL2>, Typelist<short, bool>>);
+  static_assert(std::is_same_v<Reverse3_t<TL3>, Typelist<int, short, bool>>);
+
+  // static_assert(std::is_same_v<LargestType3_t<TL0>, bool>);
+  static_assert(std::is_same_v<LargestType3_t<TL1>, bool>);
+  static_assert(std::is_same_v<LargestType3_t<TL2>, short>);
+  static_assert(std::is_same_v<LargestType3_t<TL3>, int>);
 
   EXPECT_TRUE(1);
 }

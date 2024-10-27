@@ -232,6 +232,9 @@ struct ReverseImpl<_List, true> : EmptyListWrapper {};
 template <typename _List>
 struct ReverseImpl<_List, false> : PushBackT2<Reverse2_t<PopFront_t<_List>>, Front_t<_List>> {};
 
+template <typename _List>
+using PopBack_t = Reverse2_t<PopFront_t<Reverse2_t<_List>>>;
+
 // .4 反转类型列表
 TEST(typelist, _24_2_4) {
   using TL = Typelist<>;
@@ -245,6 +248,9 @@ TEST(typelist, _24_2_4) {
   static_assert(std::is_same_v<Reverse2_t<TL>, Typelist<>>);
   static_assert(std::is_same_v<Reverse2_t<TL1>, Typelist<bool>>);
   // static_assert(std::is_same_v<Reverse2_t<TL2>, Typelist<int, bool>>);
+
+  static_assert(std::is_same_v<PopBack_t<TL1>, Typelist<>>);
+  static_assert(std::is_same_v<PopBack_t<TL2>, Typelist<bool>>);
 
   EXPECT_TRUE(1);
 }

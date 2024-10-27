@@ -299,11 +299,11 @@ struct AccumulateImpl<_List, _Func, _InitType, true> : Wrapper<_InitType> {};
 
 template <typename _List, template <typename, typename> typename _Func, typename _InitType>
 struct AccumulateImpl<_List, _Func, _InitType, false>
-  : AccumulateT<PopFront_t<_List>, _Func, _Func<Front_t<_List>, _InitType>> {};
+  : AccumulateT<PopFront_t<_List>, _Func, typename _Func<Front_t<_List>, _InitType>::type> {};
 
 // _Func is largest
 template <typename _T1, typename _T2>
-using LargerType = std::conditional_t<sizeof(_T1) >= sizeof(_T2), _T1, _T2>;
+using LargerType = std::conditional<sizeof(_T1) >= sizeof(_T2), _T1, _T2>;
 
 // .6 累加类型列表
 TEST(typelist, _24_2_6) {

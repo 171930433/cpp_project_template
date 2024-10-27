@@ -270,7 +270,10 @@ struct TransformImpl<_List, _MetaFun, true> : EmptyListWrapper {};
 
 template <typename _List, template <typename> typename _MetaFun>
 struct TransformImpl<_List, _MetaFun, false>
-  : PushFrontT<Transform_t<PopFront_t<_List>, _MetaFun>, _MetaFun<Front_t<_List>>> {};
+  : PushFrontT<Transform_t<PopFront_t<_List>, _MetaFun>, typename _MetaFun<Front_t<_List>>::Type> {};
+
+template <typename _T>
+using AddConst = Wrapper<std::add_const_t<_T>>;
 
 // .5 转化类型列表
 TEST(typelist, _24_2_5) {
@@ -278,9 +281,9 @@ TEST(typelist, _24_2_5) {
   using TL1 = Typelist<bool>;
   using TL2 = Typelist<bool, int>;
 
-  static_assert(std::is_same_v<Transform_t<TL, std::add_const_t>, Typelist<>>);
-  static_assert(std::is_same_v<Transform_t<TL1, std::add_const_t>, Typelist<bool const>>);
-  static_assert(std::is_same_v<Transform_t<TL2, std::add_const_t>, Typelist<bool const, int const>>);
+  static_assert(std::is_same_v<Transform_t<TL, AddConst>, Typelist<>>);
+  static_assert(std::is_same_v<Transform_t<TL1, AddConst>, Typelist<bool const>>);
+  static_assert(std::is_same_v<Transform_t<TL2, AddConst>, Typelist<bool const, int const>>);
 
   EXPECT_TRUE(1);
 }

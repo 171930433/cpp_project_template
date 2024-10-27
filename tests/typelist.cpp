@@ -3,9 +3,11 @@
 template <typename... _Elements>
 struct Typelist {};
 
-struct EmptyListWrapper {
-  using Type = Typelist<>;
+template <typename _T>
+struct Wrapper {
+  using Type = _T;
 };
+using EmptyListWrapper = Wrapper<Typelist<>>;
 
 using SignedIntegralTypes = Typelist<signed char, short, int, long>;
 
@@ -247,10 +249,72 @@ TEST(typelist, _24_2_4) {
 
   static_assert(std::is_same_v<Reverse2_t<TL>, Typelist<>>);
   static_assert(std::is_same_v<Reverse2_t<TL1>, Typelist<bool>>);
-  // static_assert(std::is_same_v<Reverse2_t<TL2>, Typelist<int, bool>>);
 
   static_assert(std::is_same_v<PopBack_t<TL1>, Typelist<>>);
   static_assert(std::is_same_v<PopBack_t<TL2>, Typelist<bool>>);
+
+  EXPECT_TRUE(1);
+}
+
+template <typename _List, template <typename> typename _MetaFun, bool is_empty>
+struct TransformImpl;
+
+template <typename _List, template <typename> typename _MetaFun>
+using TransformT = TransformImpl<_List, _MetaFun, IsEmpty_v<_List>>;
+
+template <typename _List, template <typename> typename _MetaFun>
+using Transform_t = typename TransformT<_List, _MetaFun>::Type;
+
+template <typename _List, template <typename> typename _MetaFun>
+struct TransformImpl<_List, _MetaFun, true> : EmptyListWrapper {};
+
+template <typename _List, template <typename> typename _MetaFun>
+struct TransformImpl<_List, _MetaFun, false>
+  : PushFrontT<Transform_t<PopFront_t<_List>, _MetaFun>, _MetaFun<Front_t<_List>>> {};
+
+// .5 转化类型列表
+TEST(typelist, _24_2_5) {
+  using TL = Typelist<>;
+  using TL1 = Typelist<bool>;
+  using TL2 = Typelist<bool, int>;
+
+  static_assert(std::is_same_v<Transform_t<TL, std::add_const_t>, Typelist<>>);
+  static_assert(std::is_same_v<Transform_t<TL1, std::add_const_t>, Typelist<bool const>>);
+  static_assert(std::is_same_v<Transform_t<TL2, std::add_const_t>, Typelist<bool const, int const>>);
+
+  EXPECT_TRUE(1);
+}
+
+template <typename _List, template <typename, typename> typename _Func, typename _InitType, bool is_empty>
+struct AccumulateImpl;
+
+template <typename _List, template <typename, typename> typename _Func, typename _InitType>
+using AccumulateT = AccumulateImpl<_List, _Func, _InitType, IsEmpty_v<_List>>;
+
+template <typename _List, template <typename, typename> typename _Func, typename _InitType>
+using Accumulate_t = typename AccumulateT<_List, _Func, _InitType>::Type;
+
+template <typename _List, template <typename, typename> typename _Func, typename _InitType>
+struct AccumulateImpl<_List, _Func, _InitType, true> : Wrapper<_InitType> {};
+
+template <typename _List, template <typename, typename> typename _Func, typename _InitType>
+struct AccumulateImpl<_List, _Func, _InitType, false>
+  : AccumulateT<PopFront_t<_List>, _Func, _Func<Front_t<_List>, _InitType>> {};
+
+// _Func is largest
+template <typename _T1, typename _T2>
+using LargerType = std::conditional_t<sizeof(_T1) >= sizeof(_T2), _T1, _T2>;
+
+// .6 累加类型列表
+TEST(typelist, _24_2_6) {
+  using TL2 = Typelist<bool, short>;
+  using TL3 = Typelist<bool, short, int>;
+
+  static_assert(std::is_same_v<Accumulate_t<TL2, LargerType, int>, int>);
+  static_assert(std::is_same_v<Accumulate_t<TL2, LargerType, bool>, short>);
+  static_assert(std::is_same_v<Accumulate_t<TL3, LargerType, bool>, int>);
+  static_assert(std::is_same_v<Accumulate_t<TL3, LargerType, int>, int>);
+  static_assert(std::is_same_v<Accumulate_t<TL3, LargerType, long>, long>);
 
   EXPECT_TRUE(1);
 }

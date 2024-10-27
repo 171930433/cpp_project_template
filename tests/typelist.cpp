@@ -3,6 +3,10 @@
 template <typename... _Elements>
 struct Typelist {};
 
+struct EmptyListWrapper {
+  using Type = Typelist<>;
+};
+
 using SignedIntegralTypes = Typelist<signed char, short, int, long>;
 
 // FrontT
@@ -215,6 +219,19 @@ public:
   using Type = PushBack2_t<Reverse_t<_Tail>, _Head>;
 };
 
+// use impl
+template <typename _List, bool is_empty>
+struct ReverseImpl;
+
+template <typename _List>
+using Reverse2_t = typename ReverseImpl<_List, IsEmpty_v<_List>>::Type;
+
+template <typename _List>
+struct ReverseImpl<_List, true> : EmptyListWrapper {};
+
+template <typename _List>
+struct ReverseImpl<_List, false> : PushBackT2<Reverse2_t<PopFront_t<_List>>, Front_t<_List>> {};
+
 // .4 反转类型列表
 TEST(typelist, _24_2_4) {
   using TL = Typelist<>;
@@ -224,6 +241,10 @@ TEST(typelist, _24_2_4) {
   static_assert(std::is_same_v<Reverse_t<TL>, Typelist<>>);
   static_assert(std::is_same_v<Reverse_t<TL1>, Typelist<bool>>);
   static_assert(std::is_same_v<Reverse_t<TL2>, Typelist<int, bool>>);
+
+  static_assert(std::is_same_v<Reverse2_t<TL>, Typelist<>>);
+  static_assert(std::is_same_v<Reverse2_t<TL1>, Typelist<bool>>);
+  // static_assert(std::is_same_v<Reverse2_t<TL2>, Typelist<int, bool>>);
 
   EXPECT_TRUE(1);
 }

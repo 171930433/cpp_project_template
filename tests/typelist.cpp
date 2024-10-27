@@ -15,7 +15,7 @@ struct FrontT<Typelist<_Head, _Tail...>> {
 };
 
 template <typename _List>
-using FrontT_t = typename FrontT<_List>::Type;
+using Front_t = typename FrontT<_List>::Type;
 
 // pop frontt
 template <typename _List>
@@ -43,7 +43,7 @@ using PushFront_t = PushFrontT<_List, _NewT>::Type;
 
 // 解剖一个类型列表
 TEST(typelist, _24_1) {
-  static_assert(std::is_same_v<FrontT_t<SignedIntegralTypes>, signed char>);
+  static_assert(std::is_same_v<Front_t<SignedIntegralTypes>, signed char>);
   static_assert(std::is_same_v<PopFront_t<SignedIntegralTypes>, Typelist<short, int, long>>);
   static_assert(std::is_same_v<PushFront_t<SignedIntegralTypes, bool>, Typelist<bool, signed char, short, int, long>>);
 
@@ -73,7 +73,7 @@ TEST(typelist, _24_2_1) {
 template <typename _List>
 struct LargestType {
 private:
-  using _First = FrontT_t<_List>;
+  using _First = Front_t<_List>;
   using _Rest = typename LargestType<PopFront_t<_List>>::Type;
 
 public:
@@ -104,7 +104,7 @@ struct LargestType2;
 template <typename _List>
 struct LargestType2<_List, false> {
 private:
-  using _First = FrontT_t<_List>;
+  using _First = Front_t<_List>;
   using _Rest = typename LargestType<PopFront_t<_List>>::Type;
 
 public:
@@ -152,7 +152,7 @@ struct PushBackRecT2;
 template <typename _List, typename _NewT>
 struct PushBackRecT2<_List, _NewT, false> {
 private:
-  using _Head = FrontT_t<_List>;
+  using _Head = Front_t<_List>;
   using _Tail = PopFront_t<_List>;
   using _NewTail = typename PushBackRecT2<_Tail, _NewT>::Type;
 
@@ -165,11 +165,16 @@ struct PushBackRecT2<_List, _NewT, true> {
   using Type = PushFront_t<_List, _NewT>;
 };
 
+// 先写具体的实现PushBackRecT2, 再写PushBackT2做具体的递归,再写PushBack2_t简化类型萃取
 template <typename _List, typename _NewT>
 struct PushBackT2 : public PushBackRecT2<_List, _NewT> {};
 
 template <typename _List, typename _NewT>
 using PushBack2_t = typename PushBackT2<_List, _NewT>::Type;
+
+// 这样结构会差一些PushBackRecT2
+template <typename _List, typename _NewT>
+using PushBack3_t = typename PushBackRecT2<_List, _NewT>::Type;
 
 // .3 追加元素到列表类型
 TEST(typelist, _24_2_3) {
@@ -182,6 +187,43 @@ TEST(typelist, _24_2_3) {
 
   static_assert(std::is_same_v<typename PushBackT2<TL1, int>::Type, Typelist<bool, int>>);
   static_assert(std::is_same_v<PushBack2_t<TL1, int>, Typelist<bool, int>>);
+
+  static_assert(std::is_same_v<PushBack3_t<TL1, int>, Typelist<bool, int>>);
+  static_assert(std::is_same_v<PushBack3_t<TL, bool>, Typelist<bool>>);
+
+  EXPECT_TRUE(1);
+}
+
+template <typename _List, bool is_empty = IsEmpty_v<_List>>
+struct Reverse;
+
+template <typename _List>
+using Reverse_t = typename Reverse<_List>::Type;
+
+template <typename _List>
+struct Reverse<_List, true> {
+  using Type = _List;
+};
+
+template <typename _List>
+struct Reverse<_List, false> {
+private:
+  using _Head = Front_t<_List>;
+  using _Tail = PopFront_t<_List>;
+
+public:
+  using Type = PushBack2_t<Reverse_t<_Tail>, _Head>;
+};
+
+// .4 反转类型列表
+TEST(typelist, _24_2_4) {
+  using TL = Typelist<>;
+  using TL1 = Typelist<bool>;
+  using TL2 = Typelist<bool, int>;
+
+  static_assert(std::is_same_v<Reverse_t<TL>, Typelist<>>);
+  static_assert(std::is_same_v<Reverse_t<TL1>, Typelist<bool>>);
+  static_assert(std::is_same_v<Reverse_t<TL2>, Typelist<int, bool>>);
 
   EXPECT_TRUE(1);
 }

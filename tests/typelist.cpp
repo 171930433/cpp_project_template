@@ -397,9 +397,20 @@ struct InsertionSortImpl<_List, _Compara, false> : inner::InsertSort<PopFront_t<
 template <typename _T1, typename _T2>
 struct less_than : std::conditional_t<(sizeof(_T1) < sizeof(_T2)), std::true_type, std::false_type> {};
 
+void InsertSort(std::vector<int>& arr, int n) {
+  if (n <= 1) return;
 
+  InsertSort(arr, n - 1);
 
+  int last = arr[n - 1];
+  int j = n - 2;
 
+  while (j >= 0 && arr[j] > last) {
+    arr[j + 1] = arr[j];
+    --j;
+  }
+  arr[j + 1] = last;
+}
 
 // .7 插入排序
 TEST(typelist, _24_2_7) {
@@ -419,9 +430,15 @@ TEST(typelist, _24_2_7) {
 
   static_assert(std::is_same_v<InsertionSort_t<TL11, less_than>, TL1>);
   static_assert(std::is_same_v<InsertionSort_t<TL22, less_than>, TL2>);
+  EXPECT_TRUE((std::is_same_v<InsertionSort_t<TL22, less_than>, TL2>));
   // static_assert(std::is_same_v<InsertionSort_t<TL33, less_than>, TL3>);
 
   // using T1 = PushFront_t<inner::InsertSort_t<TL1, int, less_than>, short>;
+
+  std::vector<int> arr{ 4, 2, 1 };
+  InsertSort(arr, arr.size());
+
+  EXPECT_EQ(arr, (std::vector<int>{ 1, 2, 4 }));
 
   EXPECT_TRUE(1);
 }

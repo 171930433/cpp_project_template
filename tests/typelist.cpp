@@ -386,7 +386,8 @@ struct InsertSortImpl<_List, _NewT, _Compare, true> : PushFrontT<_List, _NewT> {
 
 }
 
-template <typename _List, template <typename, typename> typename _Compare, typename = std::enable_if_t<!IsEmpty_v<_List>>>
+template <typename _List, template <typename, typename> typename _Compare,
+  typename = std::enable_if_t<!IsEmpty_v<_List>>>
 using InsertionSort_t = typename inner::InsertSort<PopFront_t<_List>, Front_t<_List>, _Compare>::Type;
 
 template <typename _T1, typename _T2>
@@ -440,4 +441,83 @@ TEST(typelist, _24_2_7) {
   EXPECT_EQ(arr, (std::vector<int>{ 1, 2, 4 }));
 
   EXPECT_TRUE(1);
+}
+
+// 非类型
+template <typename _T, _T _val>
+struct CTValue {
+  static constexpr _T value = _val;
+};
+
+using Primes = Typelist<CTValue<int, 2>, CTValue<int, 3>, CTValue<int, 5>, CTValue<int, 7>, CTValue<int, 11>>;
+
+template <typename _T1, typename _T2>
+struct Multiply;
+
+template <typename _T1, typename _T2>
+using Multiply_t = typename Multiply<_T1, _T2>::Type;
+
+template <typename _T1, typename _T2>
+constexpr auto Multiply_v = Multiply_t<_T1, _T2>::value;
+
+template <typename _T, _T _val1, _T _val2>
+struct Multiply<CTValue<_T, _val1>, CTValue<_T, _val2>> {
+  using Type = CTValue<_T, _val1 * _val2>;
+};
+
+template <typename _T, _T... _arrs>
+using CTTypeList = Typelist<CTValue<_T, _arrs>...>;
+
+template <typename _T, _T... _arrs>
+struct Valuelist {};
+
+template <typename _T, _T... _arrs>
+struct IsEmpty<Valuelist<_T, _arrs...>> : public std::integral_constant<bool, sizeof...(_arrs) == 0> {};
+
+template <typename _T, _T _first, _T... _arrs>
+struct FrontT<Valuelist<_T, _first, _arrs...>> {
+  using Type = CTValue<_T, _first>;
+  static constexpr _T value = _first;
+};
+
+template <typename _T, _T _first, _T... _arrs>
+struct PopFrontT<Valuelist<_T, _first, _arrs...>> {
+  using Type = Valuelist<_T, _arrs...>;
+};
+
+template <typename _T, _T _elem, _T... _arrs>
+struct PushFrontT<Valuelist<_T, _arrs...>, CTValue<_T, _elem>> {
+  using Type = Valuelist<_T, _elem, _arrs...>;
+};
+
+template <typename _T, _T _elem, _T... _arrs>
+struct PushBackT<Valuelist<_T, _arrs...>, CTValue<_T, _elem>> {
+  using Type = Valuelist<_T, _arrs..., _elem>;
+};
+
+template <typename _T, _T _val1, _T _val2>
+struct less_than<CTValue<_T, _val1>, CTValue<_T, _val2>>
+  : std::conditional_t<(_val1 < _val2), std::true_type, std::false_type> {};
+
+template <typename _T1,typename _T2>
+struct greater_than;
+
+template <typename _T, _T _val1, _T _val2>
+struct greater_than<CTValue<_T, _val1>, CTValue<_T, _val2>>
+  : std::conditional_t<(_val1 > _val2), std::true_type, std::false_type> {};
+
+TEST(typelist, _24_3_1) {
+  EXPECT_EQ((Accumulate_t<Primes, Multiply, CTValue<int, 1>>::value), 2310);
+  EXPECT_EQ((Accumulate_t<CTTypeList<int, 1, 2, 3, 4>, Multiply, CTValue<int, 1>>::value), 24);
+
+  EXPECT_EQ((Front_t<Valuelist<int, 1, 2, 3>>::value), 1);
+  EXPECT_EQ((IsEmpty_v<Valuelist<int>>), 1);
+  EXPECT_TRUE((std::is_same_v<PopFront_t<Valuelist<int, 1, 2, 3>>, Valuelist<int, 2, 3>>));
+  EXPECT_TRUE((std::is_same_v<PushFront_t<Valuelist<int, 2, 3>, CTValue<int, 1>>, Valuelist<int, 1, 2, 3>>));
+  EXPECT_TRUE((std::is_same_v<PushBackT_t<Valuelist<int, 2, 3>, CTValue<int, 1>>, Valuelist<int, 2, 3, 1>>));
+
+  EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 3, 2, 1>, less_than>, Valuelist<int, 1, 2, 3>>));
+  EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 1, 2, 3>, less_than>, Valuelist<int, 1, 2, 3>>));
+  EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 1, 2, 3>, greater_than>, Valuelist<int, 3, 2, 1>>));
+  EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 3, 2, 1>, greater_than>, Valuelist<int, 3, 2, 1>>));
 }

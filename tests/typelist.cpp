@@ -352,6 +352,18 @@ namespace inner {
 
 template <typename _List, typename _NewT, template <typename, typename> typename _Compara,
   bool is_empty = IsEmpty_v<_List>>
+struct InsertIntoOrdered
+  : Wrapper<std::conditional_t<_Compara<_NewT, Front_t<_List>>::value, PushFront_t<_List, _NewT>,
+      PushFront_t<typename InsertIntoOrdered<PopFront_t<_List>, _NewT, _Compara>::Type, Front_t<_List>>>> {};
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
+struct InsertIntoOrdered<_List, _NewT, _Compara, true> : Wrapper<PushFront_t<_List, _NewT>> {};
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
+using InsertIntoOrdered_t = typename InsertIntoOrdered<_List, _NewT, _Compara>::Type;
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compara,
+  bool is_empty = IsEmpty_v<_List>>
 struct InsertSortImpl;
 
 template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
@@ -360,22 +372,14 @@ using InsertSort = InsertSortImpl<_List, _NewT, _Compara, IsEmpty_v<_List>>;
 template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
 using InsertSort_t = typename InsertSort<_List, _NewT, _Compara>::Type;
 
-// template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-// struct InsertSortImpl<_List, _NewT, _Compara, false> {
-// private:
-//   using NewTail =
-//     std::conditional_t<_Compara<_NewT, Front_t<_List>>::value, _List, InsertSort_t<PopFront_t<_List>, _NewT,
-//     _Compara>>;
+template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
+struct InsertSortImpl<_List, _NewT, _Compara, false> {
+private:
+  using Ordered = InsertSort_t<PopFront_t<_List>, Front_t<_List>, _Compara>;
 
-//   using NewHead = std::conditional_t<_Compara<_NewT, Front_t<_List>>::value, _NewT, Front_t<_List>>;
-
-// public:
-//   using Type = PushFront_t<NewTail, NewHead>;
-// };
-template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
-struct InsertSortImpl<_List, _NewT, _Compare, false>
-  : Wrapper<std::conditional_t<_Compare<_NewT, Front_t<_List>>::value, PushFront_t<_List, _NewT>,
-      PushFront_t<InsertSort_t<PopFront_t<_List>, _NewT, _Compare>, Front_t<_List>>>> {};
+public:
+  using Type = typename InsertIntoOrdered<Ordered, _NewT, _Compara>::Type;
+};
 
 template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
 struct InsertSortImpl<_List, _NewT, _Compara, true> : PushFrontT<_List, _NewT> {};
@@ -422,7 +426,13 @@ TEST(typelist, _24_2_7) {
   using TL22 = Typelist<short, bool>;
   using TL33 = Typelist<int, short, bool>;
 
-  // using T1 = InsertionSort_t<TL1, less_than>;
+  static_assert(std::is_same_v<PushFront_t<Typelist<int>, short>, Typelist<short, int>>);
+  static_assert(
+    std::is_same_v<inner::InsertIntoOrdered_t<Typelist<bool, int>, short, less_than>, Typelist<bool, short, int>>);
+
+  using T0 = typename inner::InsertIntoOrdered<Typelist<int>, short, less_than>::Type;
+  static_assert(std::is_same_v<T0, Typelist<short, int>>);
+
   static_assert(std::is_same_v<InsertionSort_t<TL0, less_than>, Typelist<>>);
   static_assert(std::is_same_v<InsertionSort_t<TL1, less_than>, Typelist<bool>>);
   static_assert(std::is_same_v<InsertionSort_t<TL2, less_than>, Typelist<bool, short>>);
@@ -431,9 +441,7 @@ TEST(typelist, _24_2_7) {
   static_assert(std::is_same_v<InsertionSort_t<TL11, less_than>, TL1>);
   static_assert(std::is_same_v<InsertionSort_t<TL22, less_than>, TL2>);
   EXPECT_TRUE((std::is_same_v<InsertionSort_t<TL22, less_than>, TL2>));
-  // static_assert(std::is_same_v<InsertionSort_t<TL33, less_than>, TL3>);
-
-  // using T1 = PushFront_t<inner::InsertSort_t<TL1, int, less_than>, short>;
+  static_assert(std::is_same_v<InsertionSort_t<TL33, less_than>, TL3>);
 
   std::vector<int> arr{ 4, 2, 1 };
   InsertSort(arr, arr.size());

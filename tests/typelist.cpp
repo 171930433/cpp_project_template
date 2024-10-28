@@ -345,53 +345,58 @@ TEST(typelist, _24_2_6) {
   EXPECT_TRUE(1);
 }
 
-template <typename _List, template <typename, typename> typename _Compara, bool is_empty>
+template <typename _List, template <typename, typename> typename _Compare, bool is_empty>
 struct InsertionSortImpl;
 
 namespace inner {
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara,
+// InsertIntoOrdered 将一个类型插入一个有序的typelist
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare,
   bool is_empty = IsEmpty_v<_List>>
-struct InsertIntoOrdered
-  : Wrapper<std::conditional_t<_Compara<_NewT, Front_t<_List>>::value, PushFront_t<_List, _NewT>,
-      PushFront_t<typename InsertIntoOrdered<PopFront_t<_List>, _NewT, _Compara>::Type, Front_t<_List>>>> {};
+struct InsertIntoOrdered;
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-struct InsertIntoOrdered<_List, _NewT, _Compara, true> : Wrapper<PushFront_t<_List, _NewT>> {};
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+using InsertIntoOrdered_t = typename InsertIntoOrdered<_List, _NewT, _Compare>::Type;
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-using InsertIntoOrdered_t = typename InsertIntoOrdered<_List, _NewT, _Compara>::Type;
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertIntoOrdered<_List, _NewT, _Compare, false>
+  : std::conditional_t<_Compare<_NewT, Front_t<_List>>::value, PushFrontT<_List, _NewT>,
+      PushFrontT<InsertIntoOrdered_t<PopFront_t<_List>, _NewT, _Compare>, Front_t<_List>>> {};
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara,
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertIntoOrdered<_List, _NewT, _Compare, true> : PushFrontT<_List, _NewT> {};
+
+// 插入排序具体实现，_List并不一定有序
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare,
   bool is_empty = IsEmpty_v<_List>>
 struct InsertSortImpl;
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-using InsertSort = InsertSortImpl<_List, _NewT, _Compara, IsEmpty_v<_List>>;
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+using InsertSort = InsertSortImpl<_List, _NewT, _Compare, IsEmpty_v<_List>>;
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-using InsertSort_t = typename InsertSort<_List, _NewT, _Compara>::Type;
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+using InsertSort_t = typename InsertSort<_List, _NewT, _Compare>::Type;
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-struct InsertSortImpl<_List, _NewT, _Compara, false>
-  : InsertIntoOrdered<InsertSort_t<PopFront_t<_List>, Front_t<_List>, _Compara>, _NewT, _Compara> {};
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertSortImpl<_List, _NewT, _Compare, false>
+  : InsertIntoOrdered<InsertSort_t<PopFront_t<_List>, Front_t<_List>, _Compare>, _NewT, _Compare> {};
 
-template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-struct InsertSortImpl<_List, _NewT, _Compara, true> : PushFrontT<_List, _NewT> {};
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertSortImpl<_List, _NewT, _Compare, true> : PushFrontT<_List, _NewT> {};
 
 }
 
-template <typename _List, template <typename, typename> typename _Compara>
-using InsertionSortT = InsertionSortImpl<_List, _Compara, IsEmpty_v<_List>>;
+template <typename _List, template <typename, typename> typename _Compare>
+using InsertionSortT = InsertionSortImpl<_List, _Compare, IsEmpty_v<_List>>;
 
-template <typename _List, template <typename, typename> typename _Compara>
-using InsertionSort_t = typename InsertionSortT<_List, _Compara>::Type;
+template <typename _List, template <typename, typename> typename _Compare>
+using InsertionSort_t = typename InsertionSortT<_List, _Compare>::Type;
 
-template <typename _List, template <typename, typename> typename _Compara>
-struct InsertionSortImpl<_List, _Compara, true> : Wrapper<_List> {};
+template <typename _List, template <typename, typename> typename _Compare>
+struct InsertionSortImpl<_List, _Compare, true> : Wrapper<_List> {};
 
-template <typename _List, template <typename, typename> typename _Compara>
-struct InsertionSortImpl<_List, _Compara, false> : inner::InsertSort<PopFront_t<_List>, Front_t<_List>, _Compara> {};
+template <typename _List, template <typename, typename> typename _Compare>
+struct InsertionSortImpl<_List, _Compare, false> : inner::InsertSort<PopFront_t<_List>, Front_t<_List>, _Compare> {};
 
 template <typename _T1, typename _T2>
 struct less_than : std::conditional_t<(sizeof(_T1) < sizeof(_T2)), std::true_type, std::false_type> {};

@@ -499,13 +499,24 @@ template <typename _T, _T _val1, _T _val2>
 struct less_than<CTValue<_T, _val1>, CTValue<_T, _val2>>
   : std::conditional_t<(_val1 < _val2), std::true_type, std::false_type> {};
 
-template <typename _T1,typename _T2>
+template <typename _T1, typename _T2>
 struct greater_than;
 
 template <typename _T, _T _val1, _T _val2>
 struct greater_than<CTValue<_T, _val1>, CTValue<_T, _val2>>
   : std::conditional_t<(_val1 > _val2), std::true_type, std::false_type> {};
 
+template <auto _value>
+struct CTValue2 {
+  static constexpr auto value = _value;
+};
+
+using Primes2 = Typelist<CTValue2<2>, CTValue2<3>, CTValue2<5>, CTValue2<7>>;
+
+template <auto... _elems>
+struct Valuelist2 {};
+
+// 非类型列表
 TEST(typelist, _24_3_1) {
   EXPECT_EQ((Accumulate_t<Primes, Multiply, CTValue<int, 1>>::value), 2310);
   EXPECT_EQ((Accumulate_t<CTTypeList<int, 1, 2, 3, 4>, Multiply, CTValue<int, 1>>::value), 24);
@@ -520,4 +531,9 @@ TEST(typelist, _24_3_1) {
   EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 1, 2, 3>, less_than>, Valuelist<int, 1, 2, 3>>));
   EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 1, 2, 3>, greater_than>, Valuelist<int, 3, 2, 1>>));
   EXPECT_TRUE((std::is_same_v<InsertionSort_t<Valuelist<int, 3, 2, 1>, greater_than>, Valuelist<int, 3, 2, 1>>));
+
+  // 可推导的非类型参数
+  EXPECT_EQ((IsEmpty_v<Primes2>), 0);
+
+  Valuelist2<1, 'a', 1.0> x;
 }

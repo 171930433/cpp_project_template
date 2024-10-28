@@ -373,13 +373,8 @@ template <typename _List, typename _NewT, template <typename, typename> typename
 using InsertSort_t = typename InsertSort<_List, _NewT, _Compara>::Type;
 
 template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
-struct InsertSortImpl<_List, _NewT, _Compara, false> {
-private:
-  using Ordered = InsertSort_t<PopFront_t<_List>, Front_t<_List>, _Compara>;
-
-public:
-  using Type = typename InsertIntoOrdered<Ordered, _NewT, _Compara>::Type;
-};
+struct InsertSortImpl<_List, _NewT, _Compara, false>
+  : InsertIntoOrdered<InsertSort_t<PopFront_t<_List>, Front_t<_List>, _Compara>, _NewT, _Compara> {};
 
 template <typename _List, typename _NewT, template <typename, typename> typename _Compara>
 struct InsertSortImpl<_List, _NewT, _Compara, true> : PushFrontT<_List, _NewT> {};

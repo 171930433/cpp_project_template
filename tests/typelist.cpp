@@ -272,6 +272,12 @@ template <typename _List, template <typename> typename _MetaFun>
 struct TransformImpl<_List, _MetaFun, false>
   : PushFrontT<Transform_t<PopFront_t<_List>, _MetaFun>, typename _MetaFun<Front_t<_List>>::Type> {};
 
+// 24.4 包扩展优化算法
+template <typename... _Elems, template <typename> typename _MetaFun>
+struct TransformImpl<Typelist<_Elems...>, _MetaFun, false> {
+  using Type = Typelist<typename _MetaFun<_Elems>::Type...>;
+};
+
 template <typename _T>
 using AddConst = Wrapper<std::add_const_t<_T>>;
 
@@ -281,9 +287,9 @@ TEST(typelist, _24_2_5) {
   using TL1 = Typelist<bool>;
   using TL2 = Typelist<bool, int>;
 
-  static_assert(std::is_same_v<Transform_t<TL, AddConst>, Typelist<>>);
-  static_assert(std::is_same_v<Transform_t<TL1, AddConst>, Typelist<bool const>>);
-  static_assert(std::is_same_v<Transform_t<TL2, AddConst>, Typelist<bool const, int const>>);
+  EXPECT_TRUE((std::is_same_v<Transform_t<TL, AddConst>, Typelist<>>));
+  EXPECT_TRUE((std::is_same_v<Transform_t<TL1, AddConst>, Typelist<bool const>>));
+  EXPECT_TRUE((std::is_same_v<Transform_t<TL2, AddConst>, Typelist<bool const, int const>>));
 
   EXPECT_TRUE(1);
 }
@@ -536,4 +542,27 @@ TEST(typelist, _24_3_1) {
   EXPECT_EQ((IsEmpty_v<Primes2>), 0);
 
   Valuelist2<1, 'a', 1.0> x;
+}
+
+// 包扩展优化算法 275行
+
+template <typename _List, typename _Indices>
+struct SelectT;
+
+template <typename _List, typename _Indices>
+using Select_t = typename SelectT<_List, _Indices>::Type;
+
+template <typename _List, unsigned int... _indices>
+struct SelectT<_List, Valuelist<unsigned int, _indices...>> {
+  using Type = Typelist<NthElement_t<_List, _indices>...>;
+};
+
+TEST(typelist, _24_4) {
+  using Types2 = Typelist<signed char, short, int, long>;
+  // 走template <typename... _Elems, template <typename> typename _MetaFun> 偏特化
+  EXPECT_TRUE((std::is_same_v<Transform_t<Typelist<int>, AddConst>, Typelist<int const>>));
+  EXPECT_TRUE((std::is_same_v<Select_t<Types2, Valuelist<unsigned int, 0>>, Typelist<signed char>>));
+  EXPECT_TRUE((std::is_same_v<Select_t<Types2, Valuelist<unsigned int, 0, 1>>, Typelist<signed char, short>>));
+  EXPECT_TRUE((std::is_same_v<Select_t<Types2, Valuelist<unsigned int, 0, 1, 2>>, Typelist<signed char, short, int>>));
+  EXPECT_TRUE((std::is_same_v<Select_t<Types2, Valuelist<unsigned int, 2, 1>>, Typelist<int, short>>));
 }

@@ -155,3 +155,131 @@ TEST(tuple, 25_2) {
   EXPECT_FALSE(t1 == t3);
   EXPECT_FALSE(t1 == t4);
 }
+
+// IsEmpty
+template <typename... _Types>
+struct IsEmpty : std::false_type {};
+
+template <>
+struct IsEmpty<Tuple<>> : std::true_type {};
+
+template <typename... _Types>
+constexpr bool IsEmpty_v = IsEmpty<_Types...>::value;
+
+// FrontT
+template <typename _Tuple>
+struct FrontT;
+
+template <typename _Head, typename... _Tail>
+struct FrontT<Tuple<_Head, _Tail...>> {
+  using type = _Head;
+};
+
+template <typename _Tuple>
+using Front_t = typename FrontT<_Tuple>::type;
+
+// pop FrontT
+template <typename _Tuple>
+struct PopFrontT;
+
+template <typename _Head, typename... _Tail>
+struct PopFrontT<Tuple<_Head, _Tail...>> {
+  using type = Tuple<_Tail...>;
+};
+
+template <typename _Tuple>
+using PopFront_t = typename PopFrontT<_Tuple>::type;
+
+// push front t
+template <typename _Tuple, typename _New>
+struct PushFrontT;
+
+template <typename... _Types, typename _New>
+struct PushFrontT<Tuple<_Types...>, _New> {
+  using type = Tuple<_New, _Types...>;
+};
+
+template <typename _Tuple, typename _New>
+using PushFront_t = typename PushFrontT<_Tuple, _New>::type;
+
+// push back t
+template <typename _Tuple, typename _New>
+struct PushBackT;
+
+template <typename... _Types, typename _New>
+struct PushBackT<Tuple<_Types...>, _New> {
+  using type = Tuple<_Types..., _New>;
+};
+
+template <typename _Tuple, typename _New>
+using PushBack_t = typename PushBackT<_Tuple, _New>::type;
+
+// 25.3.2 添加或删除元素
+template <typename... _Types, typename _New>
+auto PushFront(Tuple<_Types...>& t, _New const& elem) {
+  return PushFront_t<Tuple<_Types...>, _New>{ elem, t };
+}
+
+template <typename _New>
+auto PushBack(Tuple<>& t, _New const& elem) {
+  return Tuple<_New>{ elem };
+}
+
+template <typename _Head, typename... _Tail, typename _New>
+auto PushBack(Tuple<_Head, _Tail...>& t, _New const& elem) {
+  return Tuple<_Head, _Tail..., _New>{ t.head(), PushBack(t.tail(), elem) };
+}
+
+template <typename... _Types>
+auto PopFront(Tuple<_Types...>& t) {
+  return PopFront_t<Tuple<_Types...>>{ t.tail() };
+}
+
+template <typename _Tuple>
+struct ReverseT;
+
+template <typename _Tuple>
+using Reverse_t = typename ReverseT<_Tuple>::type;
+
+template <>
+struct ReverseT<Tuple<>> {
+  using type = Tuple<>;
+};
+
+template <typename _Head, typename... _Tail>
+struct ReverseT<Tuple<_Head, _Tail...>> : PushBackT<Reverse_t<Tuple<_Tail...>>, _Head> {};
+
+
+// 25.3 算法
+TEST(tuple, 25_3) {
+  Tuple<> t0;
+  auto t1 = MakeTuple(1, 1.0, "xiaoming");
+
+  EXPECT_EQ(IsEmpty_v<decltype(t0)>, true);
+  EXPECT_EQ(IsEmpty_v<decltype(t1)>, false);
+
+  EXPECT_TRUE((std::is_same_v<Front_t<decltype(t1)>, int>));
+  EXPECT_TRUE((std::is_same_v<PopFront_t<decltype(t1)>, Tuple<double, char const*>>));
+  EXPECT_TRUE((std::is_same_v<PushFront_t<decltype(t1), bool>, Tuple<bool, int, double, char const*>>));
+  EXPECT_TRUE((std::is_same_v<PushBack_t<decltype(t1), bool>, Tuple<int, double, char const*, bool>>));
+
+  // 25.3.2
+  auto t2_true = MakeTuple(true, 1, 1.0, "xiaoming");
+  auto t3_true = MakeTuple(1, 1.0, "xiaoming", true);
+  auto t2 = PushFront(t1, true);
+  auto t3 = PushBack(t1, true);
+
+  EXPECT_EQ(t2, t2_true);
+  EXPECT_EQ(t3, t3_true);
+
+  auto t4_true = MakeTuple(1.0, "xiaoming");
+  auto t4 = PopFront(t1);
+  EXPECT_EQ(t4, t4_true);
+
+  // reverse
+  EXPECT_TRUE((std::is_same_v<Reverse_t<Tuple<>>, Tuple<>>));
+  EXPECT_TRUE((std::is_same_v<Reverse_t<Tuple<int>>, Tuple<int>>));
+  EXPECT_TRUE((std::is_same_v<Reverse_t<Tuple<int, double>>, Tuple<double, int>>));
+  EXPECT_TRUE((std::is_same_v<Reverse_t<Tuple<int, double, long>>, Tuple<long, double, int>>));
+  EXPECT_TRUE((std::is_same_v<Reverse_t<decltype(t1)>, Tuple<char const*, double, int>>));
+}

@@ -108,3 +108,50 @@ TEST(tuple, 25_1_2) {
   EXPECT_EQ(1.0, get<1>(t5));
   EXPECT_EQ("xiaoming", get<2>(t5));
 }
+
+// 25.2.1
+
+bool operator==(Tuple<> const& left, Tuple<> const& right) { return true; }
+
+template <typename _Head1, typename... _Tail1, typename _Head2, typename... _Tail2>
+bool operator==(Tuple<_Head1, _Tail1...> const& left, Tuple<_Head2, _Tail2...> const& right) {
+  return false;
+}
+
+template <typename _Head, typename... _Tail>
+bool operator==(Tuple<_Head, _Tail...> const& left, Tuple<_Head, _Tail...> const& right) {
+  return (left.head() == right.head()) && (left.tail() == right.tail());
+}
+
+// 25.2.2 输出
+void PrintTuple(std::ostream& os, Tuple<> const&, bool is_first = true) { os << (is_first ? '(' : ')'); }
+
+template <typename _Head, typename... _Tail>
+void PrintTuple(std::ostream& os, Tuple<_Head, _Tail...> const& t, bool is_first = true) {
+  os << (is_first ? "(" : ", ");
+  os << t.head();
+  PrintTuple(os, t.tail(), false);
+}
+
+template <typename... _Types>
+std::ostream& operator<<(std::ostream& os, Tuple<_Types...> const& t) {
+  PrintTuple(os, t);
+  return os;
+}
+
+// 25.2 基础操作
+TEST(tuple, 25_2) {
+  auto t1 = MakeTuple(1, 1.0, "xiaoming");
+  std::ostringstream oss;
+  oss << t1;
+
+  EXPECT_EQ(oss.str(), "(1, 1, xiaoming)");
+
+  auto t2(t1);
+  auto t3 = MakeTuple(2, 1.0, "xiaoming");
+  auto t4 = MakeTuple("100", 1.0, "xiaoming");
+
+  EXPECT_EQ(t1, t2);
+  EXPECT_FALSE(t1 == t3);
+  EXPECT_FALSE(t1 == t4);
+}

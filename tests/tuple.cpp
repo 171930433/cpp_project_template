@@ -317,6 +317,16 @@ struct ReverseT<CTValuelist<_T>> {
 template <typename _T, _T _head, _T... _tail>
 struct ReverseT<CTValuelist<_T, _head, _tail...>> : PushBackT2<Reverse_t<CTValuelist<_T, _tail...>>, _head> {};
 
+template <typename... _Types, typename _T, _T... _elems>
+Reverse_t<Tuple<_Types...>> Reverse2_impl(Tuple<_Types...> const& t, CTValuelist<_T, _elems...>) {
+  return { get<_elems>(t)... };
+}
+
+template <typename... _Types>
+Reverse_t<Tuple<_Types...>> Reverse2(Tuple<_Types...> const& t) {
+  return Reverse2_impl(t, Reverse_t<MakeIndexList_t<sizeof...(_Types)>>{});
+}
+
 // 25.3 算法
 TEST(tuple, 25_3) {
   Tuple<> t0;
@@ -362,4 +372,7 @@ TEST(tuple, 25_3) {
   // index list
   EXPECT_TRUE((std::is_same_v<MakeIndexList_t<3>, CTValuelist<unsigned, 0, 1, 2>>));
   EXPECT_TRUE((std::is_same_v<Reverse_t<MakeIndexList_t<3>>, CTValuelist<unsigned, 2, 1, 0>>));
+
+  auto t7_true = MakeTuple("xiaoming", 1.0, 1);
+  EXPECT_EQ(t7_true, Reverse2(t1));
 }

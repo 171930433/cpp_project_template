@@ -271,6 +271,52 @@ PopBack_t<Tuple<_Types...>> PopBack(Tuple<_Types...> const& t) {
   return Reverse(PopFront(Reverse(t)));
 }
 
+template <typename _T, _T _elem>
+struct CTValue {
+  static constexpr _T value = _elem;
+};
+
+template <typename _T, _T... _elems>
+struct CTValuelist {};
+
+template <typename _Valuelist, unsigned _new>
+struct PushFrontT2;
+
+template <typename _T, _T... _elems, unsigned _new>
+struct PushFrontT2<CTValuelist<_T, _elems...>, _new> {
+  using type = CTValuelist<_T, _new, _elems...>;
+};
+
+template <typename _Valuelist, unsigned _new>
+using PushFront_t2 = typename PushFrontT2<_Valuelist, _new>::type;
+
+template <typename _Valuelist, unsigned _new>
+struct PushBackT2;
+
+template <typename _T, _T... _elems, unsigned _new>
+struct PushBackT2<CTValuelist<_T, _elems...>, _new> {
+  using type = CTValuelist<_T, _elems..., _new>;
+};
+
+template <unsigned _n, typename _Result = CTValuelist<unsigned>>
+struct MakeIndexListT : MakeIndexListT<_n - 1, PushFront_t2<_Result, _n - 1>> {};
+
+template <typename _Result>
+struct MakeIndexListT<0, _Result> {
+  using type = _Result;
+};
+
+template <unsigned _n>
+using MakeIndexList_t = typename MakeIndexListT<_n>::type;
+
+template <typename _T>
+struct ReverseT<CTValuelist<_T>> {
+  using type = CTValuelist<_T>;
+};
+
+template <typename _T, _T _head, _T... _tail>
+struct ReverseT<CTValuelist<_T, _head, _tail...>> : PushBackT2<Reverse_t<CTValuelist<_T, _tail...>>, _head> {};
+
 // 25.3 算法
 TEST(tuple, 25_3) {
   Tuple<> t0;
@@ -312,4 +358,8 @@ TEST(tuple, 25_3) {
   EXPECT_TRUE((std::is_same_v<PopBack_t<Tuple<int, double, long>>, Tuple<int, double>>));
   auto t6_true = MakeTuple(1, 1.0);
   EXPECT_EQ(t6_true, PopBack(t1));
+
+  // index list
+  EXPECT_TRUE((std::is_same_v<MakeIndexList_t<3>, CTValuelist<unsigned, 0, 1, 2>>));
+  EXPECT_TRUE((std::is_same_v<Reverse_t<MakeIndexList_t<3>>, CTValuelist<unsigned, 2, 1, 0>>));
 }

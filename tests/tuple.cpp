@@ -231,8 +231,8 @@ Tuple<_Head, _Tail..., _New> PushBack(Tuple<_Head, _Tail...> const& t, _New cons
 }
 
 template <typename... _Types>
-auto PopFront(Tuple<_Types...>& t) {
-  return PopFront_t<Tuple<_Types...>>{ t.tail() };
+PopFront_t<Tuple<_Types...>> PopFront(Tuple<_Types...> const& t) {
+  return { t.tail() };
 }
 
 template <typename _Tuple>
@@ -254,6 +254,21 @@ Tuple<> Reverse(Tuple<> const& t) { return t; }
 template <typename... _Types>
 Reverse_t<Tuple<_Types...>> Reverse(Tuple<_Types...> const& t) {
   return PushBack(Reverse(t.tail()), t.head());
+}
+
+// pop back t
+template <typename _Tuple>
+struct PopBackT;
+
+template <typename _Tuple>
+using PopBack_t = typename PopBackT<_Tuple>::type;
+
+template <typename... _Types>
+struct PopBackT<Tuple<_Types...>> : ReverseT<PopFront_t<Reverse_t<Tuple<_Types...>>>> {};
+
+template <typename... _Types>
+PopBack_t<Tuple<_Types...>> PopBack(Tuple<_Types...> const& t) {
+  return Reverse(PopFront(Reverse(t)));
 }
 
 // 25.3 算法
@@ -290,4 +305,11 @@ TEST(tuple, 25_3) {
   EXPECT_TRUE((std::is_same_v<Reverse_t<decltype(t1)>, Tuple<char const*, double, int>>));
   auto t5_true = MakeTuple("xiaoming", 1.0, 1);
   EXPECT_EQ(t5_true, Reverse(t1));
+
+  // pop backT
+  EXPECT_TRUE((std::is_same_v<PopBack_t<Tuple<int>>, Tuple<>>));
+  EXPECT_TRUE((std::is_same_v<PopBack_t<Tuple<int, double>>, Tuple<int>>));
+  EXPECT_TRUE((std::is_same_v<PopBack_t<Tuple<int, double, long>>, Tuple<int, double>>));
+  auto t6_true = MakeTuple(1, 1.0);
+  EXPECT_EQ(t6_true, PopBack(t1));
 }

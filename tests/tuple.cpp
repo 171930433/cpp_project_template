@@ -359,6 +359,41 @@ auto Splat(Tuple<_Types...> const& t) {
   return Select_impl(t, ReplicatedIndexList_t<_i, _n>{});
 }
 
+template <typename _Tuple, unsigned _i>
+struct NthElementT;
+
+template <typename _Tuple, unsigned _i>
+using NthElement_t = typename NthElementT<_Tuple, _i>::type;
+
+template <typename... _Types, unsigned _i>
+struct NthElementT<Tuple<_Types...>, _i> : NthElementT<PopFront_t<Tuple<_Types...>>, _i - 1> {};
+
+template <typename... _Types>
+struct NthElementT<Tuple<_Types...>, 0> : FrontT<Tuple<_Types...>> {};
+
+template <typename _Tuple, template <typename _T, typename _U> typename _F>
+class MetafunOfNthElementT {
+public:
+  template <typename _T, typename _U>
+  class Apply;
+
+  template <unsigned _n, unsigned _m>
+  class Apply<CTValue<unsigned, _n>, CTValue<unsigned, _m>>
+    : public _F<NthElement_t<_Tuple, _n>, NthElement_t<_Tuple, _m>> {};
+};
+
+template <typename _T, typename _U>
+struct size_less_than : public std::integral_constant<bool, (sizeof(_T) < sizeof(_U))> {};
+
+template <typename _T, typename _U>
+constexpr bool size_less_than_v = size_less_than<_T, _U>::value;
+
+// template<template <typename _T, typename _U> typename _Compare, typename... _Types>
+// auto Sort(Tuple<_Types...> const& t) {
+   
+// }
+
+
 // 25.3 算法
 TEST(tuple, 25_3) {
   Tuple<> t0;
@@ -420,4 +455,8 @@ TEST(tuple, 25_3) {
   EXPECT_EQ((Splat<0, 4>(t1)), (Tuple<int, int, int, int>{ 1, 1, 1, 1 }));
   EXPECT_EQ((Splat<1, 2>(t1)), (Tuple<double, double>{ 1, 1 }));
   EXPECT_EQ((Splat<2, 2>(t1)), (Tuple<char const*, char const*>{ "xiaoming", "xiaoming" }));
+
+  EXPECT_TRUE((std::is_same_v<NthElement_t<decltype(t1), 0>, int>));
+  EXPECT_TRUE((std::is_same_v<NthElement_t<decltype(t1), 1>, double>));
+  EXPECT_TRUE((std::is_same_v<NthElement_t<decltype(t1), 2>, char const*>));
 }

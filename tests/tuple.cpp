@@ -327,6 +327,38 @@ Reverse_t<Tuple<_Types...>> Reverse2(Tuple<_Types...> const& t) {
   return Reverse2_impl(t, Reverse_t<MakeIndexList_t<sizeof...(_Types)>>{});
 }
 
+// 25.3.6
+template <typename... _Types, unsigned... _indices>
+auto Select_impl(Tuple<_Types...> const& t, CTValuelist<unsigned, _indices...>) {
+  return MakeTuple(get<_indices>(t)...);
+}
+
+template <unsigned... _indices, typename... _Types>
+auto Select(Tuple<_Types...> const& t) {
+  return Select_impl(t, CTValuelist<unsigned, _indices...>{});
+}
+
+template <unsigned _i, unsigned _n, typename _IndexList = CTValuelist<unsigned>>
+class ReplicatedIndexListT;
+
+template <unsigned _i, unsigned _n>
+using ReplicatedIndexList_t = typename ReplicatedIndexListT<_i, _n>::type;
+
+template <unsigned _i, unsigned... _indices>
+class ReplicatedIndexListT<_i, 0, CTValuelist<unsigned, _indices...>> {
+public:
+  using type = CTValuelist<unsigned, _indices...>;
+};
+
+template <unsigned _i, unsigned _n, unsigned... _indices>
+class ReplicatedIndexListT<_i, _n, CTValuelist<unsigned, _indices...>>
+  : public ReplicatedIndexListT<_i, _n - 1, CTValuelist<unsigned, _indices..., _i>> {};
+
+template <unsigned _i, unsigned _n, typename... _Types>
+auto Splat(Tuple<_Types...> const& t) {
+  return Select_impl(t, ReplicatedIndexList_t<_i, _n>{});
+}
+
 // 25.3 算法
 TEST(tuple, 25_3) {
   Tuple<> t0;
@@ -375,4 +407,17 @@ TEST(tuple, 25_3) {
 
   auto t7_true = MakeTuple("xiaoming", 1.0, 1);
   EXPECT_EQ(t7_true, Reverse2(t1));
+
+  // 25.3.6 selset
+  // EXPECT_EQ(Select(t1, CTValuelist<unsigned, 0>{}), Tuple<int>{ 1 });
+  EXPECT_EQ(Select<0>(t1), Tuple<int>{ 1 });
+  EXPECT_EQ((Select<0, 1>(t1)), (Tuple<int, double>{ 1, 1.0 }));
+  EXPECT_EQ((Select<0, 2, 1>(t1)), (Tuple<int, char const*, double>{ 1, "xiaoming", 1.0 }));
+
+  EXPECT_EQ((Splat<0, 1>(t1)), Tuple<int>{ 1 });
+  EXPECT_EQ((Splat<0, 2>(t1)), (Tuple<int, int>{ 1, 1 }));
+  EXPECT_EQ((Splat<0, 3>(t1)), (Tuple<int, int, int>{ 1, 1, 1 }));
+  EXPECT_EQ((Splat<0, 4>(t1)), (Tuple<int, int, int, int>{ 1, 1, 1, 1 }));
+  EXPECT_EQ((Splat<1, 2>(t1)), (Tuple<double, double>{ 1, 1 }));
+  EXPECT_EQ((Splat<2, 2>(t1)), (Tuple<char const*, char const*>{ "xiaoming", "xiaoming" }));
 }

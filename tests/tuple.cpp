@@ -279,22 +279,26 @@ struct CTValue {
 template <typename _T, _T... _elems>
 struct CTValuelist {};
 
-template <typename _Valuelist, unsigned _new>
-struct PushFrontT2;
+template <typename _T, _T _head, _T... _elems>
+struct FrontT<CTValuelist<_T, _head, _elems...>> {
+  using type = CTValue<_T, _head>;
+};
 
 template <typename _T, _T... _elems, unsigned _new>
-struct PushFrontT2<CTValuelist<_T, _elems...>, _new> {
+struct PushFrontT<CTValuelist<_T, _elems...>, CTValue<unsigned, _new>> {
   using type = CTValuelist<_T, _new, _elems...>;
 };
 
-template <typename _Valuelist, unsigned _new>
-using PushFront_t2 = typename PushFrontT2<_Valuelist, _new>::type;
+template <typename _T, _T _head, _T... _elems>
+struct PopFrontT<CTValuelist<_T, _head, _elems...>> {
+  using type = CTValuelist<_T, _elems...>;
+};
 
 template <typename _Valuelist, unsigned _new>
-struct PushBackT2;
+using PushFront_t2 = typename PushFrontT<_Valuelist, CTValue<unsigned, _new>>::type;
 
 template <typename _T, _T... _elems, unsigned _new>
-struct PushBackT2<CTValuelist<_T, _elems...>, _new> {
+struct PushBackT<CTValuelist<_T, _elems...>, CTValue<unsigned, _new>> {
   using type = CTValuelist<_T, _elems..., _new>;
 };
 
@@ -315,7 +319,8 @@ struct ReverseT<CTValuelist<_T>> {
 };
 
 template <typename _T, _T _head, _T... _tail>
-struct ReverseT<CTValuelist<_T, _head, _tail...>> : PushBackT2<Reverse_t<CTValuelist<_T, _tail...>>, _head> {};
+struct ReverseT<CTValuelist<_T, _head, _tail...>>
+  : PushBackT<Reverse_t<CTValuelist<_T, _tail...>>, CTValue<unsigned, _head>> {};
 
 template <typename... _Types, typename _T, _T... _elems>
 Reverse_t<Tuple<_Types...>> Reverse2_impl(Tuple<_Types...> const& t, CTValuelist<_T, _elems...>) {
@@ -370,29 +375,6 @@ struct NthElementT<Tuple<_Types...>, _i> : NthElementT<PopFront_t<Tuple<_Types..
 
 template <typename... _Types>
 struct NthElementT<Tuple<_Types...>, 0> : FrontT<Tuple<_Types...>> {};
-
-template <typename _Tuple, template <typename _T, typename _U> typename _F>
-class MetafunOfNthElementT {
-public:
-  template <typename _T, typename _U>
-  class Apply;
-
-  template <unsigned _n, unsigned _m>
-  class Apply<CTValue<unsigned, _n>, CTValue<unsigned, _m>>
-    : public _F<NthElement_t<_Tuple, _n>, NthElement_t<_Tuple, _m>> {};
-};
-
-template <typename _T, typename _U>
-struct size_less_than : public std::integral_constant<bool, (sizeof(_T) < sizeof(_U))> {};
-
-template <typename _T, typename _U>
-constexpr bool size_less_than_v = size_less_than<_T, _U>::value;
-
-// template<template <typename _T, typename _U> typename _Compare, typename... _Types>
-// auto Sort(Tuple<_Types...> const& t) {
-   
-// }
-
 
 // 25.3 算法
 TEST(tuple, 25_3) {
@@ -459,4 +441,94 @@ TEST(tuple, 25_3) {
   EXPECT_TRUE((std::is_same_v<NthElement_t<decltype(t1), 0>, int>));
   EXPECT_TRUE((std::is_same_v<NthElement_t<decltype(t1), 1>, double>));
   EXPECT_TRUE((std::is_same_v<NthElement_t<decltype(t1), 2>, char const*>));
+}
+
+template <typename _T, _T... _elems>
+struct IsEmpty<CTValuelist<_T, _elems...>> : public std::integral_constant<bool, (sizeof...(_elems) == 0)> {};
+
+namespace inner {
+
+// InsertIntoOrdered 将一个类型插入一个有序的typelist
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare,
+  bool is_empty = IsEmpty_v<_List>>
+struct InsertIntoOrdered;
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+using InsertIntoOrdered_t = typename InsertIntoOrdered<_List, _NewT, _Compare>::type;
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertIntoOrdered<_List, _NewT, _Compare, false>
+  : std::conditional_t<_Compare<_NewT, Front_t<_List>>::value, PushFrontT<_List, _NewT>,
+      PushFrontT<InsertIntoOrdered_t<PopFront_t<_List>, _NewT, _Compare>, Front_t<_List>>> {};
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertIntoOrdered<_List, _NewT, _Compare, true> : PushFrontT<_List, _NewT> {};
+
+// 插入排序具体实现，_List并不一定有序
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare,
+  bool is_empty = IsEmpty_v<_List>>
+struct InsertSortImpl;
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+using InsertSort = InsertSortImpl<_List, _NewT, _Compare, IsEmpty_v<_List>>;
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+using InsertSort_t = typename InsertSort<_List, _NewT, _Compare>::type;
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertSortImpl<_List, _NewT, _Compare, false>
+  : InsertIntoOrdered<InsertSort_t<PopFront_t<_List>, Front_t<_List>, _Compare>, _NewT, _Compare> {};
+
+template <typename _List, typename _NewT, template <typename, typename> typename _Compare>
+struct InsertSortImpl<_List, _NewT, _Compare, true> : PushFrontT<_List, _NewT> {};
+
+}
+
+template <typename _List, template <typename, typename> typename _Compare,
+  typename = std::enable_if_t<!IsEmpty_v<_List>>>
+using InsertionSort_t = typename inner::InsertSort<PopFront_t<_List>, Front_t<_List>, _Compare>::type;
+
+template <typename _T1, typename _T2>
+struct less_than;
+
+template <typename _T, typename _U>
+constexpr bool less_than_v = less_than<_T, _U>::value;
+
+template <typename _T, _T _left, _T _right>
+struct less_than<CTValue<_T, _left>, CTValue<_T, _right>> : std::bool_constant<(_left < _right)> {};
+
+template <typename _T, typename _U>
+struct less_than : public std::integral_constant<bool, (sizeof(_T) < sizeof(_U))> {};
+
+template <typename _Tuple, template <typename _T, typename _U> typename _F>
+class MetafunOfNthElementT {
+public:
+  template <typename _T, typename _U>
+  class Apply;
+
+  template <unsigned _n, unsigned _m>
+  class Apply<CTValue<unsigned, _n>, CTValue<unsigned, _m>>
+    : public _F<NthElement_t<_Tuple, _n>, NthElement_t<_Tuple, _m>> {};
+};
+
+template <template <typename _T, typename _U> typename _Compare, typename... _Types>
+auto Sort(Tuple<_Types...> const& t) {
+  return Select_impl(t,
+    InsertionSort_t<MakeIndexList_t<sizeof...(_Types)>,
+      MetafunOfNthElementT<Tuple<_Types...>, _Compare>::template Apply>{});
+}
+
+TEST(tuple, 25_6) {
+
+  EXPECT_TRUE(
+    (std::is_same_v<InsertionSort_t<CTValuelist<unsigned, 3, 2, 1>, less_than>, CTValuelist<unsigned, 1, 2, 3>>));
+
+  EXPECT_TRUE(
+    (std::is_same_v<InsertionSort_t<CTValuelist<unsigned, 2, 3, 1>, less_than>, CTValuelist<unsigned, 1, 2, 3>>));
+
+  auto t1 = MakeTuple(int(4), short(2), (long long)(8), char(1));
+  auto t2 = Sort<less_than>(t1);
+  auto t2_true = Tuple<char, short, int, long long>{ 1, 2, 4, 8 };
+
+  EXPECT_EQ(t2, t2_true);
 }

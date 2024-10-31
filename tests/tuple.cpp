@@ -649,19 +649,32 @@ TEST(tuple, 25_5) {
 template <typename... _Types>
 class Tuple5;
 
-template <unsigned _height, typename _T, bool = std::is_final_v<_T>>
+template <unsigned _height, typename _T, bool = std::is_class_v<_T> && !std::is_final_v<_T>>
 class TupleElement3;
 
 template <typename _Head, typename... _Tail>
 class Tuple5<_Head, _Tail...>
   : TupleElement3<sizeof...(_Tail), _Head>
-  , Tuple5<_Tail...> {};
+  , Tuple5<_Tail...> {
+  using HeadElement = TupleElement3<sizeof...(_Tail), _Head>;
+
+public:
+  Tuple5() = default;
+
+  template <typename _VHead, typename... _VTail, typename = std::enable_if_t<sizeof...(_Tail) == sizeof...(_VTail)>>
+  Tuple5(_VHead const& head, _VTail const&... tail)
+    : HeadElement(head)
+    , Tuple5<_Tail...>(tail...) {}
+
+  template <unsigned _i, typename... _Types>
+  friend auto get(Tuple5<_Types...>& t);
+};
 
 template <>
 class Tuple5<> {};
 
 template <unsigned _height, typename _T>
-class TupleElement3<_height, _T, true> {
+class TupleElement3<_height, _T, false> {
   _T value_;
 
 public:
@@ -676,7 +689,7 @@ public:
 };
 
 template <unsigned _height, typename _T>
-class TupleElement3<_height, _T, false> : _T {
+class TupleElement3<_height, _T, true> : _T {
 
 public:
   TupleElement3() = default;
@@ -697,8 +710,26 @@ TEST(tuple, 25_5_1) {
   EXPECT_EQ(sizeof(Tuple5<CA>), 1);
   EXPECT_EQ(sizeof(Tuple5<CA, CB>), 1);
   EXPECT_EQ(sizeof(Tuple5<CA, CB, CC>), 1);
-  EXPECT_EQ(sizeof(Tuple5<CA, CA>), 1);
+  EXPECT_EQ(sizeof(Tuple5<CA, CA>), 2);
   EXPECT_EQ(sizeof(Tuple5<CA, CA, CB, CB>), 3); // ? 为什么
   EXPECT_EQ(sizeof(Tuple5<CA, CB, char>), 1);
   EXPECT_EQ(sizeof(Tuple5<CA, char, CB, char, CA>), 2); // ? 为什么
+}
+
+template <unsigned _i, typename _Type>
+_Type& getHeight(TupleElement3<_i, _Type>& elem) {
+  return elem.get();
+}
+
+template <unsigned _i, typename... _Types>
+auto get(Tuple5<_Types...>& t) {
+  return getHeight<sizeof...(_Types) - _i - 1>(t);
+}
+
+TEST(tuple, 25_5_2) {
+  //
+  Tuple5<int, double, std::string> t0{ 1, 2, "xiaoming" };
+  EXPECT_EQ((get<0>(t0)), 1);
+  EXPECT_EQ((get<1>(t0)), 2);
+  EXPECT_EQ((get<2>(t0)), "xiaoming");
 }

@@ -634,14 +634,71 @@ public:
 template <>
 class Tuple4<> {};
 
-
 // 优化
 TEST(tuple, 25_5) {
   //
   Tuple2<CA, CB> t0; // ! 先构造CA,再构造CB,有点违背直观感觉
 
   EXPECT_EQ((sizeof(Tuple<CA, CB>)), 3);
-  EXPECT_EQ((sizeof(Tuple2<CA, CB>)), 2); // 继承的方式会有EBCO，所以tuple<> 不再占空间
-  EXPECT_EQ((sizeof(Tuple3<CA, CB>)), 2); // 相同的基类会confuse
+  EXPECT_EQ((sizeof(Tuple2<CA, CB>)), 2);     // 继承的方式会有EBCO，所以tuple<> 不再占空间
+  EXPECT_EQ((sizeof(Tuple3<CA, CB>)), 2);     // 相同的基类会confuse
   EXPECT_EQ((sizeof(Tuple4<CA, CA, CB>)), 3); // 相同的基类不会confuse，但是CA CB都是空类没有EBCO
+}
+
+// 优化5 final
+template <typename... _Types>
+class Tuple5;
+
+template <unsigned _height, typename _T, bool = std::is_final_v<_T>>
+class TupleElement3;
+
+template <typename _Head, typename... _Tail>
+class Tuple5<_Head, _Tail...>
+  : TupleElement3<sizeof...(_Tail), _Head>
+  , Tuple5<_Tail...> {};
+
+template <>
+class Tuple5<> {};
+
+template <unsigned _height, typename _T>
+class TupleElement3<_height, _T, true> {
+  _T value_;
+
+public:
+  TupleElement3() = default;
+
+  template <typename _U>
+  TupleElement3(_U&& other)
+    : value_(std::forward<_U>(other)) {}
+
+  _T& get() { return value_; }
+  _T const& get() const { return value_; }
+};
+
+template <unsigned _height, typename _T>
+class TupleElement3<_height, _T, false> : _T {
+
+public:
+  TupleElement3() = default;
+
+  template <typename _U>
+  TupleElement3(_U&& other)
+    : _T(std::forward<_U>(other)) {}
+
+  _T& get() { return *this; }
+  _T const& get() const { return *this; }
+};
+
+struct CC {
+  CC() { GTEST_LOG_(INFO) << "CC"; }
+};
+
+TEST(tuple, 25_5_1) {
+  EXPECT_EQ(sizeof(Tuple5<CA>), 1);
+  EXPECT_EQ(sizeof(Tuple5<CA, CB>), 1);
+  EXPECT_EQ(sizeof(Tuple5<CA, CB, CC>), 1);
+  EXPECT_EQ(sizeof(Tuple5<CA, CA>), 1);
+  EXPECT_EQ(sizeof(Tuple5<CA, CA, CB, CB>), 3); // ? 为什么
+  EXPECT_EQ(sizeof(Tuple5<CA, CB, char>), 1);
+  EXPECT_EQ(sizeof(Tuple5<CA, char, CB, char, CA>), 2); // ? 为什么
 }

@@ -667,7 +667,10 @@ public:
     , Tuple5<_Tail...>(tail...) {}
 
   template <unsigned _i, typename... _Types>
-  friend auto get(Tuple5<_Types...>& t);
+  friend auto& get(Tuple5<_Types...>& t);
+
+  template <typename _T, _T _i>
+  auto& operator[](CTValue<_T, _i>);
 };
 
 template <>
@@ -722,14 +725,27 @@ _Type& getHeight(TupleElement3<_i, _Type>& elem) {
 }
 
 template <unsigned _i, typename... _Types>
-auto get(Tuple5<_Types...>& t) {
+auto& get(Tuple5<_Types...>& t) {
   return getHeight<sizeof...(_Types) - _i - 1>(t);
 }
 
 TEST(tuple, 25_5_2) {
-  //
   Tuple5<int, double, std::string> t0{ 1, 2, "xiaoming" };
   EXPECT_EQ((get<0>(t0)), 1);
   EXPECT_EQ((get<1>(t0)), 2);
   EXPECT_EQ((get<2>(t0)), "xiaoming");
+}
+
+template <typename _Head, typename... _Tail>
+template <typename _T, _T _i>
+auto& Tuple5<_Head, _Tail...>::operator[](CTValue<_T, _i>) {
+  return get<_i>(*this);
+}
+
+// 下标
+TEST(tuple, 25_6) {
+  Tuple5<int, double, std::string> t0{ 1, 2, "xiaoming" };
+  EXPECT_EQ((t0[CTValue<unsigned, 0>{}]), 1);
+  EXPECT_EQ((t0[CTValue<unsigned, 1>{}]), 2);
+  EXPECT_EQ((t0[CTValue<unsigned, 2>{}]), "xiaoming");
 }

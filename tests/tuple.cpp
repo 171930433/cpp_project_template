@@ -749,3 +749,35 @@ TEST(tuple, 25_6) {
   EXPECT_EQ((t0[CTValue<unsigned, 1>{}]), 2);
   EXPECT_EQ((t0[CTValue<unsigned, 2>{}]), "xiaoming");
 }
+
+// 模板和继承
+// 21.1 空基类优化
+
+class Empty {};
+class EmptyTwo : Empty {};
+class EmptyThree : EmptyTwo {};
+
+class NoneEmpty
+  : Empty
+  , EmptyTwo {};
+
+TEST(tuple, 21_1) {
+
+  Empty arr[10] = {};
+  EXPECT_TRUE((sizeof(Empty) == 1));
+  EXPECT_TRUE(((&arr[9] - &arr[0]) == 9)); //! Empty大小为0的话，会导致数据指针的计算失败
+
+  EXPECT_TRUE((sizeof(EmptyTwo) == 1));
+  EXPECT_TRUE((sizeof(EmptyThree) == 1)); // empty empty2 empty3具有同一个地址
+
+  //! NoneEmpty的父类Empty对象，与EmptyTwo的父类Empty对象，不能拥有同一个地址,所以size是2
+  // ! 原则上，指针不同则对象不同
+  EXPECT_TRUE((sizeof(NoneEmpty) == 2)); // ! 为什么大小是2， 因为Empty和EmptyTwo对象不能分配在同一个地址，否则
+
+  EXPECT_EQ(sizeof(Tuple5<CA>), 1);             // EBCO
+  EXPECT_EQ(sizeof(Tuple5<CA, CA>), 2);         // 避免2个基类CA对象冲突，所以必须分配2个字节内存
+  EXPECT_EQ(sizeof(Tuple5<CA, CB, CC>), 1);     // CA CB CC对象共享一个字节内存
+  EXPECT_EQ(sizeof(Tuple5<CA, CA, CA, CA>), 4); // 每个CA对象都需要独立的字节
+  EXPECT_EQ(sizeof(Tuple5<CA, CA, CB>), 2);     // CA，CB占一个字节，另外冲突的CA占一个字节
+  EXPECT_EQ(sizeof(Tuple5<CA, CA, CB, CC>), 2); // CA，CB, CC占一个字节，另外冲突的CA占一个字节
+}

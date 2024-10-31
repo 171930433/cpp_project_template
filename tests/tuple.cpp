@@ -518,7 +518,7 @@ auto Sort(Tuple<_Types...> const& t) {
       MetafunOfNthElementT<Tuple<_Types...>, _Compare>::template Apply>{});
 }
 
-TEST(tuple, 25_6) {
+TEST(tuple, 25_3_6) {
 
   EXPECT_TRUE(
     (std::is_same_v<InsertionSort_t<CTValuelist<unsigned, 3, 2, 1>, less_than>, CTValuelist<unsigned, 1, 2, 3>>));
@@ -531,4 +531,117 @@ TEST(tuple, 25_6) {
   auto t2_true = Tuple<char, short, int, long long>{ 1, 2, 4, 8 };
 
   EXPECT_EQ(t2, t2_true);
+}
+
+template <typename _Func, typename _Tuple, unsigned... _indices>
+auto ApplyImpl(_Func&& func, _Tuple const& t, CTValuelist<unsigned, _indices...>) {
+  return func(get<_indices>(t)...);
+}
+
+template <typename _Func, typename... _Types>
+auto Apply(_Func&& func, Tuple<_Types...> const& t) {
+  return ApplyImpl(std::forward<_Func>(func), t, MakeIndexList_t<sizeof...(_Types)>{});
+}
+
+double Add(int a, double b) { return a + b; }
+
+// 拓展 apply
+TEST(tuple, 25_4) {
+  auto t1 = MakeTuple(1, 1.0);
+  EXPECT_EQ(Apply(Add, t1), 2);
+}
+
+// 优化2， 直接继承，但是会有构造，存储倒叙的违和感
+
+struct CA {
+  CA() { GTEST_LOG_(INFO) << "CA"; }
+};
+struct CB {
+  CB() { GTEST_LOG_(INFO) << "CB"; }
+};
+
+template <typename...>
+class Tuple2;
+
+template <typename _Head, typename... _Tail>
+class Tuple2<_Head, _Tail...> : private Tuple2<_Tail...> {
+private:
+  _Head head_;
+};
+
+template <>
+class Tuple2<> {};
+
+// TupleElt 优化2， 直接继承， 可以优化空基类 tuple<>的内存占用，但是相同类型会confuse
+template <typename... Types>
+class Tuple3;
+
+template <typename _T>
+class TupleElement {
+  _T value_;
+
+public:
+  TupleElement() = default;
+
+  template <typename _U>
+  TupleElement(_U&& other)
+    : value_(std::forward<_U>(other)) {}
+
+  _T& get() { return value_; }
+  _T const& get() const { return value_; }
+};
+
+template <typename _Head, typename... _Tail>
+class Tuple3<_Head, _Tail...>
+  : TupleElement<_Head>
+  , Tuple3<_Tail...> {};
+
+template <>
+class Tuple3<> {};
+
+// 优化3 ，对TupleElement2添加了height的概念，可以存储相同类型
+template <unsigned _height, typename _T>
+class TupleElement2 {
+  _T value_;
+
+public:
+  TupleElement2() = default;
+
+  template <typename _U>
+  TupleElement2(_U&& other)
+    : value_(std::forward<_U>(other)) {}
+
+  _T& get() { return value_; }
+  _T const& get() const { return value_; }
+};
+
+template <typename... Types>
+class Tuple4;
+
+template <typename _Head, typename... _Tail>
+class Tuple4<_Head, _Tail...>
+  : TupleElement2<sizeof...(_Tail), _Head>
+  , Tuple4<_Tail...> {
+  using HeadElement = TupleElement2<sizeof...(_Tail), _Head>;
+
+public:
+  _Head const& head() const { return static_cast<HeadElement>(this)->get(); }
+  _Head& head() { return static_cast<HeadElement>(this)->get(); }
+  Tuple4<_Tail...> const& tail() const { return *this; }
+  Tuple4<_Tail...>& tail() { return *this; }
+};
+
+template <>
+class Tuple4<> {};
+
+
+// 优化
+TEST(tuple, 25_5) {
+  //
+  Tuple2<CA, CB> t0; // ! 先构造CA,再构造CB,有点违背直观感觉
+
+  EXPECT_EQ((sizeof(Tuple<CA, CB>)), 3);
+  EXPECT_EQ((sizeof(Tuple2<CA, CB>)), 2); // 继承的方式会有EBCO，所以tuple<> 不再占空间
+  EXPECT_EQ((sizeof(Tuple3<CA, CB>)), 2); // 相同的基类会confuse
+  EXPECT_EQ((sizeof(Tuple4<CA, CA, CB>)), 3); // 相同的基类不会confuse，但是CA CB都是空类没有EBCO
 }

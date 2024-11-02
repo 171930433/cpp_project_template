@@ -100,3 +100,38 @@ TEST_F(Lesson3, product_block) {
 
   EXPECT_TRUE(C0.isApprox(C_));
 }
+
+// 如果一个矩阵A可逆,则
+// 1. A的行列式不等于0
+// 2. A的所有列向量线性无关
+// 3. AX = 0, 仅有X=0 时成立
+class Lesson3Inverse : public testing::Test {
+protected:
+  Lesson3Inverse() {
+    a_ << 1, 2, 3, 7;
+    a_inverse_ = a_.inverse();
+  }
+  void SetUp() override {}
+  void TearDown() override {}
+  Matrix2d a_;
+  Matrix2d a_inverse_;
+};
+
+TEST_F(Lesson3Inverse, gauss_jordan_2d) {
+  Matrix<double, 2, 4> A_argumented;
+  A_argumented << a_, Matrix2d::Identity();
+
+  Matrix2d Elementry1;
+  Elementry1 << RowVector2d(1, 0), RowVector2d(-3, 1);
+
+  Matrix2d A1;
+  A1 << 1, 2, 0, 1;
+
+  EXPECT_TRUE((A1.isApprox((Elementry1 * A_argumented).leftCols(2))));
+
+  Matrix2d Elementry2;
+  Elementry2 << RowVector2d(1, -2), RowVector2d(0, 1);
+
+  EXPECT_TRUE((Matrix2d::Identity().isApprox((Elementry2 * Elementry1 * A_argumented).leftCols(2))));
+  EXPECT_TRUE((a_inverse_.isApprox((Elementry2 * Elementry1 * A_argumented).rightCols(2))));
+}

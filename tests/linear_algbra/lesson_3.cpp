@@ -45,18 +45,22 @@ TEST_F(Lesson3, product_basic2) {
 
 TEST_F(Lesson3, product_row_picture) {
   Matrix3d C0;
+  C0.setZero();
 
   // C0的每一行
   for (int i = 0; i < 3; ++i) {
-    C0.row(i) = A_(i, 0) * B_.row(0) + A_(i, 1) * B_.row(1) + A_(i, 2) * B_.row(2); // B_行的线性组合
+    for (int j = 0; j < 3; j++) { C0.row(i) += A_(i, j) * B_.row(j); }
   }
   EXPECT_TRUE(C0.isApprox(C_));
 }
 
 TEST_F(Lesson3, product_col_picture) {
   Matrix3d C0;
+  C0.setZero();
 
-  for (int i = 0; i < 3; ++i) { C0.col(i) = B_(0, i) * A_.col(0) + B_(1, i) * A_.col(1) + B_(2, i) * A_.col(2); }
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; j++) { C0.col(i) += B_(j, i) * A_.col(j); }
+  }
 
   EXPECT_TRUE(C0.isApprox(C_));
 }

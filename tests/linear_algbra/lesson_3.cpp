@@ -8,29 +8,29 @@ class Lesson3 : public testing::Test {
 
 public:
   Lesson3() {
-    A_ = Matrix3d::Random();
-    B_ = Matrix3d ::Random();
-    C_ = A_ * B_;
+    m_ = 3;
+    n_ = 5;
+    p_ = 4;
   }
   void SetUp() override {
-    m_ = 3;
-    n_ = 3;
-    p_ = 3;
+    A_ = MatrixXd::Random(m_, n_);
+    B_ = MatrixXd::Random(n_, p_);
+    C_ = A_ * B_;
   }
 
   void TearDown() override {}
 
 protected:
-  Matrix3d A_;
-  Matrix3d B_;
-  Matrix3d C_;
+  MatrixXd A_;
+  MatrixXd B_;
+  MatrixXd C_;
   int m_;
   int n_;
   int p_;
 };
 
 TEST_F(Lesson3, product_basic1) {
-  Matrix3d C0;
+  MatrixXd C0(m_, p_);
   C0.setZero();
   for (int i = 0; i < m_; ++i) {
     for (int j = 0; j < p_; ++j) {
@@ -42,7 +42,7 @@ TEST_F(Lesson3, product_basic1) {
 }
 
 TEST_F(Lesson3, product_basic2) {
-  Matrix3d C0;
+  MatrixXd C0(m_, p_);
   for (int i = 0; i < m_; ++i) {
     for (int j = 0; j < p_; ++j) { C0(i, j) = A_.row(i) * B_.col(j); }
   }
@@ -51,7 +51,7 @@ TEST_F(Lesson3, product_basic2) {
 }
 
 TEST_F(Lesson3, product_row_picture) {
-  Matrix3d C0;
+  MatrixXd C0(m_, p_);
   C0.setZero();
 
   // C0的每一行
@@ -62,7 +62,7 @@ TEST_F(Lesson3, product_row_picture) {
 }
 
 TEST_F(Lesson3, product_col_picture) {
-  Matrix3d C0;
+  MatrixXd C0(m_, p_);
   C0.setZero();
 
   for (int i = 0; i < p_; ++i) {
@@ -73,7 +73,7 @@ TEST_F(Lesson3, product_col_picture) {
 }
 
 TEST_F(Lesson3, product_block_picture) {
-  Matrix3d C0;
+  MatrixXd C0(m_, p_);
   C0.setZero();
   for (int i = 0; i < n_; i++) { C0 += A_.col(i) * B_.row(i); }
 
@@ -82,21 +82,21 @@ TEST_F(Lesson3, product_block_picture) {
 
 TEST_F(Lesson3, product_block) {
   // blocks of A
-  auto A00 = A_.topLeftCorner<2, 2>();
-  auto A01 = A_.topRightCorner<2, 1>();
-  auto A10 = A_.bottomLeftCorner<1, 2>();
-  auto A11 = A_.bottomRightCorner<1, 1>();
+  auto A00 = A_.block(0, 0, 2, 2);
+  auto A01 = A_.block(0, 2, 2, n_ - 2);
+  auto A10 = A_.block(2, 0, m_ - 2, 2);
+  auto A11 = A_.block(2, 2, m_ - 2, n_ - 2);
   // blocks of B
-  auto B00 = B_.topLeftCorner<2, 2>();
-  auto B01 = B_.topRightCorner<2, 1>();
-  auto B10 = B_.bottomLeftCorner<1, 2>();
-  auto B11 = B_.bottomRightCorner<1, 1>();
+  auto B00 = B_.block(0, 0, 2, 2);
+  auto B01 = B_.block(0, 2, 2, p_ - 2);
+  auto B10 = B_.block(2, 0, n_ - 2, 2);
+  auto B11 = B_.block(2, 2, n_ - 2, p_ - 2);
 
-  Matrix3d C0;
-  C0.topLeftCorner<2, 2>() = A00 * B00 + A01 * B10;
-  C0.topRightCorner<2, 1>() = A00 * B01 + A01 * B11;
-  C0.bottomLeftCorner<1, 2>() = A10 * B00 + A11 * B10;
-  C0.bottomRightCorner<1, 1>() = A10 * B01 + A11 * B11;
+  MatrixXd C0(m_, p_);
+  C0.block(0, 0, 2, 2) = A00 * B00 + A01 * B10;
+  C0.block(0, 2, 2, p_ - 2) = A00 * B01 + A01 * B11;
+  C0.block(2, 0, m_ - 2, 2) = A10 * B00 + A11 * B10;
+  C0.block(2, 2, m_ - 2, p_ - 2) = A10 * B01 + A11 * B11;
 
   EXPECT_TRUE(C0.isApprox(C_));
 }

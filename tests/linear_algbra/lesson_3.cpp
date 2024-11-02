@@ -12,7 +12,11 @@ public:
     B_ = Matrix3d ::Random();
     C_ = A_ * B_;
   }
-  void SetUp() override {}
+  void SetUp() override {
+    m_ = 3;
+    n_ = 3;
+    p_ = 3;
+  }
 
   void TearDown() override {}
 
@@ -20,14 +24,17 @@ protected:
   Matrix3d A_;
   Matrix3d B_;
   Matrix3d C_;
+  int m_;
+  int n_;
+  int p_;
 };
 
 TEST_F(Lesson3, product_basic1) {
   Matrix3d C0;
   C0.setZero();
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      for (int k = 0; k < 3; ++k) { C0(i, j) += A_(i, k) * B_(k, j); }
+  for (int i = 0; i < m_; ++i) {
+    for (int j = 0; j < p_; ++j) {
+      for (int k = 0; k < n_; ++k) { C0(i, j) += A_(i, k) * B_(k, j); }
     }
   }
 
@@ -36,8 +43,8 @@ TEST_F(Lesson3, product_basic1) {
 
 TEST_F(Lesson3, product_basic2) {
   Matrix3d C0;
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) { C0(i, j) = A_.row(i) * B_.col(j); }
+  for (int i = 0; i < m_; ++i) {
+    for (int j = 0; j < p_; ++j) { C0(i, j) = A_.row(i) * B_.col(j); }
   }
 
   EXPECT_TRUE(C0.isApprox(C_));
@@ -48,8 +55,8 @@ TEST_F(Lesson3, product_row_picture) {
   C0.setZero();
 
   // C0的每一行
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; j++) { C0.row(i) += A_(i, j) * B_.row(j); }
+  for (int i = 0; i < m_; ++i) {
+    for (int j = 0; j < n_; j++) { C0.row(i) += A_(i, j) * B_.row(j); }
   }
   EXPECT_TRUE(C0.isApprox(C_));
 }
@@ -58,8 +65,8 @@ TEST_F(Lesson3, product_col_picture) {
   Matrix3d C0;
   C0.setZero();
 
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; j++) { C0.col(i) += B_(j, i) * A_.col(j); }
+  for (int i = 0; i < p_; ++i) {
+    for (int j = 0; j < n_; j++) { C0.col(i) += B_(j, i) * A_.col(j); }
   }
 
   EXPECT_TRUE(C0.isApprox(C_));
@@ -68,7 +75,7 @@ TEST_F(Lesson3, product_col_picture) {
 TEST_F(Lesson3, product_block_picture) {
   Matrix3d C0;
   C0.setZero();
-  for (int i = 0; i < 3; i++) { C0 += A_.col(i) * B_.row(i); }
+  for (int i = 0; i < n_; i++) { C0 += A_.col(i) * B_.row(i); }
 
   EXPECT_TRUE(C0.isApprox(C_));
 }

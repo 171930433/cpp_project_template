@@ -57,6 +57,7 @@ TEST_F(Lesson2, eliminate) {
   EXPECT_EQ(u_, A11);
 }
 
+// permutaion matrix, 置换行或列的矩阵 P * M 则为对M的行置换, M * P则是对M的列置换
 TEST_F(Lesson2, permutaion) {
   Matrix3d p1;
   p1 << RowVector3d{ 1, 0, 0 }, RowVector3d{ -4, 1, 0 }, RowVector3d{ 0, 0, 1 };
@@ -78,16 +79,23 @@ TEST_F(Lesson2, permutaion2) {
   Matrix3i A;
   A << 0, 0, 1, 0, 1, 0, 1, 0, 0;
 
-  // GTEST_LOG_(INFO) << p1.indices().transpose();
-  // GTEST_LOG_(INFO) << p1.toDenseMatrix();
-
   EXPECT_EQ(p1.indices(), (Vector3i{ 2, 1, 0 }));
   EXPECT_EQ(p1.toDenseMatrix(), A);
 }
 
-// elementary matrix:当进行矩阵行（或列）的线性组合操作时，从理论角度来讲，这种操作可以通过初等矩阵来表示
+// elementary matrix: 当进行矩阵行（或列）的线性组合操作时，从理论角度来讲，这种操作可以通过初等矩阵来表示
+// 即表达为 A 有 c(i) 列, 任意列是c(i)的线性组合时,可以由初等矩阵完成
 TEST_F(Lesson2, elementary) {
-  Matrix3d E12;
+  // 使得a00下的元素为0
+  Matrix3d E00;
 
-  EXPECT_TRUE(true);
+  E00 << RowVector3d{ 1, 0, 0 }, RowVector3d{ -4, 1, 0 }, RowVector3d{ -7, 0, 1 };
+
+  // 使得E11下的元素为0
+  Matrix3d E11;
+  E11 << RowVector3d{ 1, 0, 0 }, RowVector3d{ 0, 1, 0 }, RowVector3d{ 0, -2, 1 };
+
+  Matrix3d u = E11 * E00 * a_;
+
+  EXPECT_EQ(u, u_);
 }

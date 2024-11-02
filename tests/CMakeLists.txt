@@ -1,5 +1,5 @@
 # vcpkg
-file(GLOB TEST_FILES *.cpp linear_algbra/*.cpp)
+file(GLOB TEST_FILES *.cpp linear_algbra/*.cpp boost/*.cpp template/*.cpp)
 
 find_package(GTest CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS timer)

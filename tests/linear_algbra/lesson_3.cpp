@@ -129,6 +129,8 @@ TEST_F(Lesson3Inverse, gauss_jordan_2d) {
 
   EXPECT_TRUE((A1.isApprox((Elementry1 * A_argumented).leftCols(2))));
 
+  // guass到主元下方元素都是0就结束了
+  // jordan 是在guass完成的基础上,将U矩阵分解成 U = D * U2,  即对角阵和另外一个上三角阵
   Matrix2d Elementry2;
   Elementry2 << RowVector2d(1, -2), RowVector2d(0, 1);
 

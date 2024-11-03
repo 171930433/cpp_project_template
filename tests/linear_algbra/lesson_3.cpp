@@ -137,3 +137,156 @@ TEST_F(Lesson3Inverse, gauss_jordan_2d) {
   EXPECT_TRUE((Matrix2d::Identity().isApprox((Elementry2 * Elementry1 * A_argumented).leftCols(2))));
   EXPECT_TRUE((a_inverse_.isApprox((Elementry2 * Elementry1 * A_argumented).rightCols(2))));
 }
+
+class ProblemSet1_3 : public testing::Test {
+protected:
+  ProblemSet1_3() {
+    S_.col(0) << 1, 1, 1;
+    S_.col(1) << 0, 1, 1;
+    S_.col(2) << 0, 0, 1;
+
+    W_.col(0) << 1, 2, 3;
+    W_.col(1) << 4, 5, 6;
+    W_.col(2) << 7, 8, 9;
+  }
+  void SetUp() override {}
+  void TearDown() override {}
+  Matrix3d S_;
+  Matrix3d W_;
+};
+
+TEST_F(ProblemSet1_3, 1) {
+  Vector3d x{ 2, 3, 4 };
+
+  Vector3d b{ 2, 5, 9 };
+
+  EXPECT_DOUBLE_EQ(S_.row(0).dot(x), b[0]);
+  EXPECT_DOUBLE_EQ(S_.row(1).dot(x), b[1]);
+  EXPECT_DOUBLE_EQ(S_.row(2).dot(x), b[2]);
+  EXPECT_TRUE((S_ * x).isApprox(b));
+}
+
+TEST_F(ProblemSet1_3, 2) {
+
+  Matrix<double, 3, 2> b;
+  b.col(0) << 1, 1, 1;
+  b.col(1) << 1, 4, 9;
+
+  Matrix<double, 3, 2> y;
+  y.col(0) << 1, 0, 0;
+  y.col(1) << 1, 3, 5;
+
+  EXPECT_TRUE((S_.lu().solve(b)).isApprox(y));
+}
+
+TEST_F(ProblemSet1_3, 3) { EXPECT_TRUE(S_.determinant() != 0); }
+
+TEST_F(ProblemSet1_3, 4) {
+
+  Vector3d x = { 1, -2, 1 };
+
+  GTEST_LOG_(INFO) << x.transpose();
+
+  EXPECT_TRUE(W_.determinant() == 0);
+  EXPECT_TRUE((W_ * x).isApprox(Vector3d::Zero()));
+}
+
+TEST_F(ProblemSet1_3, 5) {
+  Matrix3d R = W_.transpose();
+  Vector3d x = { 1, -2, 1 };
+
+  EXPECT_TRUE(R.determinant() == 0);
+  EXPECT_TRUE((R * x).isApprox(Vector3d::Zero()));
+}
+
+TEST_F(ProblemSet1_3, 6) {
+  Matrix3d A;
+
+  double c = 3;
+  A.row(0) << 1, 3, 5;
+  A.row(1) << 0, -1, -1;
+  A.row(2) << 0, -2, c - 5;
+  A.row(2) << 0, 0, c - 3;
+
+  EXPECT_TRUE(A.determinant() == 0);
+
+  Matrix3d B;
+  double c2 = -1;
+  B.row(0) << 1, 0, c2;
+  B.row(1) << 0, 1, -c2;
+  B.row(2) << 0, 1, 1;
+  B.row(2) << 0, 0, 1 + c2;
+
+  EXPECT_TRUE(B.determinant() == 0);
+
+  Matrix3d C;
+  double c3 = 0;
+  C.col(0) << c3, 2, 3;
+  C.col(1) << 0, -1, 0;
+  C.col(2) << 0, 3, 3;
+
+  EXPECT_TRUE(C.determinant() == 0);
+}
+
+TEST_F(ProblemSet1_3, 7) {
+  // 因为ri*x == 0,所以x垂直于r1,r2,r3组成的平面; 自然r1,r2,r3线性相关
+  // 而非零向量x就是 r1,r2,r3所张成的平面π的法向量
+  EXPECT_TRUE(1);
+}
+
+TEST_F(ProblemSet1_3, 8) {
+  Matrix4d A;
+  A.row(0) << 1, 0, 0, 0;
+  A.row(1) << -1, 1, 0, 0;
+  A.row(2) << 0, -1, 1, 0;
+  A.row(3) << 0, 0, -1, 1;
+
+  Matrix<double, 4, 8> A_argumented;
+  A_argumented << A, Matrix4d::Identity();
+
+  Matrix4d E10 = Matrix4d::Identity();
+  E10.row(1) << 1, 1, 0, 0;
+
+  Matrix4d E21 = Matrix4d::Identity();
+  E21.row(2) << 0, 1, 1, 0;
+
+  Matrix4d E32 = Matrix4d::Identity();
+  E32.row(3) << 0, 0, 1, 1;
+
+  Matrix<double, 4, 8> U = E32 * E21 * E10 * A_argumented;
+
+  // GTEST_LOG_(INFO) << "U.leftCols(4) \n " << U.leftCols(4);
+  // GTEST_LOG_(INFO) << "U.rightCols(4) \n " << U.rightCols(4);
+  // GTEST_LOG_(INFO) << "A.inv() \n " << A.inverse();
+
+  EXPECT_TRUE((U.leftCols(4).isApprox(Matrix4d::Identity())));
+  EXPECT_TRUE((U.rightCols(4).isApprox(A.inverse())));
+}
+
+TEST_F(ProblemSet1_3, 9) {
+  Matrix4d C;
+  C.row(0) << 1, 0, 0, -1;
+  C.row(1) << -1, 1, 0, 0;
+  C.row(2) << 0, -1, 1, 0;
+  C.row(3) << 0, 0, -1, 1;
+
+  //  1,1,1,1 为C的列向量张成空间的正交补空间
+  Vector4d x = Vector4d::Ones();
+
+  EXPECT_TRUE((C * x).isApprox(Vector4d::Zero()));
+}
+
+TEST_F(ProblemSet1_3, 10) {
+  Matrix3d A;
+  A.row(0) << -1, 1, 0;
+  A.row(1) << 0, -1, 1;
+  A.row(2) << 0, 0, -1;
+
+  // GTEST_LOG_(INFO) <<" a.inv = \n" << A.inverse();
+  Matrix3d A_inv;
+  A_inv.row(0) << -1, -1, -1;
+  A_inv.row(1) << 0, -1, -1;
+  A_inv.row(2) << 0, 0, -1;
+
+  EXPECT_TRUE(A.inverse().isApprox(A_inv));
+}

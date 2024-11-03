@@ -2,7 +2,6 @@
 #include "PSINSCore/KFApp.h"
 #include "modules/app_base.h"
 #include "psins_reader.h"
-// #include <glog/logging.h>
 #include <ylt/easylog.hpp>
 
 /*! 1. 从暴露的接口来看,预测和量测在同一线程

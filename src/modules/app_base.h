@@ -1,7 +1,7 @@
 #pragma once
+#include "common/earth.hpp"
 #include "message/message_buffer.h"
 #include "message/message_dispatcher.h"
-#include "common/earth.hpp"
 #include "mylib.h"
 
 class AppBase {
@@ -16,7 +16,7 @@ public:
   virtual ~AppBase() = default;
   Dispatcher* dispatcher() { return &msf_->dispatcher_; }
   ChannelConfigs* io_cfg() { return &msf_->cm_.io_; }
-
+  tf::Executor* executor() { return &msf_->executor_; }
   void WriteMessage(MessageBase::SCPtr frame);
 
   std::string name_ = "";

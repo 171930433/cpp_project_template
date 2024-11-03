@@ -2,6 +2,7 @@ file(GLOB HEADER_FILES *.h)
 file(GLOB SOURCE_FILES mylib.cpp)
 
 option(ENABLE_PSINS "enable psins module" ON)
+option(ENABLE_LM "enable lm module" ON)
 option(ENABLE_IMGUI "enable IMGUI module" ON)
 
 # vcpkg
@@ -13,7 +14,6 @@ find_package(units CONFIG REQUIRED)
 set(GFLAGS_USE_TARGET_NAMESPACE ON)
 find_package(gflags CONFIG REQUIRED)
 find_package(Taskflow CONFIG REQUIRED)
-# find_package(PROJ CONFIG REQUIRED)
 
 # system
 find_package(Boost REQUIRED COMPONENTS system)
@@ -30,13 +30,10 @@ target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE $<$<BOOL:${PROTOBUF_DEMO}>:${PROJECT_NAME}_proto>
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd> Eigen3::Eigen
-          units::units Boost::system Taskflow::Taskflow 
-          # PROJ::proj
+          units::units Boost::system Taskflow::Taskflow
   PUBLIC yalantinglibs::yalantinglibs fmt::fmt gflags::gflags
-        #  $<$<BOOL:${ENABLE_PSINS}>:implot::implot>
-        #  $<$<BOOL:${ENABLE_PSINS}>:imgui::imgui>
   # modules
-  PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins>)
+  PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins> $<$<BOOL:${ENABLE_LM}>:lm>)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
@@ -63,7 +60,7 @@ generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME
 
 # install and export
 install(
-  TARGETS ${PROJECT_NAME} psins
+  TARGETS ${PROJECT_NAME} psins lm
   EXPORT ${PROJECT_NAME}-targets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin
@@ -100,4 +97,3 @@ foreach(single_header ${HEADER_FILES})
 endforeach()
 
 # my app
-

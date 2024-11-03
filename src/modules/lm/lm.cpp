@@ -3,6 +3,8 @@
 
 #include "releative_loc/releative_loc.h"
 
+namespace lm {
+
 LM::LM() { rl_ = std::make_unique<ReleativeLoc>(); }
 
 void LM::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
@@ -28,4 +30,6 @@ void LM::ProcessInitState(std::shared_ptr<const Message<State>> frame) {
   tf.emplace([this, frame]() { rl_->ProcessInitState(frame); }).name("ReleativeLoc ProcessImu");
 
   executor()->run(tf);
+}
+
 }

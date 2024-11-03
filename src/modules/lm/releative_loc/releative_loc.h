@@ -1,6 +1,8 @@
 #pragma once
 #include <message/message_buffer.h>
 
+namespace lm {
+
 class ReleativeLoc {
 public:
   ReleativeLoc();
@@ -11,3 +13,5 @@ public:
 
 private:
 };
+
+}

@@ -1,6 +1,7 @@
 #pragma once
 #include "modules/app_base.h"
 
+namespace lm {
 class ReleativeLoc;
 
 class LM : public AppBase {
@@ -21,3 +22,5 @@ public:
 private:
   std::unique_ptr<ReleativeLoc> rl_;
 };
+
+}

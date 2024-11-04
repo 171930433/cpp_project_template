@@ -26,8 +26,8 @@ struct State16 : public Eigen::Matrix<double, 16, 1> {
   State16 Update(Message<Imu> const& frame, double dt) {
     using namespace Eigen;
     State16 re = *this;
-    Vector3d const vel_inc = ToVector3d(frame.msg_.acc_) * dt;
-    Vector3d const ang_inc = ToVector3d(frame.msg_.gyr_) * dt;
+    Vector3d const vel_inc = frame.msg_.acc_.Map3d() * dt;
+    Vector3d const ang_inc = frame.msg_.gyr_.Map3d() * dt;
     Vector3d const vel_rot = 1.0 / 2.0 * ang_inc.cross(vel_inc);
     // pos vel att
     re.vel() += qua() * (vel_inc + vel_rot) + Vector3d{ 0, 0, gl_g0 } * dt;
@@ -53,6 +53,7 @@ struct ErrorState15 : public Eigen::Matrix<double, 15, 1> {
   auto dbg() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dbg); }
   auto dba() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dba); }
   // This method allows you to assign Eigen expressions to MyVectorType
+  // https://eigen.tuxfamily.org/dox/TopicCustomizing_InheritingMatrix.html
   template <typename OtherDerived>
   ErrorState15& operator=(const Eigen::MatrixBase<OtherDerived>& other) {
     this->Base::operator=(other);
@@ -117,7 +118,7 @@ protected:
 
     FaiType F = FaiType::Zero();
 
-    Eigen::Vector3d const fn = x.qua() * ToVector3d(frame.msg_.acc_);
+    Eigen::Vector3d const fn = x.qua() * frame.msg_.acc_.Map3d();
     Eigen::Matrix3d const Cnb = x.qua().toRotationMatrix();
 
     using Idx = _ErrorState::Idx;

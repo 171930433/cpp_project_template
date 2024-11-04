@@ -11,7 +11,6 @@ Message<State>::SPtr ReleativeLoc::ProcessImpl(Message<Imu>::SCPtr frame) {
   auto filter_state = eskf_.TimeUpdate(*frame);
 
   auto re = CreateMessage<State>("/releative_loc/pose");
-  
 
   return re;
 }

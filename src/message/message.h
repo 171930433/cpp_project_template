@@ -13,20 +13,14 @@
 #include <ylt/struct_json/json_writer.h>
 #include <ylt/struct_pb.hpp>
 
-inline Eigen::Vector3d ToVector3d(Vec3d const& v3d) { return { v3d.x_, v3d.y_, v3d.z_ }; }
-
-inline Vec3d ToVec3d(Eigen::Vector3d const& v3d) { return { v3d.x(), v3d.y(), v3d.z() }; }
-
 inline Eigen::Isometry3d ToIsometry3d(Gnss const& gnss) {
-  Eigen::Vector3d pos = ToVector3d(gnss.pos_.pos);
   Eigen::AngleAxisd aa(gnss.dual_antenna_.dual_antenna_angle.x_, Eigen::Vector3d::UnitZ());
-  return Eigen::Translation3d(pos) * aa;
+  return Eigen::Translation3d(gnss.pos_.pos.Map3d()) * aa;
 }
 
 inline Eigen::Isometry3d ToIsometry3d(State const& state) {
-  Eigen::Vector3d pos = ToVector3d(state.pos_);
   Eigen::EulerAnglesZXYd att{ state.att_.z_, state.att_.x_, state.att_.y_ };
-  return Eigen::Translation3d(pos) * att;
+  return Eigen::Translation3d(state.pos_.Map3d()) * att;
 }
 
 namespace Eigen {

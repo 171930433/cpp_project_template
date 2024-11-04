@@ -35,6 +35,7 @@ inline Message<State>::SPtr ToState(DataSensor* frame) {
   state->msg_.pos_ = convert::ToVec3d(frame->gpspos);
   state->msg_.vel_ = convert::ToVec3d(frame->gpsvn);
   state->msg_.att_ = convert::ToVec3d(frame->att);
+  state->UpdateRelativePose();
   return state;
 }
 

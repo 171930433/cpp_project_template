@@ -12,8 +12,8 @@ public:
   template <typename _Sensor>
   auto ProcessData(std::shared_ptr<Message<_Sensor> const> frame) {
     if (!inited_) {
-      inited_.store(initializer_->TryInit(frame));
-      if (inited_) { initializer_->InitedState(); }
+      inited_.store(TryInit(frame));
+      if (inited_) {}
     }
 
     return ProcessImpl(frame);
@@ -23,6 +23,7 @@ public:
   //   void ProcessImpl(MessageBase::SCPtr frame) {};
   void ProcessImpl(std::shared_ptr<Message<Gnss> const> frame);
   void ProcessImpl(std::shared_ptr<Message<State> const> frame);
+  bool TryInit(MessageBase::SCPtr frame);
 
 private:
   std::unique_ptr<Initializer> initializer_;

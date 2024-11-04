@@ -89,6 +89,13 @@ public:
 
   ErrorStateKalmanFilter() = default;
 
+  void Init(std::shared_ptr<Message<State> const> frame) {
+    states_.t0_ = frame->t0();
+    states_.x_.pos() = Eigen::Vector3d::Zero();
+    states_.x_.qua() = Eigen::Quaterniond::Identity();
+    states_.x_.pos() = Eigen::Vector3d{ 0, frame->msg_.vel_.Map3d().norm(), 0 };
+  }
+
   std::shared_ptr<FStates> TimeUpdate(Message<Imu> const& frame) {
     auto predicted_states = std::make_shared<FStates>(states_);
     double const dt = frame.t0() - states_.t0_;

@@ -6,6 +6,7 @@
 
 #include "mock/app_mock.h"
 #include "modules/psins/psins_app.h"
+#include "modules/lm/lm.h"
 
 class OfflineTest : public testing::Test {
 protected:
@@ -75,6 +76,34 @@ TEST_F(OfflineTest, psins) {
   msf.dispatcher()->RegisterWriter("/fused_state", cbk);
 
   int count = 200 * 1;
+  for (int i = 0; i < count; ++i) {
+    auto it = reader.ReadFrame();
+    msf.ProcessData(it.first);
+  }
+
+  EXPECT_TRUE(1);
+  // 数据有丢帧
+  EXPECT_GE(fused_states.size(), count * 0.99);
+}
+
+TEST_F(OfflineTest, lm) {
+  msf.Init(FLAGS_config_dir);
+
+  PsinsReader reader;
+  reader.Init(FLAGS_data_dir + "/mimuattgps.bin");
+
+  msf.CreateModule<lm::LM>();
+
+  // 构造输出
+  std::deque<Message<State>::SCPtr> fused_states;
+  Message<State>::CFunc cbk = [&fused_states](Message<State>::SCPtr frame) {
+    fused_states.push_back(frame);
+    ELOGD << frame->to_json();
+  };
+
+  msf.dispatcher()->RegisterWriter("/fused_state", cbk);
+
+  int count = 5 * 1;
   for (int i = 0; i < count; ++i) {
     auto it = reader.ReadFrame();
     msf.ProcessData(it.first);

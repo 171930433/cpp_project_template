@@ -12,10 +12,13 @@ Message<State>::SPtr ReleativeLoc::ProcessImpl(Message<Imu>::SCPtr frame) {
 
   auto re = CreateMessage<State>("/releative_loc/pose");
 
+  re->msg_.t0_ = filter_state->t0_;
   re->rpose_ = Eigen::Translation3d(filter_state->x_.pos()) * filter_state->x_.qua();
   re->msg_.pos_.Map3d().setZero();
   re->msg_.vel_.Map3d().setZero();
   re->msg_.att_.Map3d().setZero();
+
+  ELOGD << "ReleativeLoc::ProcessImpl " << re->to_header_str();
 
   return re;
 }
@@ -34,6 +37,8 @@ bool ReleativeLoc::TryInit(MessageBase::SCPtr frame) {
   re->UpdateRelativePose();
 
   eskf_.Init(re);
+
+  ELOGD << "ReleativeLoc::TryInit done" << frame->to_header_str();
 
   return true;
 }

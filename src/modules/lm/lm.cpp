@@ -5,7 +5,7 @@
 
 namespace lm {
 
-LM::LM() { rl_ = std::make_unique<ReleativeLoc>(); }
+LM::LM() { rl_ = std::make_shared<ReleativeLoc>(); }
 
 void LM::ProcessImu(std::shared_ptr<Message<Imu> const> frame) {
   tf::Taskflow tf;

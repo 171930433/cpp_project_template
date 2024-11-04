@@ -2,6 +2,7 @@
 #include "modules/app_base.h"
 
 namespace lm {
+
 class ReleativeLoc;
 
 class LM : public AppBase {
@@ -20,7 +21,7 @@ public:
   void ProcessInitState(std::shared_ptr<const Message<State>> frame);
 
 private:
-  std::unique_ptr<ReleativeLoc> rl_;
+  std::shared_ptr<ReleativeLoc> rl_;
 };
 
 }

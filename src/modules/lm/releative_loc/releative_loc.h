@@ -1,4 +1,5 @@
 #pragma once
+#include "kalman.h"
 #include "releative_loc/initializer.h"
 #include <message/message_buffer.h>
 
@@ -25,6 +26,7 @@ public:
 
 private:
   std::unique_ptr<Initializer> initializer_;
+  filter::ESKF15 eskf_;
 
 private:
   TotalBuffer<Imu, Gnss, State> buffers_;

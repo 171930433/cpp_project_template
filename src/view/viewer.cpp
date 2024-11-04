@@ -3,6 +3,8 @@
 #include "modules/psins/psins_app.h"
 #include "tree_view_helper.h"
 
+#include "modules/lm/lm.h"
+
 #ifdef FF
 #undef FF
 #endif
@@ -21,12 +23,14 @@ void MyViewer::Init() {
   reader_->Init(FLAGS_data_dir);
   msf_.Init();
   msf_.CreateModule<PsinsApp>();
+  msf_.CreateModule<lm::LM>();
 
   Message<State>::CFunc cbk = [this](Message<State>::SCPtr frame) {
     // buffer_[frame->channel_name_].push_back(frame);
     buffers_.Append(frame);
   };
   msf_.dispatcher()->RegisterWriter("/fused_state", cbk);
+  msf_.dispatcher()->RegisterWriter("/releative_loc/pose", cbk);
 
   inited_ = true;
 }
@@ -135,6 +139,7 @@ void MyViewer::TrajectoryWindow() {
   if (ImPlot::BeginPlot("##0", ImVec2(-1, -1), plot_flag)) {
 
     PlotTrajectory(buffers_.Get<State>("/fused_state"));
+    PlotTrajectory(buffers_.Get<State>("/releative_loc/pose"));
     PlotTrajectory(buffers_.Get<Gnss>("/gnss"));
 
     PlotTrajectory(buffers_.Get<State>("/psins/state"));

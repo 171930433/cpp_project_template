@@ -101,7 +101,7 @@ TEST_F(OfflineTest, lm) {
     ELOGD << frame->to_json();
   };
 
-  msf.dispatcher()->RegisterWriter("/fused_state", cbk);
+  msf.dispatcher()->RegisterWriter("/releative_loc/pose", cbk);
 
   int count = 5 * 1;
   for (int i = 0; i < count; ++i) {

@@ -10,7 +10,7 @@ public:
   LM();
 
   void Init() override {
-    ELOGI << "PsinsApp init done";
+    ELOGI << "lm init done";
 
     dispatcher()->RegisterReader("/imu", &LM::ProcessImu, this);
     dispatcher()->RegisterReader("/gnss", &LM::ProcessGnss, this);

@@ -10,6 +10,10 @@ inline Eigen::Matrix3d askew(Eigen::Vector3d const& v) {
 }
 
 struct State16 : public Eigen::Matrix<double, 16, 1> {
+  State16() {
+    this->setZero();
+    this->data()[3] = 1;
+  }
   enum class Idx { qua = 0, dv = 4, dp = 7, dbg = 10, dba = 13 };
   auto qua() { return Eigen::Map<Eigen::Quaterniond>(this->data()); }
   auto vel() { return Eigen::Map<Eigen::Vector3d>(this->data() + 4); }
@@ -22,6 +26,12 @@ struct State16 : public Eigen::Matrix<double, 16, 1> {
   auto pos() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 7); }
   auto bg() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 10); }
   auto ba() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 13); }
+
+  template <typename OtherDerived>
+  State16& operator=(const Eigen::MatrixBase<OtherDerived>& other) {
+    this->Base::operator=(other);
+    return *this;
+  }
 
   State16 Update(Message<Imu> const& frame, double dt) {
     using namespace Eigen;
@@ -40,6 +50,7 @@ struct State16 : public Eigen::Matrix<double, 16, 1> {
 struct ErrorState15 : public Eigen::Matrix<double, 15, 1> {
   using Base = Eigen::Matrix<double, 15, 1>;
   constexpr static unsigned klocal = 15;
+  ErrorState15() { this->setZero(); }
   enum class Idx { fai = 0, dv = 3, dp = 6, dbg = 9, dba = 12 };
   auto fai() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::fai); }
   auto dv() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::dv); }
@@ -90,10 +101,24 @@ public:
   ErrorStateKalmanFilter() = default;
 
   void Init(std::shared_ptr<Message<State> const> frame) {
+    using namespace Eigen;
     states_.t0_ = frame->t0();
-    states_.x_.pos() = Eigen::Vector3d::Zero();
-    states_.x_.qua() = Eigen::Quaterniond::Identity();
-    states_.x_.pos() = Eigen::Vector3d{ 0, frame->msg_.vel_.Map3d().norm(), 0 };
+    states_.x_.vel() = Eigen::Vector3d{ 0, frame->msg_.vel_.Map3d().norm(), 0 };
+    states_.dx_.setZero();
+
+    //
+    static double const gl_deg = M_PI / 180.0;
+    static double const gl_dpsh = gl_deg / sqrt(3600);
+    static double const gl_ugpshz = gl_g0 * 1e-6;
+    // init cov
+    QType std0 = QType::Zero();
+    std0 << Vector3d::Ones() * 5 * gl_deg, Vector3d::Ones(), Vector3d::Ones() * 10,
+      Vector3d::Ones() * 100 * gl_deg / 3600, Vector3d::Ones() * 5e-3 * gl_g0;
+
+    states_.cov_ = std0.cwiseAbs2().asDiagonal();
+    // q
+    q_.setZero();
+    q_ << Vector3d::Ones() * 0.1 * gl_dpsh, Vector3d::Ones() * 10 * gl_ugpshz, Vector<double, 15 - 6>::Zero();
   }
 
   std::shared_ptr<FStates> TimeUpdate(Message<Imu> const& frame) {

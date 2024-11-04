@@ -4,6 +4,7 @@
 
 constexpr double WGS84_ELLIPSOID_RE = 6378137.0;
 constexpr double WGS84_ELLIPSOID_F = (1.0 / 298.257223563);
+constexpr double gl_g0 = 9.7803267714;
 
 template <double _Re, double _F>
 struct Earth {

@@ -22,14 +22,23 @@ struct State16 : public Eigen::Matrix<double, 16, 1> {
   auto pos() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 7); }
   auto bg() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 10); }
   auto ba() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 13); }
+
+  State16 Update(Message<Imu> const& frame, double dt) {
+    using namespace Eigen;
+    State16 re = *this;
+    Vector3d const vel_inc = ToVector3d(frame.msg_.acc_) * dt;
+    Vector3d const ang_inc = ToVector3d(frame.msg_.gyr_) * dt;
+    Vector3d const vel_rot = 1.0 / 2.0 * ang_inc.cross(vel_inc);
+    // pos vel att
+    re.vel() += qua() * (vel_inc + vel_rot) + Vector3d{ 0, 0, gl_g0 } * dt;
+    re.pos() += 0.5 * (re.vel() + this->vel());
+    re.qua() = AngleAxisd{ ang_inc.norm(), ang_inc / ang_inc.norm() } * this->qua();
+    return re;
+  }
 };
 
-template <typename _State>
-std::shared_ptr<_State> StateUpdate(_State const& x, Message<Imu> const& frame) {
-  return nullptr;
-}
-
 struct ErrorState15 : public Eigen::Matrix<double, 15, 1> {
+  using Base = Eigen::Matrix<double, 15, 1>;
   constexpr static unsigned klocal = 15;
   enum class Idx { fai = 0, dv = 3, dp = 6, dbg = 9, dba = 12 };
   auto fai() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::fai); }
@@ -43,10 +52,25 @@ struct ErrorState15 : public Eigen::Matrix<double, 15, 1> {
   auto dp() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dp); }
   auto dbg() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dbg); }
   auto dba() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dba); }
+  // This method allows you to assign Eigen expressions to MyVectorType
+  template <typename OtherDerived>
+  ErrorState15& operator=(const Eigen::MatrixBase<OtherDerived>& other) {
+    this->Base::operator=(other);
+    return *this;
+  }
 };
 
+inline State16 Compensate(State16 const& x, ErrorState15 const& dx) {
+  State16 re;
+
+  re.qua() = Eigen::AngleAxisd{ dx.fai().norm(), dx.fai() / dx.fai().norm() } * x.qua();
+  re.tail(12) = x.tail(12) + dx.tail(12);
+
+  return re;
+}
+
 template <typename _State, typename _ErrorState>
-struct StatePair {
+struct FilterState {
   using CovType = Eigen::Matrix<double, _ErrorState::klocal, _ErrorState::klocal>;
   double t0_;
   _State x_;
@@ -59,37 +83,48 @@ class ErrorStateKalmanFilter {
 public:
   constexpr static unsigned klocal = _ErrorState::klocal;
   using FaiType = Eigen::Matrix<double, klocal, klocal>;
-  using States = StatePair<_State, _ErrorState>;
+  using QType = Eigen::Matrix<double, klocal, 1>;
+  using FStates = FilterState<_State, _ErrorState>;
 
   ErrorStateKalmanFilter() = default;
 
-  std::shared_ptr<States> TimeUpdate(Message<Imu> const& frame) {
-    auto predicted_states = std::make_shared<States>(*states_);
+  std::shared_ptr<FStates> TimeUpdate(Message<Imu> const& frame) {
+    auto predicted_states = std::make_shared<FStates>(states_);
+    double const dt = frame.t0() - states_.t0_;
     predicted_states->t0_ = frame.t0();
 
-    auto Phi = Fai(states_, frame);
+    // 0. 误差状态更新
+    FaiType const& Phi = Fai(states_, frame, dt);
     if (!(states_.dx_.all() == 0)) { predicted_states->dx_ = Phi * states_.dx_; }
-    predicted_states->cov_ = Phi.transpose() * states_.cov_ * Phi /*过程噪声部分先忽略*/;
-    predicted_states->x_ = StateUpdate(states_.x_, frame);
+
+    // 1. 方差更新
+    FaiType const cov = Phi.transpose() * states_.cov_ * Phi + FaiType(q_.asDiagonal() * dt);
+    predicted_states->cov_ = (cov.transpose() + cov) * 0.5;
+
+    // 2. 全状态更新
+    predicted_states->x_ = states_.x_.Update(frame, dt);
+
+    // 更新当前滤波状态
+    states_ = *predicted_states;
 
     return predicted_states;
   }
 
 protected:
-  FaiType Fai(States const& states, Message<Imu> const& frame) {
+  FaiType Fai(FStates const& states, Message<Imu> const& frame, double dt) {
     static FaiType const Inn = FaiType::Identity();
     auto& x = states.x_;
-    double const dt = frame.t0() - states.t0_;
 
     FaiType F = FaiType::Zero();
 
     Eigen::Vector3d const fn = x.qua() * ToVector3d(frame.msg_.acc_);
     Eigen::Matrix3d const Cnb = x.qua().toRotationMatrix();
 
-    F.block<3, 3>(_State::Idx::fai, _State::Idx::dbg) = -Cnb;
-    F.block<3, 3>(_State::Idx::dv, _State::Idx::fai) = askew(fn);
-    F.block<3, 3>(_State::Idx::dv, _State::Idx::dba) = Cnb;
-    F.block<3, 3>(_State::Idx::dp, _State::Idx::dv) = Eigen::Matrix3d::Identity();
+    using Idx = _ErrorState::Idx;
+    F.template block<3, 3>((int)Idx::fai, (int)Idx::dbg) = -Cnb;
+    F.template block<3, 3>((int)Idx::dv, (int)Idx::fai) = askew(fn);
+    F.template block<3, 3>((int)Idx::dv, (int)Idx::dba) = Cnb;
+    F.template block<3, 3>((int)Idx::dp, (int)Idx::dv) = Eigen::Matrix3d::Identity();
 
     //   相关时间暂时不管
     FaiType Phi = Inn + F * dt;
@@ -98,7 +133,8 @@ protected:
   };
 
 protected:
-  States states_;
+  FStates states_;
+  QType q_ = QType::Zero();
 };
 
 using ESKF15 = ErrorStateKalmanFilter<100, State16, ErrorState15>;

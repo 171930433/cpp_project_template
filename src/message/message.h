@@ -13,9 +13,9 @@
 #include <ylt/struct_json/json_writer.h>
 #include <ylt/struct_pb.hpp>
 
-inline Eigen::Vector3d ToVector3d(Vec3d const& v3d) {
-  return { v3d.x_, v3d.y_, v3d.z_ };
-}
+inline Eigen::Vector3d ToVector3d(Vec3d const& v3d) { return { v3d.x_, v3d.y_, v3d.z_ }; }
+
+inline Vec3d ToVec3d(Eigen::Vector3d const& v3d) { return { v3d.x(), v3d.y(), v3d.z() }; }
 
 inline Eigen::Isometry3d ToIsometry3d(Gnss const& gnss) {
   Eigen::Vector3d pos = ToVector3d(gnss.pos_.pos);

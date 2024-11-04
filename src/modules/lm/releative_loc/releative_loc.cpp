@@ -8,7 +8,11 @@ ReleativeLoc::ReleativeLoc() { initializer_ = std::make_unique<Initializer>(); }
 Message<State>::SPtr ReleativeLoc::ProcessImpl(Message<Imu>::SCPtr frame) {
   if (!inited_) { return nullptr; }
 
+  auto filter_state = eskf_.TimeUpdate(*frame);
+
   auto re = CreateMessage<State>("/releative_loc/pose");
+  
+
   return re;
 }
 

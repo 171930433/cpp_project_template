@@ -1,14 +1,19 @@
 #pragma once
+#include <eigen3/Eigen/Dense>
 
 struct Vec2d {
   double x_ = 0;
   double y_ = 0;
+  auto Map2d() { return Eigen::Map<Eigen::Vector2d>(&x_); }
+  auto Map2d() const { return Eigen::Map<Eigen::Vector2d const>(&x_); }
 };
 
 struct Vec3d {
   double x_ = 0;
   double y_ = 0;
   double z_ = 0;
+  auto Map3d() { return Eigen::Map<Eigen::Vector3d>(&x_); }
+  auto Map3d() const { return Eigen::Map<Eigen::Vector3d const>(&x_); }
 };
 
 struct Imu {

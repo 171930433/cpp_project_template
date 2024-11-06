@@ -6,11 +6,61 @@ using namespace Eigen;
 
 // 添加reduced row echelon from,计算一个矩阵的行最简形式
 // 高斯-约尔当消元
+
 template <typename _Scalar, int _m, int _n>
-Matrix<_Scalar, _m, _n> GaussJordanEiliminate(Matrix<_Scalar, _m, _n> const& A) {
-  Matrix<_Scalar, _m, _n> matrix = A;
-  
-  return matrix;
+std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar, _m, _n>& A) {
+  Matrix<_Scalar, _m, _n> matrix = A; // 创建输入矩阵的副本
+  int rows = matrix.rows();
+  int cols = matrix.cols();
+
+  // 用于存储每一步的初等矩阵
+  std::vector<Matrix<_Scalar, _m, _m>> elementary_matrices;
+
+  for (int i = 0; i < rows; ++i) {
+    // 创建单位矩阵作为初等矩阵的基础
+    Matrix<_Scalar, _m, _m> E = Matrix<_Scalar, _m, _m>::Identity();
+
+    // 查找当前列中的最大元素作为主元
+    int maxRow = i;
+    for (int k = i + 1; k < rows; ++k) {
+      if (std::abs(matrix(k, i)) > std::abs(matrix(maxRow, i))) { maxRow = k; }
+    }
+
+    // 如果整个列都是零，跳过此列
+    if (matrix(maxRow, i) == 0) { continue; }
+
+    // 交换最大主元行和当前行
+    if (maxRow != i) {
+      matrix.row(i).swap(matrix.row(maxRow));
+      E.row(i).swap(E.row(maxRow)); // 记录行交换
+      elementary_matrices.push_back(E);
+      std::cout << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E << "\n\n";
+      E = Matrix<_Scalar, _m, _m>::Identity(); // 重置初等矩阵
+    }
+
+    // 归一化主元行
+    _Scalar pivot = matrix(i, i);
+    matrix.row(i) /= pivot;
+    E(i, i) = 1 / pivot; // 记录归一化
+    elementary_matrices.push_back(E);
+    std::cout << "Scaling Matrix for Row " << i << ":\n" << E << "\n\n";
+    E = Matrix<_Scalar, _m, _m>::Identity();
+
+    // 消元
+    for (int j = 0; j < rows; ++j) {
+      if (j != i) {
+        _Scalar factor = matrix(j, i);
+        matrix.row(j) -= factor * matrix.row(i);
+        E(j, i) = -factor; // 记录行加减
+        elementary_matrices.push_back(E);
+        std::cout << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E << "\n\n";
+        E = Matrix<_Scalar, _m, _m>::Identity();
+      }
+    }
+  }
+
+  std::cout << "Final Matrix (RREF):\n" << matrix << "\n\n";
+  return elementary_matrices;
 }
 
 class Lesson5_6_7 : public testing::Test {
@@ -180,7 +230,7 @@ TEST_F(Lesson5_6_7, rref_eigen2_At) {
 }
 
 TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
-  Matrix<double, 3, 4> A2 = GaussJordanEiliminate(a_);
+  auto re = GaussJordanEiliminate(a_);
 
-  GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
+  // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
 }

@@ -9,16 +9,17 @@ using namespace Eigen;
 
 template <typename _Scalar, int _m, int _n>
 std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar, _m, _n>& A) {
+  using ElemetrayType = Matrix<_Scalar, _m, _m>;
   Matrix<_Scalar, _m, _n> matrix = A; // 创建输入矩阵的副本
-  int rows = matrix.rows();
-  int cols = matrix.cols();
+  int rows = _m;
+  int cols = _n;
 
   // 用于存储每一步的初等矩阵
-  std::vector<Matrix<_Scalar, _m, _m>> elementary_matrices;
+  std::vector<ElemetrayType> elementary_matrices;
 
   for (int i = 0; i < rows; ++i) {
     // 创建单位矩阵作为初等矩阵的基础
-    Matrix<_Scalar, _m, _m> E = Matrix<_Scalar, _m, _m>::Identity();
+    ElemetrayType E = ElemetrayType::Identity();
 
     // 查找当前列中的最大元素作为主元
     int maxRow = i;
@@ -27,7 +28,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
     }
 
     // 如果整个列都是零，跳过此列
-    if (matrix(maxRow, i) == 0) { continue; }
+    if (fabs(matrix(maxRow, i)) <= 1e-10) { continue; }
 
     // 交换最大主元行和当前行
     if (maxRow != i) {
@@ -35,7 +36,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
       E.row(i).swap(E.row(maxRow)); // 记录行交换
       elementary_matrices.push_back(E);
       std::cout << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E << "\n\n";
-      E = Matrix<_Scalar, _m, _m>::Identity(); // 重置初等矩阵
+      E = ElemetrayType::Identity(); // 重置初等矩阵
     }
 
     // 归一化主元行
@@ -44,7 +45,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
     E(i, i) = 1 / pivot; // 记录归一化
     elementary_matrices.push_back(E);
     std::cout << "Scaling Matrix for Row " << i << ":\n" << E << "\n\n";
-    E = Matrix<_Scalar, _m, _m>::Identity();
+    E = ElemetrayType::Identity();
 
     // 消元
     for (int j = 0; j < rows; ++j) {
@@ -54,7 +55,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
         E(j, i) = -factor; // 记录行加减
         elementary_matrices.push_back(E);
         std::cout << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E << "\n\n";
-        E = Matrix<_Scalar, _m, _m>::Identity();
+        E = ElemetrayType::Identity();
       }
     }
   }

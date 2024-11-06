@@ -21,14 +21,13 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
     // 创建单位矩阵作为初等矩阵的基础
     ElemetrayType E = ElemetrayType::Identity();
 
-    // 查找当前列中的最大元素作为主元
-    int maxRow = i;
-    for (int k = i + 1; k < rows; ++k) {
-      if (std::abs(matrix(k, i)) > std::abs(matrix(maxRow, i))) { maxRow = k; }
-    }
+    int maxRow = 0;
+    _Scalar const max_pivot = matrix.col(i).tail(_m - i).maxCoeff(&maxRow);
+    maxRow += i;
+    GTEST_LOG_(INFO) << " maxRow = " << maxRow + i;
 
     // 如果整个列都是零，跳过此列
-    if (fabs(matrix(maxRow, i)) <= 1e-10) { continue; }
+    if (fabs(max_pivot) <= 1e-10) { continue; }
 
     // 交换最大主元行和当前行
     if (maxRow != i) {

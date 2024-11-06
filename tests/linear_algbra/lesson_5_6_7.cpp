@@ -7,13 +7,17 @@ using namespace Eigen;
 class Lesson5_6_7 : public testing::Test {
 
 public:
-  Lesson5_6_7() { a_ << RowVector4d{ 1, 2, 2, 2 }, RowVector4d{ 2, 4, 6, 8 }, RowVector4d{ 3, 6, 8, 10 }; }
+  Lesson5_6_7() {
+    a_ << RowVector4d{ 1, 2, 2, 2 }, RowVector4d{ 2, 4, 6, 8 }, RowVector4d{ 3, 6, 8, 10 };
+    at_ = a_.transpose();
+  }
   void SetUp() override {}
 
   void TearDown() override {}
 
 protected:
   Matrix<double, 3, 4> a_;
+  Matrix<double, 4, 3> at_;
 };
 
 // 行阶梯形，主元以下均为0
@@ -125,4 +129,43 @@ TEST_F(Lesson5_6_7, rref_eigen2) {
   cout << lu.permutationP().inverse() * l * u * lu.permutationQ().inverse() << endl;
 
   EXPECT_TRUE(m.isApprox(lu.permutationP().inverse() * l * u * lu.permutationQ().inverse()));
+}
+
+// LU分解的最终目标是 将 Ax=b, 分解成 PLUx=b, 令 Ux=y, 则
+// 先解 PLy=b,又因为PL是下三角矩阵，则可以使用前向迭代依次解出来y
+// y解出后，又因为Ux=y,U是上三角矩阵，则可以再通过后向迭代依次解出来x
+TEST_F(Lesson5_6_7, rref_eigen2_At) {
+  constexpr int m = 4;
+  constexpr int n = 3;
+
+  Matrix<double, m, n> At = at_;
+
+  FullPivLU<Matrix<double, m, n>> flu = At.fullPivLu();
+
+  Matrix<double, m, n> A2 = flu.permutationP() * At * flu.permutationQ();
+
+  GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
+
+  // A2 将不再有行列变换，更容易看清楚过程
+  auto flu2 = A2.fullPivLu();
+
+  EXPECT_EQ((flu2.permutationP().indices()), (Vector<int, m>{ 0, 1, 2, 3 }));
+  EXPECT_EQ((flu2.permutationQ().indices()), (Vector<int, n>{ 0, 1, 2 }));
+
+  GTEST_LOG_(INFO) << "Here is the LU:\n" << flu2.matrixLU();
+
+  Matrix<double, m, m> L = Matrix<double, m, m>::Identity();
+  L.block<m, n>(0, 0).triangularView<StrictlyLower>() = flu2.matrixLU();
+  GTEST_LOG_(INFO) << "Here is the L:\n" << L;
+
+  Matrix<double, m, n> U = flu2.matrixLU().triangularView<Upper>();
+  GTEST_LOG_(INFO) << "Here is the U:\n" << U;
+
+  int rank = flu2.rank();
+  EXPECT_EQ(rank, 2);
+
+  MatrixXd NullA2(n, n - rank);
+  NullA2 = flu2.kernel();
+
+  EXPECT_TRUE((A2 * NullA2).isApprox(MatrixXd::Zero(m, n - rank)));
 }

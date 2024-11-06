@@ -4,6 +4,15 @@
 
 using namespace Eigen;
 
+// 添加reduced row echelon from,计算一个矩阵的行最简形式
+// 高斯-约尔当消元
+template <typename _Scalar, int _m, int _n>
+Matrix<_Scalar, _m, _n> GaussJordanEiliminate(Matrix<_Scalar, _m, _n> const& A) {
+  Matrix<_Scalar, _m, _n> matrix = A;
+  
+  return matrix;
+}
+
 class Lesson5_6_7 : public testing::Test {
 
 public:
@@ -168,4 +177,10 @@ TEST_F(Lesson5_6_7, rref_eigen2_At) {
   NullA2 = flu2.kernel();
 
   EXPECT_TRUE((A2 * NullA2).isApprox(MatrixXd::Zero(m, n - rank)));
+}
+
+TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
+  Matrix<double, 3, 4> A2 = GaussJordanEiliminate(a_);
+
+  GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
 }

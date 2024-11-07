@@ -83,3 +83,13 @@ TEST_F(Lesson4, LU_3) {
   GTEST_LOG_(INFO) << "L2 = \n" << L2;
   GTEST_LOG_(INFO) << "U2 = \n" << U2;
 }
+
+TEST_F(Lesson4, sysmmetric) {
+  Eigen::Matrix3d A = Eigen::Matrix3d::Random();
+  Eigen::Matrix3d AAt = A * A.transpose();
+  Eigen::Matrix3d AtA = A.transpose() * A;
+
+  EXPECT_FALSE(A.isApprox(A.transpose()));
+  EXPECT_TRUE(AAt.isApprox(AAt.transpose()));
+  EXPECT_TRUE(AtA.isApprox(AtA.transpose()));
+}

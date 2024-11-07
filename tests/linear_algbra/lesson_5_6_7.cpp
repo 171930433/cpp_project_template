@@ -18,6 +18,8 @@ std::tuple<Matrix<_Scalar, _m, _n>, Matrix<_Scalar, _m, _m>, int> GaussJordanEil
   int n_pivot = 0;
   for (int i = 0; i < _m; ++i) {
 
+    if (i >= _n) { break; }
+
     int row_of_pivot = i;
     _Scalar pivot = A.col(i).tail(_m - n_pivot).maxCoeff(&row_of_pivot);
     row_of_pivot += n_pivot;
@@ -77,7 +79,7 @@ std::pair<Matrix<_Scalar, _m, _n>, PermutationMatrix<_n>> IdentityFree(Matrix<_S
     }
   }
 
-  GTEST_LOG_(INFO) << " P is " << P.indices().transpose() << "rref * P is \n" << rref * P;
+  // GTEST_LOG_(INFO) << " P is " << P.indices().transpose() << "rref * P is \n" << rref * P;
 
   return { rref * P, P };
 }
@@ -250,23 +252,48 @@ TEST_F(Lesson5_6_7, rref_eigen2_At) {
 
 // gauss-jordan最终结果是rref： 简化行阶梯型矩阵, E*A = rref
 // 通过rref通过列变换 P 获得 [I F; 0]矩阵，即 IF = rref * P
-// 这个 [-F I] 即为 A * P 的零空间
+// 这个 [-F I] 即为 A * P 的零空间; 或者说A的零空间是 P * [-F I]
 TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
-  auto const [RREF, E, rank] = GaussJordanEiliminate(a_);
+  auto const& [RREF, E, rank] = GaussJordanEiliminate(a_);
+  GTEST_LOG_(INFO) << "Here is the RREF:\n" << RREF;
 
   EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
 
-  auto const [IF, P] = IdentityFree(a_);
+  auto const& [IF, P] = IdentityFree(a_);
 
   GTEST_LOG_(INFO) << "Here is the IF:\n" << IF;
 
   MatrixXd NullA(4, rank);
   NullA.topRows(rank) = -IF.topRightCorner(rank, rank);
-  NullA.bottomRows(rank).setIdentity();
+  NullA.bottomRows(4 - rank).setIdentity();
+  P.applyThisOnTheLeft(NullA);
 
   GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
 
-  EXPECT_EQ((a_ * P * NullA), MatrixXd::Zero(3, rank));
+  EXPECT_EQ((a_ * NullA), MatrixXd::Zero(3, rank));
 
   // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
+}
+
+TEST_F(Lesson5_6_7, null_space_of_A_transpose) {
+  constexpr int m = 4;
+  constexpr int n = 3;
+  Matrix<double, m, n> At = at_;
+
+  auto const& [RREF, E, rank] = GaussJordanEiliminate(At);
+  EXPECT_TRUE(At.isApprox(E.inverse() * RREF));
+
+  GTEST_LOG_(INFO) << "Here is the RREF:\n" << RREF;
+
+  auto const& [IF, P] = IdentityFree(At);
+  MatrixXd NullAt(n, n - rank);
+  NullAt.topRows(rank) = -IF.topRightCorner(rank, n - rank);
+  NullAt.bottomRows(n - rank).setIdentity();
+
+  P.applyThisOnTheLeft(NullAt);
+  GTEST_LOG_(INFO) << "Here is the NullAt:\n" << NullAt;
+
+  GTEST_LOG_(INFO) << "Here is the NullAt2:\n" << At.fullPivLu().kernel();
+
+  EXPECT_TRUE((At * NullAt).isZero());
 }

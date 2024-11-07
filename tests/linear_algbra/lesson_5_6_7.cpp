@@ -14,14 +14,13 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
   int rows = _m;
   int cols = _n;
 
-  // 用于存储每一步的初等矩阵
   std::vector<ElemetrayType> elementary_matrices;
 
   for (int i = 0; i < rows; ++i) {
-    // 创建单位矩阵作为初等矩阵的基础
     ElemetrayType E = ElemetrayType::Identity();
 
     int maxRow = 0;
+
     _Scalar const max_pivot = matrix.col(i).tail(_m - i).maxCoeff(&maxRow);
     maxRow += i;
     GTEST_LOG_(INFO) << " maxRow = " << maxRow + i;
@@ -37,7 +36,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
 
       matrix = P * matrix;
       elementary_matrices.push_back(P.toDenseMatrix().template cast<_Scalar>());
-      GTEST_LOG_(INFO) << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E;
+      GTEST_LOG_(INFO) << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E << "\n" << matrix;
     }
 
     // 归一化主元行
@@ -45,7 +44,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
     E(i, i) = 1 / matrix(i, i); // 记录归一化
     matrix = E * matrix;
     elementary_matrices.push_back(E);
-    GTEST_LOG_(INFO) << "Scaling Matrix for Row " << i << ":\n" << E;
+    GTEST_LOG_(INFO) << "Scaling Matrix for Row " << i << ":\n" << E << "\n" << matrix;
 
     // 消元
     for (int j = 0; j < rows; ++j) {
@@ -54,7 +53,7 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
         E(j, i) = -matrix(j, i); // 记录行加减
         matrix = E * matrix;
         elementary_matrices.push_back(E);
-        GTEST_LOG_(INFO) << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E;
+        GTEST_LOG_(INFO) << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E << "\n" << matrix;
         // E = ElemetrayType::Identity();
       }
     }

@@ -42,21 +42,26 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
 
     // 归一化主元行
     _Scalar pivot = matrix(i, i);
-    matrix.row(i) /= pivot;
+    // matrix.row(i) /= pivot;
+    E.setIdentity();
     E(i, i) = 1 / pivot; // 记录归一化
+    matrix = E * matrix;
     elementary_matrices.push_back(E);
     std::cout << "Scaling Matrix for Row " << i << ":\n" << E << "\n\n";
-    E = ElemetrayType::Identity();
+    // E = ElemetrayType::Identity();
 
     // 消元
     for (int j = 0; j < rows; ++j) {
       if (j != i) {
+        E.setIdentity();
+
         _Scalar factor = matrix(j, i);
-        matrix.row(j) -= factor * matrix.row(i);
+        // matrix.row(j) -= factor * matrix.row(i);
         E(j, i) = -factor; // 记录行加减
+        matrix = E * matrix;
         elementary_matrices.push_back(E);
         std::cout << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E << "\n\n";
-        E = ElemetrayType::Identity();
+        // E = ElemetrayType::Identity();
       }
     }
   }

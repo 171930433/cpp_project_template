@@ -35,38 +35,32 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
       P.setIdentity();
       std::swap(P.indices()[i], P.indices()[maxRow]);
 
-      elementary_matrices.push_back(P.toDenseMatrix().template cast<_Scalar>());
       matrix = P * matrix;
-      std::cout << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E << "\n\n";
+      elementary_matrices.push_back(P.toDenseMatrix().template cast<_Scalar>());
+      GTEST_LOG_(INFO) << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E;
     }
 
     // 归一化主元行
-    _Scalar pivot = matrix(i, i);
-    // matrix.row(i) /= pivot;
     E.setIdentity();
-    E(i, i) = 1 / pivot; // 记录归一化
+    E(i, i) = 1 / matrix(i, i); // 记录归一化
     matrix = E * matrix;
     elementary_matrices.push_back(E);
-    std::cout << "Scaling Matrix for Row " << i << ":\n" << E << "\n\n";
-    // E = ElemetrayType::Identity();
+    GTEST_LOG_(INFO) << "Scaling Matrix for Row " << i << ":\n" << E;
 
     // 消元
     for (int j = 0; j < rows; ++j) {
       if (j != i) {
         E.setIdentity();
-
-        _Scalar factor = matrix(j, i);
-        // matrix.row(j) -= factor * matrix.row(i);
-        E(j, i) = -factor; // 记录行加减
+        E(j, i) = -matrix(j, i); // 记录行加减
         matrix = E * matrix;
         elementary_matrices.push_back(E);
-        std::cout << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E << "\n\n";
+        GTEST_LOG_(INFO) << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E;
         // E = ElemetrayType::Identity();
       }
     }
   }
 
-  std::cout << "Final Matrix (RREF):\n" << matrix << "\n\n";
+  GTEST_LOG_(INFO) << "Final Matrix (RREF):\n" << matrix;
   return elementary_matrices;
 }
 
@@ -238,15 +232,6 @@ TEST_F(Lesson5_6_7, rref_eigen2_At) {
 
 TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
   auto re = GaussJordanEiliminate(a_);
-
-  PermutationMatrix<3> P;
-  P.setIdentity();
-
-  GTEST_LOG_(INFO) << "Here is the v " << P.indices().transpose();
-
-  std::swap(P.indices()[0], P.indices()[2]);
-
-  GTEST_LOG_(INFO) << "Here is the v " << P.indices().transpose();
 
   // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
 }

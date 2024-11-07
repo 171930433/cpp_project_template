@@ -31,11 +31,13 @@ std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar,
 
     // 交换最大主元行和当前行
     if (maxRow != i) {
-      matrix.row(i).swap(matrix.row(maxRow));
-      E.row(i).swap(E.row(maxRow)); // 记录行交换
-      elementary_matrices.push_back(E);
+      PermutationMatrix<_m> P;
+      P.setIdentity();
+      std::swap(P.indices()[i], P.indices()[maxRow]);
+
+      elementary_matrices.push_back(P.toDenseMatrix().template cast<_Scalar>());
+      matrix = P * matrix;
       std::cout << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E << "\n\n";
-      E = ElemetrayType::Identity(); // 重置初等矩阵
     }
 
     // 归一化主元行
@@ -231,6 +233,15 @@ TEST_F(Lesson5_6_7, rref_eigen2_At) {
 
 TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
   auto re = GaussJordanEiliminate(a_);
+
+  PermutationMatrix<3> P;
+  P.setIdentity();
+
+  GTEST_LOG_(INFO) << "Here is the v " << P.indices().transpose();
+
+  std::swap(P.indices()[0], P.indices()[2]);
+
+  GTEST_LOG_(INFO) << "Here is the v " << P.indices().transpose();
 
   // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
 }

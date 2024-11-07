@@ -6,61 +6,80 @@ using namespace Eigen;
 
 // 添加reduced row echelon from,计算一个矩阵的行最简形式
 // 高斯-约尔当消元
-
 template <typename _Scalar, int _m, int _n>
-std::vector<Matrix<_Scalar, _m, _m>> GaussJordanEiliminate(const Matrix<_Scalar, _m, _n>& A) {
+std::tuple<Matrix<_Scalar, _m, _n>, Matrix<_Scalar, _m, _m>, int> GaussJordanEiliminate(
+  Matrix<_Scalar, _m, _n> const& input_matrix) {
   using ElemetrayType = Matrix<_Scalar, _m, _m>;
-  Matrix<_Scalar, _m, _n> matrix = A; // 创建输入矩阵的副本
-  int rows = _m;
-  int cols = _n;
+  Matrix<_Scalar, _m, _n> A = input_matrix; // 创建输入矩阵的副本
 
-  std::vector<ElemetrayType> elementary_matrices;
+  ElemetrayType E = ElemetrayType::Identity();
 
-  for (int i = 0; i < rows; ++i) {
-    ElemetrayType E = ElemetrayType::Identity();
+  // 确认每一行的主元
+  int n_pivot = 0;
+  for (int i = 0; i < _m; ++i) {
 
-    int maxRow = 0;
+    int row_of_pivot = i;
+    _Scalar pivot = A.col(i).tail(_m - n_pivot).maxCoeff(&row_of_pivot);
+    row_of_pivot += n_pivot;
 
-    _Scalar const max_pivot = matrix.col(i).tail(_m - i).maxCoeff(&maxRow);
-    maxRow += i;
-    GTEST_LOG_(INFO) << " maxRow = " << maxRow + i;
+    if (fabs(pivot) <= 1e-10) { continue; }
+    GTEST_LOG_(INFO) << " n_pivot = " << n_pivot << ", row of pivot is " << row_of_pivot;
 
-    // 如果整个列都是零，跳过此列
-    if (fabs(max_pivot) <= 1e-10) { continue; }
-
-    // 交换最大主元行和当前行
-    if (maxRow != i) {
+    // 1. 最大元素交换到主元行
+    if (n_pivot != row_of_pivot) {
       PermutationMatrix<_m> P;
       P.setIdentity();
-      std::swap(P.indices()[i], P.indices()[maxRow]);
-
-      matrix = P * matrix;
-      elementary_matrices.push_back(P.toDenseMatrix().template cast<_Scalar>());
-      GTEST_LOG_(INFO) << "Row Swap Matrix (Row " << i << " <-> Row " << maxRow << "):\n" << E << "\n" << matrix;
+      P = P.applyTranspositionOnTheLeft(n_pivot, row_of_pivot);
+      A = P * A;
+      E = P * E;
+      GTEST_LOG_(INFO) << "P is \n" << P.toDenseMatrix() << " A is \n" << A;
     }
 
-    // 归一化主元行
-    E.setIdentity();
-    E(i, i) = 1 / matrix(i, i); // 记录归一化
-    matrix = E * matrix;
-    elementary_matrices.push_back(E);
-    GTEST_LOG_(INFO) << "Scaling Matrix for Row " << i << ":\n" << E << "\n" << matrix;
+    // 2. 主元缩放成1
+    ElemetrayType Eij = ElemetrayType::Identity();
+    Eij(n_pivot, n_pivot) /= pivot;
+    A = Eij * A;
+    E = Eij * E;
+    GTEST_LOG_(INFO) << "step2 Eij is \n" << Eij << " A is \n" << A;
 
-    // 消元
-    for (int j = 0; j < rows; ++j) {
-      if (j != i) {
-        E.setIdentity();
-        E(j, i) = -matrix(j, i); // 记录行加减
-        matrix = E * matrix;
-        elementary_matrices.push_back(E);
-        GTEST_LOG_(INFO) << "Elimination Matrix for Row " << j << " using Row " << i << ":\n" << E << "\n" << matrix;
-        // E = ElemetrayType::Identity();
+    // 3. 主元向下消成0
+    for (int i2 = 0; i2 < _m; ++i2) {
+      if (i2 != n_pivot) {
+        Eij.setIdentity();
+        Eij(i2, n_pivot) = -A(i2, i);
+        A = Eij * A;
+        E = Eij * E;
+        GTEST_LOG_(INFO) << "Eij is \n" << Eij << " A is \n" << A;
+      }
+    }
+
+    n_pivot++;
+    GTEST_LOG_(INFO) << "--------------------n_pivot = " << n_pivot << "done  \n";
+  }
+
+  GTEST_LOG_(INFO) << " rank is " << n_pivot << " Final Matrix (RREF):\n" << A;
+  return std::make_tuple(A, E, n_pivot);
+}
+
+//  [I F ; 0]
+template <typename _Scalar, int _m, int _n>
+std::pair<Matrix<_Scalar, _m, _n>, PermutationMatrix<_n>> IdentityFree(Matrix<_Scalar, _m, _n> const& input_matrix) {
+  auto const [rref, E, rank] = GaussJordanEiliminate(input_matrix);
+
+  PermutationMatrix<_n> P;
+  P.setIdentity();
+  for (int i = 0; i < rank; ++i) {
+    for (int j = i; j < _n; ++j) {
+      if (fabs(rref(i, j)) >= 1e-10) {
+        std::swap(P.indices()[i], P.indices()[j]);
+        break;
       }
     }
   }
 
-  GTEST_LOG_(INFO) << "Final Matrix (RREF):\n" << matrix;
-  return elementary_matrices;
+  GTEST_LOG_(INFO) << " P is " << P.indices().transpose() << "rref * P is \n" << rref * P;
+
+  return { rref * P, P };
 }
 
 class Lesson5_6_7 : public testing::Test {
@@ -229,8 +248,25 @@ TEST_F(Lesson5_6_7, rref_eigen2_At) {
   EXPECT_TRUE((A2 * NullA2).isApprox(MatrixXd::Zero(m, n - rank)));
 }
 
+// gauss-jordan最终结果是rref： 简化行阶梯型矩阵, E*A = rref
+// 通过rref通过列变换 P 获得 [I F; 0]矩阵，即 IF = rref * P
+// 这个 [-F I] 即为 A * P 的零空间
 TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
-  auto re = GaussJordanEiliminate(a_);
+  auto const [RREF, E, rank] = GaussJordanEiliminate(a_);
+
+  EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
+
+  auto const [IF, P] = IdentityFree(a_);
+
+  GTEST_LOG_(INFO) << "Here is the IF:\n" << IF;
+
+  MatrixXd NullA(4, rank);
+  NullA.topRows(rank) = -IF.topRightCorner(rank, rank);
+  NullA.bottomRows(rank).setIdentity();
+
+  GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
+
+  EXPECT_EQ((a_ * P * NullA), MatrixXd::Zero(3, rank));
 
   // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
 }

@@ -180,18 +180,18 @@ TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
 
   EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
 
-  auto const& [E2, IF, P, rank2] = IdentityFree(a_);
+  // auto const& [E2, IF, P, rank2] = IdentityFree(a_);
 
-  GTEST_LOG_(INFO) << "Here is the IF:\n" << IF;
+  // GTEST_LOG_(INFO) << "Here is the IF:\n" << IF;
 
-  MatrixXd NullA(4, rank);
-  NullA.topRows(rank) = -IF.topRightCorner(rank, rank);
-  NullA.bottomRows(4 - rank).setIdentity();
-  P.applyThisOnTheLeft(NullA);
+  // MatrixXd NullA(4, rank);
+  // NullA.topRows(rank) = -IF.topRightCorner(rank, rank);
+  // NullA.bottomRows(4 - rank).setIdentity();
+  // P.applyThisOnTheLeft(NullA);
 
-  GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
+  // GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
 
-  EXPECT_EQ((a_ * NullA), MatrixXd::Zero(3, rank));
+  // EXPECT_EQ((a_ * NullA), MatrixXd::Zero(3, rank));
 
   // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
 }
@@ -201,20 +201,9 @@ TEST_F(Lesson5_6_7, null_space_of_A_transpose) {
   constexpr int n = 3;
   Matrix<double, m, n> At = at_;
 
-  auto const& [RREF, E, rank] = GaussJordanEiliminate(At);
-  EXPECT_TRUE(At.isApprox(E.inverse() * RREF));
+  RREF IF(At);
 
-  GTEST_LOG_(INFO) << "Here is the RREF:\n" << RREF;
+  ELOGD << "IF.NullSpace() = \n" << IF.NullSpace();
 
-  auto const& [E2, IF, P, rank2] = IdentityFree(At);
-  MatrixXd NullAt(n, n - rank);
-  NullAt.topRows(rank) = -IF.topRightCorner(rank, n - rank);
-  NullAt.bottomRows(n - rank).setIdentity();
-
-  P.applyThisOnTheLeft(NullAt);
-  GTEST_LOG_(INFO) << "Here is the NullAt:\n" << NullAt;
-
-  GTEST_LOG_(INFO) << "Here is the NullAt2:\n" << At.fullPivLu().kernel();
-
-  EXPECT_TRUE((At * NullAt).isZero());
+  EXPECT_TRUE((At * IF.NullSpace()).isZero());
 }

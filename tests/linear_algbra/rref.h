@@ -98,30 +98,63 @@ IdentityFree(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
 // F, r*(n-r)
 // 0, (m-r)*n
 // A = E_inv * rref * P_inv
+// E A P = rref;
 template <typename _Scalar, int _m, int _n>
-struct FullRREF {
-  int rank_;
-  Eigen::Matrix<_Scalar, _m, _m> Einv_;
-  Eigen::PermutationMatrix<_n> Pinv_;
-  Eigen::Matrix<_Scalar, -1, -1> null_space_;
-  Eigen::Matrix<_Scalar, _m, _n> rref_;
-};
+class RREF {
+public:
+  // RREF() {}
 
+  RREF(Eigen::Matrix<_Scalar, _m, _n> const& A) {
+    std::tie(rref_, E_, rank_) = GaussJordanEiliminate(A);
 
-template <typename _Scalar, int _m, int _n>
-Eigen::Matrix<_Scalar, -1, -1> NullSpace(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
-  using namespace Eigen;
-
-  auto const& [E, IF, P, rank] = IdentityFree(input_matrix);
-
-  Eigen::Matrix<_Scalar, -1, -1> nullspace;
-  nullspace = MatrixXd::Zero(_n, _n - rank);
-
-  if (_n - rank > 0) {
-    nullspace.topRows(rank) = -IF.topRightCorner(rank, _n - rank);
-    nullspace.bottomRows(_n - rank).setIdentity();
-    P.applyThisOnTheLeft(nullspace);
+    P_.setIdentity();
+    for (int i = 0; i < rank_; ++i) {
+      for (int j = i; j < _n; ++j) {
+        if (fabs(rref_(i, j)) >= 1e-10) {
+          std::swap(P_.indices()[i], P_.indices()[j]);
+          break;
+        }
+      }
+    }
   }
 
-  return nullspace;
-}
+  Eigen::Matrix<_Scalar, _m, _n> WithColumnPermutation() { return rref_ * P_; }
+  Eigen::Matrix<_Scalar, -1, -1> NullSpace() {
+    using namespace Eigen;
+
+    Eigen::Matrix<_Scalar, -1, -1> nullspace;
+    nullspace = MatrixXd::Zero(_n, _n - rank_);
+
+    if (_n - rank_ > 0) {
+      nullspace.topRows(rank_) = -(rref_ * P_).topRightCorner(rank_, _n - rank_);
+      nullspace.bottomRows(_n - rank_).setIdentity();
+      P_.applyThisOnTheLeft(nullspace);
+    }
+
+    return nullspace;
+  }
+
+public:
+  int rank_;
+  Eigen::Matrix<_Scalar, _m, _m> E_;
+  Eigen::Matrix<_Scalar, _m, _n> rref_; // 没有进行列置换
+  Eigen::PermutationMatrix<_n> P_;
+};
+
+// template <typename _Scalar, int _m, int _n>
+// Eigen::Matrix<_Scalar, -1, -1> NullSpace(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
+//   using namespace Eigen;
+
+//   auto const& [E, IF, P, rank] = IdentityFree(input_matrix);
+
+//   Eigen::Matrix<_Scalar, -1, -1> nullspace;
+//   nullspace = MatrixXd::Zero(_n, _n - rank);
+
+//   if (_n - rank > 0) {
+//     nullspace.topRows(rank) = -IF.topRightCorner(rank, _n - rank);
+//     nullspace.bottomRows(_n - rank).setIdentity();
+//     P.applyThisOnTheLeft(nullspace);
+//   }
+
+//   return nullspace;
+// }

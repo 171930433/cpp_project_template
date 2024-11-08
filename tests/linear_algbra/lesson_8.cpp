@@ -24,13 +24,13 @@ TEST_F(Lesson8, full_row_rank) {
   A << a_.row(0), a_.row(2);
 
   // rref is [I F],
-  // auto const& re = IdentityFree(A);
+  auto const& IF = RREF(A).WithColumnPermutation();
+  EXPECT_FALSE(IF.bottomRows(1).isZero());
 
-  // EXPECT_EQ(m, re.rank_);
-  // EXPECT_TRUE((re.Einv_ * re.rref_ * re.Pinv_).isApprox(A));
-  // EXPECT_TRUE((A * re.null_space_).isZero());
+  ELOGD << " IF is \n" << IF;
 
-  // Matrix<double, m, n> rref;
-  // rref << RowVector4d{ 1, 2, 0, -2 }, RowVector4d{ 0, 0, 1, 2 };
-  // EXPECT_TRUE((re.rref_).isApprox(re.Pinv_.inverse() * rref));
+  // Ax=b ,行满秩，列不满秩， 所以当b不在C(A)时则无解，在C(A)时，因为N(A)的存在，所以有无穷多解
+  Vector<double, n> x;
+  Vector<double, n> b = Vector<double, n>::Random();
+
 }

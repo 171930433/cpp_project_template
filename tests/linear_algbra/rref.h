@@ -67,32 +67,6 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
   return std::make_tuple(A, E, np);
 }
 
-//  IF = [I F ; 0]
-//  E*A*P=IF
-// A = E_inv * IF * P_inv;
-template <typename _Scalar, int _m, int _n>
-std::tuple<Eigen::Matrix<_Scalar, _m, _m>, Eigen::Matrix<_Scalar, _m, _n>, Eigen::PermutationMatrix<_n>, int>
-IdentityFree(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
-  using namespace Eigen;
-
-  auto const [rref, E, rank] = GaussJordanEiliminate(input_matrix);
-
-  PermutationMatrix<_n> P;
-  P.setIdentity();
-  for (int i = 0; i < rank; ++i) {
-    for (int j = i; j < _n; ++j) {
-      if (fabs(rref(i, j)) >= 1e-10) {
-        std::swap(P.indices()[i], P.indices()[j]);
-        break;
-      }
-    }
-  }
-
-  // GTEST_LOG_(INFO) << " P is " << P.indices().transpose() << "rref * P is \n" << rref * P;
-
-  return { E, rref * P, P, rank };
-}
-
 // rref with column permutation [I F; 0]
 // I, r*r
 // F, r*(n-r)
@@ -140,21 +114,3 @@ public:
   Eigen::Matrix<_Scalar, _m, _n> rref_; // 没有进行列置换
   Eigen::PermutationMatrix<_n> P_;
 };
-
-// template <typename _Scalar, int _m, int _n>
-// Eigen::Matrix<_Scalar, -1, -1> NullSpace(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
-//   using namespace Eigen;
-
-//   auto const& [E, IF, P, rank] = IdentityFree(input_matrix);
-
-//   Eigen::Matrix<_Scalar, -1, -1> nullspace;
-//   nullspace = MatrixXd::Zero(_n, _n - rank);
-
-//   if (_n - rank > 0) {
-//     nullspace.topRows(rank) = -IF.topRightCorner(rank, _n - rank);
-//     nullspace.bottomRows(_n - rank).setIdentity();
-//     P.applyThisOnTheLeft(nullspace);
-//   }
-
-//   return nullspace;
-// }

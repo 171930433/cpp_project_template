@@ -179,21 +179,15 @@ TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
   GTEST_LOG_(INFO) << "Here is the RREF:\n" << RREF;
 
   EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
+  EXPECT_TRUE((E * a_).isApprox(RREF));
+}
 
-  // auto const& [E2, IF, P, rank2] = IdentityFree(a_);
+TEST_F(Lesson5_6_7, guass_jordan_ellimination2) {
+  auto const& [RREF, E, rank] = GaussJordanEiliminate(at_);
+  GTEST_LOG_(INFO) << "Here is the RREF:\n" << RREF;
 
-  // GTEST_LOG_(INFO) << "Here is the IF:\n" << IF;
-
-  // MatrixXd NullA(4, rank);
-  // NullA.topRows(rank) = -IF.topRightCorner(rank, rank);
-  // NullA.bottomRows(4 - rank).setIdentity();
-  // P.applyThisOnTheLeft(NullA);
-
-  // GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
-
-  // EXPECT_EQ((a_ * NullA), MatrixXd::Zero(3, rank));
-
-  // GTEST_LOG_(INFO) << "Here is the A2:\n" << A2;
+  EXPECT_TRUE(at_.isApprox(E.inverse() * RREF));
+  EXPECT_TRUE((E * at_).isApprox(RREF));
 }
 
 TEST_F(Lesson5_6_7, null_space_of_A_transpose) {

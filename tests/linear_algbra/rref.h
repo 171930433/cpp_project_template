@@ -84,3 +84,40 @@ std::pair<Eigen::Matrix<_Scalar, _m, _n>, Eigen::PermutationMatrix<_n>> Identity
 
   return { rref * P, P };
 }
+
+// rref with column permutation [I F; 0]
+// I, r*r
+// F, r*(n-r)
+// 0, (m-r)*n
+// A = E_inv * rref * P_inv
+template <typename _Scalar, int _m, int _n>
+struct FullRREF {
+  int rank_;
+  Eigen::Matrix<_Scalar, _m, _m> Einv_;
+  Eigen::PermutationMatrix<_n> Pinv_;
+  Eigen::Matrix<_Scalar, -1, -1> null_space_;
+};
+
+template <typename _Scalar, int _m, int _n>
+FullRREF<_Scalar, _m, _n> RREF2(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
+  using namespace Eigen;
+  FullRREF<_Scalar, _m, _n> re;
+  auto const& [rref, E, rank] = GaussJordanEiliminate(input_matrix);
+
+  auto const& [IF, P] = IdentityFree(input_matrix);
+
+  re.rank_ = rank;
+  re.Einv_ = E.inverse();
+  re.Pinv_ = P.inverse();
+
+  //   nullspace
+  if (rank == _n) {
+    re.null_space_ = Matrix<_Scalar, 0, 0>::Zero();
+  } else {
+    re.null_space_ = MatrixXd::Zero(_m, _n - rank);
+    re.null_space_.topRows(rank) = -IF.topRightCorner(rank, _n - rank);
+    re.null_space_.bottomRows(_m - rank).setIdentity();
+  }
+
+  return re;
+}

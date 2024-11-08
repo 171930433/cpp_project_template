@@ -189,6 +189,7 @@ TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
   NullA.bottomRows(4 - rank).setIdentity();
   P.applyThisOnTheLeft(NullA);
 
+
   GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
 
   EXPECT_EQ((a_ * NullA), MatrixXd::Zero(3, rank));

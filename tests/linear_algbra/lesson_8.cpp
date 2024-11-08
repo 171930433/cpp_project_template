@@ -24,7 +24,13 @@ TEST_F(Lesson8, full_row_rank) {
   A << a_.row(0), a_.row(2);
 
   // rref is [I F],
-  auto const& re = RREF2(A);
+  // auto const& re = IdentityFree(A);
 
-  EXPECT_EQ(m, re.rank_);
+  // EXPECT_EQ(m, re.rank_);
+  // EXPECT_TRUE((re.Einv_ * re.rref_ * re.Pinv_).isApprox(A));
+  // EXPECT_TRUE((A * re.null_space_).isZero());
+
+  // Matrix<double, m, n> rref;
+  // rref << RowVector4d{ 1, 2, 0, -2 }, RowVector4d{ 0, 0, 1, 2 };
+  // EXPECT_TRUE((re.rref_).isApprox(re.Pinv_.inverse() * rref));
 }

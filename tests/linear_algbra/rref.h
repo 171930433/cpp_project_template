@@ -69,7 +69,7 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
 
 //  IF = [I F ; 0]
 //  E*A*P=IF
-// A = E_inv * A * P_inv;
+// A = E_inv * IF * P_inv;
 template <typename _Scalar, int _m, int _n>
 std::tuple<Eigen::Matrix<_Scalar, _m, _m>, Eigen::Matrix<_Scalar, _m, _n>, Eigen::PermutationMatrix<_n>, int>
 IdentityFree(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
@@ -104,27 +104,24 @@ struct FullRREF {
   Eigen::Matrix<_Scalar, _m, _m> Einv_;
   Eigen::PermutationMatrix<_n> Pinv_;
   Eigen::Matrix<_Scalar, -1, -1> null_space_;
+  Eigen::Matrix<_Scalar, _m, _n> rref_;
 };
 
+
 template <typename _Scalar, int _m, int _n>
-FullRREF<_Scalar, _m, _n> RREF2(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
+Eigen::Matrix<_Scalar, -1, -1> NullSpace(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
   using namespace Eigen;
-  FullRREF<_Scalar, _m, _n> re;
 
   auto const& [E, IF, P, rank] = IdentityFree(input_matrix);
 
-  re.rank_ = rank;
-  re.Einv_ = E.inverse();
-  re.Pinv_ = P.inverse();
+  Eigen::Matrix<_Scalar, -1, -1> nullspace;
+  nullspace = MatrixXd::Zero(_n, _n - rank);
 
-  //   nullspace
-  if (rank == _n) {
-    re.null_space_ = Matrix<_Scalar, 0, 0>::Zero();
-  } else {
-    re.null_space_ = MatrixXd::Zero(_m, _n - rank);
-    re.null_space_.topRows(rank) = -IF.topRightCorner(rank, _n - rank);
-    re.null_space_.bottomRows(_m - rank).setIdentity();
+  if (_n - rank > 0) {
+    nullspace.topRows(rank) = -IF.topRightCorner(rank, _n - rank);
+    nullspace.bottomRows(_n - rank).setIdentity();
+    P.applyThisOnTheLeft(nullspace);
   }
 
-  return re;
+  return nullspace;
 }

@@ -1,5 +1,6 @@
 #include <eigen3/Eigen/Dense>
 #include <gtest/gtest.h>
+#include <ylt/easylog.hpp>
 
 // 添加reduced row echelon from,计算一个矩阵的行最简形式
 // 高斯-约尔当消元
@@ -13,52 +14,57 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
   ElemetrayType E = ElemetrayType::Identity();
 
   // 确认每一行的主元
-  int n_pivot = 0;
-  for (int i = 0; i < _m; ++i) {
+  int max_rank = std::min(_m, _n);
+  int np = 0;
 
-    if (i >= _n) { break; }
-
-    int row_of_pivot = i;
-    _Scalar pivot = A.col(i).tail(_m - n_pivot).maxCoeff(&row_of_pivot);
-    row_of_pivot += n_pivot;
-
-    if (fabs(pivot) <= 1e-10) { continue; }
-    GTEST_LOG_(INFO) << " n_pivot = " << n_pivot << ", row of pivot is " << row_of_pivot;
-
+  for (; np < max_rank; ++np) {
+    // 遍历行列寻找第n个主元
+    _Scalar pivot = 0;
+    int row_of_pivot = 0;
+    int col_of_pivot = 0;
+    for (int j = np; j < _n; ++j) {
+      if (A.col(j).tail(_m - np).isZero()) { continue; }
+      pivot = A.col(j).tail(_m - np).maxCoeff(&row_of_pivot);
+      col_of_pivot = j;
+      break;
+    }
+    row_of_pivot += np;
+    if (fabs(pivot) <= 1e-10) {
+      ELOGW << "np = " << np << " with all zero";
+      break;
+    }
     // 1. 最大元素交换到主元行
-    if (n_pivot != row_of_pivot) {
+    ELOGD << fmt::format("pivot is A({},{})={}", row_of_pivot, col_of_pivot, pivot);
+
+    if (np != row_of_pivot) {
       PermutationMatrix<_m> P;
       P.setIdentity();
-      P = P.applyTranspositionOnTheLeft(n_pivot, row_of_pivot);
+      P = P.applyTranspositionOnTheLeft(np, row_of_pivot);
       A = P * A;
       E = P * E;
-      GTEST_LOG_(INFO) << "P is \n" << P.toDenseMatrix() << " A is \n" << A;
+      ELOGD << "P is \n" << P.toDenseMatrix() << " A is \n" << A;
     }
-
     // 2. 主元缩放成1
     ElemetrayType Eij = ElemetrayType::Identity();
-    Eij(n_pivot, n_pivot) /= pivot;
+    Eij(np, np) /= pivot;
     A = Eij * A;
     E = Eij * E;
-    GTEST_LOG_(INFO) << "step2 Eij is \n" << Eij << " A is \n" << A;
-
+    ELOGD << "step2 Eij is \n" << Eij << " A is \n" << A;
     // 3. 主元向下消成0
     for (int i2 = 0; i2 < _m; ++i2) {
-      if (i2 != n_pivot) {
+      if (i2 != np) {
         Eij.setIdentity();
-        Eij(i2, n_pivot) = -A(i2, i);
+        Eij(i2, np) = -A(i2, col_of_pivot);
         A = Eij * A;
         E = Eij * E;
-        GTEST_LOG_(INFO) << "Eij is \n" << Eij << " A is \n" << A;
+        ELOGD << "Eij is \n" << Eij << " A is \n" << A;
       }
     }
-
-    n_pivot++;
-    GTEST_LOG_(INFO) << "--------------------n_pivot = " << n_pivot << "done  \n";
+    ELOGD << "--------------------n_pivot = " << np << "done  \n";
   }
 
-  GTEST_LOG_(INFO) << " rank is " << n_pivot << " Final Matrix (RREF):\n" << A;
-  return std::make_tuple(A, E, n_pivot);
+  ELOGD << " rank is " << np << " Final Matrix (RREF):\n" << A;
+  return std::make_tuple(A, E, np);
 }
 
 //  [I F ; 0]

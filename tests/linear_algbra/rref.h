@@ -67,10 +67,12 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
   return std::make_tuple(A, E, np);
 }
 
-//  [I F ; 0]
+//  IF = [I F ; 0]
+//  E*A*P=IF
+// A = E_inv * A * P_inv;
 template <typename _Scalar, int _m, int _n>
-std::pair<Eigen::Matrix<_Scalar, _m, _n>, Eigen::PermutationMatrix<_n>> IdentityFree(
-  Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
+std::tuple<Eigen::Matrix<_Scalar, _m, _m>, Eigen::Matrix<_Scalar, _m, _n>, Eigen::PermutationMatrix<_n>, int>
+IdentityFree(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
   using namespace Eigen;
 
   auto const [rref, E, rank] = GaussJordanEiliminate(input_matrix);
@@ -88,7 +90,7 @@ std::pair<Eigen::Matrix<_Scalar, _m, _n>, Eigen::PermutationMatrix<_n>> Identity
 
   // GTEST_LOG_(INFO) << " P is " << P.indices().transpose() << "rref * P is \n" << rref * P;
 
-  return { rref * P, P };
+  return { E, rref * P, P, rank };
 }
 
 // rref with column permutation [I F; 0]
@@ -108,9 +110,8 @@ template <typename _Scalar, int _m, int _n>
 FullRREF<_Scalar, _m, _n> RREF2(Eigen::Matrix<_Scalar, _m, _n> const& input_matrix) {
   using namespace Eigen;
   FullRREF<_Scalar, _m, _n> re;
-  auto const& [rref, E, rank] = GaussJordanEiliminate(input_matrix);
 
-  auto const& [IF, P] = IdentityFree(input_matrix);
+  auto const& [E, IF, P, rank] = IdentityFree(input_matrix);
 
   re.rank_ = rank;
   re.Einv_ = E.inverse();

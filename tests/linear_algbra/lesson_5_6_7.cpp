@@ -180,7 +180,7 @@ TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
 
   EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
 
-  auto const& [IF, P] = IdentityFree(a_);
+  auto const& [E2, IF, P, rank2] = IdentityFree(a_);
 
   GTEST_LOG_(INFO) << "Here is the IF:\n" << IF;
 
@@ -188,7 +188,6 @@ TEST_F(Lesson5_6_7, guass_jordan_ellimination) {
   NullA.topRows(rank) = -IF.topRightCorner(rank, rank);
   NullA.bottomRows(4 - rank).setIdentity();
   P.applyThisOnTheLeft(NullA);
-
 
   GTEST_LOG_(INFO) << "Here is the NullA:\n" << NullA;
 
@@ -207,7 +206,7 @@ TEST_F(Lesson5_6_7, null_space_of_A_transpose) {
 
   GTEST_LOG_(INFO) << "Here is the RREF:\n" << RREF;
 
-  auto const& [IF, P] = IdentityFree(At);
+  auto const& [E2, IF, P, rank2] = IdentityFree(At);
   MatrixXd NullAt(n, n - rank);
   NullAt.topRows(rank) = -IF.topRightCorner(rank, n - rank);
   NullAt.bottomRows(n - rank).setIdentity();

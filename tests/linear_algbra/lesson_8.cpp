@@ -13,6 +13,8 @@ public:
 
   void TearDown() override {}
 
+  double rand_01() const { return (std::rand() % 100) / 100.0; }
+
 protected:
   Matrix<double, 3, 4> a_;
 };
@@ -24,13 +26,39 @@ TEST_F(Lesson8, full_row_rank) {
   A << a_.row(0), a_.row(2);
 
   // rref is [I F],
-  auto const& IF = RREF(A).WithColumnPermutation();
+  auto rref = RREF(A);
+  auto const& E = rref.E_;
+  auto const rank = rref.rank_;
+  auto const& IF = rref.WithColumnPermutation();
   EXPECT_FALSE(IF.bottomRows(1).isZero());
 
   ELOGD << " IF is \n" << IF;
 
-  // Ax=b ,行满秩，列不满秩， 所以当b不在C(A)时则无解，在C(A)时，因为N(A)的存在，所以有无穷多解
-  Vector<double, n> x;
-  Vector<double, n> b = Vector<double, n>::Random();
+  // Ax=b ,行满秩，所有C(A) 与R^2一致,包含所有的b向量,又因为0空间的维度为n-r,所有一定有无穷多个解
+  // m = r < n
+  // EAP=IF
+  // Ax=b --> EAx=Eb --> EAP * Pinv*x=Eb,令y=Pinv*x,则
+  // EAP * y = Eb, 即 IF*y=Eb, y = [Eb; 0]
+  // x = P*y
+  Vector<double, m> b = Vector<double, m>::Random();
+  Vector<double, n> y = (Vector<double, n>() << E * b, VectorXd::Zero(n - rank)).finished();
+  MatrixXd nullspace = rref.NullSpace();
 
+  // ELOGD << "nullspace IS \n" << nullspace;
+  // ELOGD << "P_inv *  nullspace IS \n" << rref.P_.inverse() * nullspace;
+
+  Vector<double, n> x_p = rref.P_ * y;
+  Vector<double, n> x_s = rand_01() * nullspace.col(0) + rand_01() * nullspace.col(1);
+  Vector<double, n> x = x_p + x_s;
+
+  // ELOGD << " A * nullspace is \n" << A * nullspace;
+  // ELOGD << " IF * x_p is \n" << IF * x_p;
+
+  EXPECT_EQ((IF * y), (E * b));
+  EXPECT_TRUE((A * x_p).isApprox(b));
+  EXPECT_TRUE((A * x_s).isZero());
+  EXPECT_TRUE((A * x).isApprox(b));
+
+  // EXPECT_TRUE((A * x_s).isZero());
+  // EXPECT_EQ((A * rref.P_ * x), b);
 }

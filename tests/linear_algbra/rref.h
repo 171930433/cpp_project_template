@@ -34,7 +34,7 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
       break;
     }
     // 1. 最大元素交换到主元行
-    ELOGD << fmt::format("pivot is A({},{})={}", row_of_pivot, col_of_pivot, pivot);
+    // ELOGD << fmt::format("pivot is A({},{})={}", row_of_pivot, col_of_pivot, pivot);
 
     if (np != row_of_pivot) {
       PermutationMatrix<_m> P;
@@ -42,14 +42,14 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
       P = P.applyTranspositionOnTheLeft(np, row_of_pivot);
       A = P * A;
       E = P * E;
-      ELOGD << "P is \n" << P.toDenseMatrix() << " A is \n" << A;
+      // ELOGD << "P is \n" << P.toDenseMatrix() << " A is \n" << A;
     }
     // 2. 主元缩放成1
     ElemetrayType Eij = ElemetrayType::Identity();
     Eij(np, np) /= pivot;
     A = Eij * A;
     E = Eij * E;
-    ELOGD << "step2 Eij is \n" << Eij << " A is \n" << A;
+    // ELOGD << "step2 Eij is \n" << Eij << " A is \n" << A;
     // 3. 主元向下消成0
     for (int i2 = 0; i2 < _m; ++i2) {
       if (i2 != np) {
@@ -57,10 +57,10 @@ std::tuple<Eigen::Matrix<_Scalar, _m, _n>, Eigen::Matrix<_Scalar, _m, _m>, int> 
         Eij(i2, np) = -A(i2, col_of_pivot);
         A = Eij * A;
         E = Eij * E;
-        ELOGD << "Eij is \n" << Eij << " A is \n" << A;
+        // ELOGD << "Eij is \n" << Eij << " A is \n" << A;
       }
     }
-    ELOGD << "--------------------n_pivot = " << np << "done  \n";
+    // ELOGD << "--------------------n_pivot = " << np << "done  \n";
   }
 
   ELOGD << " rank is " << np << " Final Matrix (RREF):\n" << A;

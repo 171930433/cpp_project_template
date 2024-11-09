@@ -96,3 +96,65 @@ TEST_F(Lesson8, full_col_rank) {
   Vector<double, 3> b2 = A.col(0).cross(A.col(1));
   EXPECT_FALSE(((E * b2).tail(m - rank).isZero()));
 }
+
+// r = m = n
+TEST_F(Lesson8, full_rank) {
+  constexpr int m = 3;
+  constexpr int n = 3;
+  Matrix<double, m, n> A;
+  A << a_.col(0), a_.col(2), A.col(0).cross(A.col(1));
+
+  // 因为A是方阵, r=m=n, 所以 C(A)==R^3, 则b一定在C(A)中,所以任意b有唯一解
+  // rref=[I]
+  auto rref = RREF(A);
+  auto const& E = rref.E_;
+  auto const rank = rref.rank_;
+  auto const& IF = rref.WithColumnPermutation();
+
+  EXPECT_EQ(rank, 3);
+  Vector<double, 3> b = Vector<double, 3>::Random();
+  Vector<double, 3> y = E * b;
+  Vector<double, 3> x = y;
+
+  EXPECT_TRUE(IF.isApprox(Matrix3d::Identity()));
+  EXPECT_TRUE((A * x).isApprox(b));
+
+  EXPECT_TRUE((x).isApprox(A.lu().solve(b)));
+}
+
+// r < m, r < n
+TEST_F(Lesson8, rank_deficiency) {
+  constexpr int m = 3;
+  constexpr int n = 4;
+  Matrix<double, m, n> A = a_;
+
+  // rref is [I F; 0], 0 is m-r,n
+  // I is r*r, F is r*n-r
+  auto rref = RREF(A);
+  auto const& E = rref.E_;
+  auto const rank = rref.rank_;
+  auto const& IF = rref.WithColumnPermutation();
+  auto const& P = rref.P_;
+
+  EXPECT_EQ(rank, 2);
+
+  // 1. 如果b在 C(A)中, 则有无穷多个解
+  Vector<double, m> b = A.col(0) + A.col(2);
+  EXPECT_TRUE((E * b).tail(m - rank).isZero());
+
+  Vector<double, n> y = (Vector<double, n>() << (E * b).head(rank), VectorXd::Zero(n - rank)).finished();
+  EXPECT_TRUE((IF * y).isApprox(E * b));
+
+  Vector<double, n> x_p = P * y;
+  EXPECT_TRUE((A * x_p).isApprox(b));
+
+  Vector<double, n> x_s = rand_01() * rref.NullSpace().col(0) + rand_01() * rref.NullSpace().col(1);
+  EXPECT_TRUE((A * x_s).isZero());
+
+  Vector<double, n> x = x_p + x_s;
+  EXPECT_TRUE((A * x).isApprox(b));
+
+  // 2. 如果b不在 C(A)中, 则无解
+  Vector<double, 3> b2 = A.col(0).cross(A.col(2));
+  EXPECT_FALSE((E * b2).tail(m - rank).isZero());
+}

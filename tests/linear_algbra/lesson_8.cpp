@@ -207,3 +207,34 @@ TEST_F(Lesson8, worked_example_3_4A) {
   auto const Rd = RREF(Ab2).WithColumnPermutation();
   ELOGD << "Rd is \n" << Rd;
 }
+
+TEST_F(Lesson8, worked_example_3_4B) {
+  // 如果Ax=b, Ais m*n, rank of A is r
+
+  // 1. 如果只有一个解 IF 是 [I;0], 说明没有自由变量,则列满秩 n=r, 即 m>=n=r
+
+  // 2. x=x_p + c*x_s, 说明 [I F; 0], 说明有一个自由变量, N(A)is n*1, m>= n=r+1
+  // 且 r=1, n=2, m>=1
+
+  // 3. 无解, 说明 b不在C(A)中 , IF is [I F;0], 即 r<m
+
+  // 4. x=x_p + c*x_s, 且x_p 是3*1, IF is [I F; 0], n=3, r=2, m>=2
+
+  // 5. 无穷多个解 rref is [I F; 0], r<n
+}
+
+TEST_F(Lesson8, worked_example_3_4C) {
+  constexpr int m = 3;
+  constexpr int n = 4;
+  Matrix<double, 3, 4> A;
+  A.row(0) << 1, 2, 1, 0;
+  A.row(1) << 2, 4, 4, 8;
+  A.row(2) << 4, 8, 6, 8;
+  Vector<double, m> b{ 4, 2, 10 };
+
+  MatrixXd Ab = (MatrixXd(3,5) << A, b).finished();
+
+  auto const R = RREF(A);
+
+  EXPECT_TRUE(1);
+}

@@ -158,3 +158,52 @@ TEST_F(Lesson8, rank_deficiency) {
   Vector<double, 3> b2 = A.col(0).cross(A.col(2));
   EXPECT_FALSE((E * b2).tail(m - rank).isZero());
 }
+
+TEST_F(Lesson8, worked_example_3_4A) {
+  constexpr int m = 3;
+  constexpr int n = 4;
+  Matrix<double, 3, 4> A;
+  A.row(0) << 1, 2, 3, 5;
+  A.row(1) << 2, 4, 8, 12;
+  A.row(2) << 3, 6, 7, 13;
+  Vector<double, 3> b = Vector<double, 3>::Random();
+
+  // [A b] --> [U c], without column permutation
+  Matrix<double, 3, 5> Ab;
+  Ab << A, b;
+
+  // 1
+  auto rref1 = RREF(Ab);
+  ELOGD << " rref1.rref_ is \n" << rref1.rref_;
+  EXPECT_TRUE(rref1.rref_.isUpperTriangular());
+
+  // 2 因为A的IF形式为 [I F; 0]
+  bool with_solution1 = Ab.bottomRows(A.rows() - rref1.rank_).isZero();
+  bool with_solution2 = Ab.fullPivLu().kernel().cols() != 0; // Ab的0空间>0,则b与A的列向量线性相关
+  EXPECT_EQ(with_solution1, with_solution2);
+
+  // 3 .C(A) 是 c(0)与c(2)的线性组合; C(A) 是所有b向量线性组合
+
+  // 4 N(A) is n*(n-r)
+  auto rref = RREF(A);
+  auto const& nullspace = rref.NullSpace();
+  EXPECT_EQ(nullspace.cols(), A.cols() - rref.rank_);
+  EXPECT_TRUE((A * nullspace).isZero());
+
+  // b = {0,6,-6}, [I F; 0]
+  b = Vector3d{ 0, 6, -6 };
+  bool with_solution3 = (rref.E_ * b).bottomRows(m - rref.rank_).isZero();
+  EXPECT_TRUE(with_solution3);
+
+  Vector<double, n> y =
+    (Vector<double, n>() << (rref.E_ * b).head(rref.rank_), VectorXd::Zero(n - rref.rank_)).finished();
+  Vector<double, n> x_p = rref.P_ * y;
+  EXPECT_TRUE((A * x_p).isApprox(b));
+
+  // [A b] --> [R d], with column permutation
+  Matrix<double, 3, 5> Ab2;
+  Ab2 << A, b;
+
+  auto const Rd = RREF(Ab2).WithColumnPermutation();
+  ELOGD << "Rd is \n" << Rd;
+}

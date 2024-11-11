@@ -37,4 +37,11 @@ TEST_F(Lesson9_10, problem_set_3_6_1) {
   // auto R = RREF(A);
 
   EXPECT_EQ(A.fullPivLu().rank(), r);
+  EXPECT_EQ(A.fullPivLu().kernel().cols(), n - r);
+  EXPECT_EQ(A.transpose().fullPivLu().kernel().cols(), m - r);
+}
+TEST_F(Lesson9_10, problem_set_3_6_2) {
+
+  Matrix<double, 2, 3> A = (Matrix<double, 2, 3>() << 1, 2, 4, 2, 4, 8).finished();
+  Matrix<double, 2, 3> B = (Matrix<double, 2, 3>() << 1, 2, 4, 2, 5, 8).finished();
 }

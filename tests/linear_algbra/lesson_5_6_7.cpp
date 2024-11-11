@@ -201,3 +201,16 @@ TEST_F(Lesson5_6_7, null_space_of_A_transpose) {
 
   EXPECT_TRUE((At * IF.NullSpace()).isZero());
 }
+
+TEST_F(Lesson5_6_7, rref2) {
+  constexpr int m = 3;
+  constexpr int n = 4;
+  // Matrix<double, 3, 4> A = (Matrix<double, 3, 4>() << 1, 1, 2, 4, 1, 2, 2, 5, 1, 3, 2, 6).finished();
+  auto const& [E, R] = RREF2(a_);
+
+  ELOGD << "R is \n" << R;
+  ELOGD << "kernal is \n" << a_.fullPivLu().kernel();
+
+  // EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
+  // EXPECT_TRUE((E * a_).isApprox(RREF));
+}

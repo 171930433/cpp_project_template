@@ -114,3 +114,46 @@ public:
   Eigen::Matrix<_Scalar, _m, _n> rref_; // 没有进行列置换
   Eigen::PermutationMatrix<_n> P_;
 };
+
+// 根据LU分解，获得rref矩阵
+// A = Pinv L U Qinv
+// A = Pinv L E R Qinv
+inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> RREF2(Eigen::MatrixXd const& A) {
+  using namespace Eigen;
+  int rows = A.rows();
+  int cols = A.cols();
+
+  auto fullLU = A.fullPivLu();
+  MatrixXd U = fullLU.matrixLU().triangularView<Eigen::Upper>();
+  MatrixXd L = fullLU.matrixLU().triangularView<Eigen::UnitLower>();
+
+  ELOGD << " L is \n" << L;
+  ELOGD << " U is \n" << U;
+
+  // 再次对U进行主元的向上消元
+  int const rank = fullLU.rank();
+  MatrixXd E = MatrixXd::Identity(rows, rows);
+  for (int np = 0; np < rank; ++np) {
+    double pivot = U(np, np);
+    // 2. 主元缩放成1
+    MatrixXd Eii = MatrixXd::Identity(rows, rows);
+    Eii(np, np) /= pivot;
+
+    Eii.applyThisOnTheLeft(U);
+    Eii.applyThisOnTheLeft(E);
+    ELOGD << "step2 Eii is \n" << Eii << " U is \n" << U;
+    // 3. 主元向上消成0
+    for (int i2 = 0; i2 < rows; ++i2) {
+      if (i2 == np) { break; }
+
+      Eii.setIdentity();
+      Eii(i2, np) = -U(i2, np);
+      Eii.applyThisOnTheLeft(U);
+      Eii.applyThisOnTheLeft(E);
+      ELOGD << "Eii is \n" << Eii << " U is \n" << U;
+    }
+  }
+  ELOGD << "Final E is \n" << E << " U is \n" << U;
+
+  return { E, U };
+}

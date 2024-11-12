@@ -138,29 +138,34 @@ inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::PermutationMatrix<-1>
   // ELOGD << " L is \n" << L;
   // ELOGD << " U is \n" << U;
 
+  MatrixXd R = U;
+
   // 再次对U进行主元的向上消元
   MatrixXd E = MatrixXd::Identity(rows, rows);
   for (int np = 0; np < rank; ++np) {
-    double pivot = U(np, np);
+    double pivot = R(np, np);
     // 2. 主元缩放成1
     MatrixXd Eii = MatrixXd::Identity(rows, rows);
     Eii(np, np) /= pivot;
 
-    Eii.applyThisOnTheLeft(U);
+    Eii.applyThisOnTheLeft(R);
     Eii.applyThisOnTheLeft(E);
-    // ELOGD << "step2 Eii is \n" << Eii << " U is \n" << U;
+    // ELOGD << "step2 Eii is \n" << Eii << " R is \n" << R;
     // 3. 主元向上消成0
     for (int i2 = 0; i2 < rows; ++i2) {
       if (i2 == np) { break; }
 
       Eii.setIdentity();
-      Eii(i2, np) = -U(i2, np);
-      Eii.applyThisOnTheLeft(U);
+      Eii(i2, np) = -R(i2, np);
+      Eii.applyThisOnTheLeft(R);
       Eii.applyThisOnTheLeft(E);
-      // ELOGD << "Eii is \n" << Eii << " U is \n" << U;
+      // ELOGD << "Eii is \n" << Eii << " R is \n" << R;
     }
   }
-  ELOGD << "Final E is \n" << E << " U is \n" << U;
+  ELOGD << "Final E is \n" << E << " R is \n" << R;
 
-  return { (fullLU.permutationP().inverse() * L * E).inverse(), U, fullLU.permutationQ().inverse(), rank };
+  // EU=R --> U=Einv*R
+
+  return { fullLU.permutationP().inverse() * L * E.inverse(), R, fullLU.permutationQ().inverse(), rank };
+  // return { E * L.inverse() * fullLU.permutationP(), R, fullLU.permutationQ().inverse(), rank };
 }

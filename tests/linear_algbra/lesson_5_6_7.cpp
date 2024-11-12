@@ -209,8 +209,8 @@ TEST_F(Lesson5_6_7, rref2) {
   auto const& [Einv, R, Qinv, rank] = RREF2(a_);
 
   ELOGD << "R is \n" << R;
+  ELOGD << "Einv * R * Qinv is \n" << Einv * R * Qinv;
   ELOGD << "kernal is \n" << a_.fullPivLu().kernel();
 
-  // EXPECT_TRUE(a_.isApprox(E.inverse() * RREF));
-  // EXPECT_TRUE((E * a_).isApprox(RREF));
+  EXPECT_TRUE((a_).isApprox(Einv * R * Qinv));
 }

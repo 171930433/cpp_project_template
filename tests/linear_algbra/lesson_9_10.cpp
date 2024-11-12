@@ -57,8 +57,30 @@ TEST_F(Lesson9_10, rref2_left_nullspace) {
 
   ELOGD << "N_A is \n" << N_A;
 
-
   EXPECT_TRUE((A * N_A).isZero());
+}
+// 事实上,N(a_.Transpose)，在做guass-jordan消元的时候已经获得，R底部的0行都是通过消元获得，即
+//  EAQ=R , R的下方有m-r行
+//  EA = R*Qinv
+TEST_F(Lesson9_10, rref2_left_nullspace2) {
+
+  MatrixXd A = a_;
+
+  int const m = A.rows(); // 3
+  int const n = A.cols(); // 4
+  auto const [Einv, R, Qinv, rank] = RREF2(A);
+  EXPECT_EQ(rank, 2);
+
+  ELOGD << "Einv is \n" << Einv;
+  ELOGD << "Einv * R * Qinv is \n" << Einv * R * Qinv;
+
+  // N(Rt)'s dim is m-r=1, N(Rt) in R^m
+  MatrixXd N_At = Einv.inverse().bottomRows(m - rank);
+
+  ELOGD << "N_At is \n" << N_At;
+  ELOGD << "N_At * A is \n" << N_At * A;
+
+  EXPECT_TRUE((N_At * A).isZero());
 }
 
 TEST_F(Lesson9_10, problem_set_3_6_1) {

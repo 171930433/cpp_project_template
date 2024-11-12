@@ -118,20 +118,23 @@ public:
 // 根据LU分解，获得rref矩阵
 // A = Pinv L U Qinv
 // A = Pinv L E R Qinv
-inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> RREF2(Eigen::MatrixXd const& A) {
+// E A Q = R
+// A = Einv R Qinv
+inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::PermutationMatrix<-1>, int> RREF2(Eigen::MatrixXd const& A) {
   using namespace Eigen;
   int rows = A.rows();
   int cols = A.cols();
 
   auto fullLU = A.fullPivLu();
+  int const rank = fullLU.rank();
+
   MatrixXd U = fullLU.matrixLU().triangularView<Eigen::Upper>();
-  MatrixXd L = fullLU.matrixLU().triangularView<Eigen::UnitLower>();
+  MatrixXd L = fullLU.matrixLU().bottomLeftCorner(rows, rows).triangularView<Eigen::UnitLower>();
 
   ELOGD << " L is \n" << L;
   ELOGD << " U is \n" << U;
 
   // 再次对U进行主元的向上消元
-  int const rank = fullLU.rank();
   MatrixXd E = MatrixXd::Identity(rows, rows);
   for (int np = 0; np < rank; ++np) {
     double pivot = U(np, np);
@@ -155,5 +158,5 @@ inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> RREF2(Eigen::MatrixXd const&
   }
   ELOGD << "Final E is \n" << E << " U is \n" << U;
 
-  return { E, U };
+  return { (fullLU.permutationP().inverse() * L * E).inverse(), U, fullLU.permutationQ().inverse(), rank };
 }

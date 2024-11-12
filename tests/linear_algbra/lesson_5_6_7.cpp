@@ -206,7 +206,7 @@ TEST_F(Lesson5_6_7, rref2) {
   constexpr int m = 3;
   constexpr int n = 4;
   // Matrix<double, 3, 4> A = (Matrix<double, 3, 4>() << 1, 1, 2, 4, 1, 2, 2, 5, 1, 3, 2, 6).finished();
-  auto const& [E, R] = RREF2(a_);
+  auto const& [Einv, R, Qinv, rank] = RREF2(a_);
 
   ELOGD << "R is \n" << R;
   ELOGD << "kernal is \n" << a_.fullPivLu().kernel();

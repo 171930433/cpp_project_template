@@ -129,10 +129,14 @@ inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::PermutationMatrix<-1>
   int const rank = fullLU.rank();
 
   MatrixXd U = fullLU.matrixLU().triangularView<Eigen::Upper>();
-  MatrixXd L = fullLU.matrixLU().bottomLeftCorner(rows, rows).triangularView<Eigen::UnitLower>();
+  MatrixXd L = MatrixXd::Identity(rows, rows);
 
-  ELOGD << " L is \n" << L;
-  ELOGD << " U is \n" << U;
+  // ELOGD << " fullLU.matrixLU() is \n" << fullLU.matrixLU();
+
+  L.block(0, 0, rows, rank).triangularView<StrictlyLower>() = fullLU.matrixLU().block(0, 0, rows, rank);
+
+  // ELOGD << " L is \n" << L;
+  // ELOGD << " U is \n" << U;
 
   // 再次对U进行主元的向上消元
   MatrixXd E = MatrixXd::Identity(rows, rows);
@@ -144,7 +148,7 @@ inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::PermutationMatrix<-1>
 
     Eii.applyThisOnTheLeft(U);
     Eii.applyThisOnTheLeft(E);
-    ELOGD << "step2 Eii is \n" << Eii << " U is \n" << U;
+    // ELOGD << "step2 Eii is \n" << Eii << " U is \n" << U;
     // 3. 主元向上消成0
     for (int i2 = 0; i2 < rows; ++i2) {
       if (i2 == np) { break; }
@@ -153,7 +157,7 @@ inline std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::PermutationMatrix<-1>
       Eii(i2, np) = -U(i2, np);
       Eii.applyThisOnTheLeft(U);
       Eii.applyThisOnTheLeft(E);
-      ELOGD << "Eii is \n" << Eii << " U is \n" << U;
+      // ELOGD << "Eii is \n" << Eii << " U is \n" << U;
     }
   }
   ELOGD << "Final E is \n" << E << " U is \n" << U;

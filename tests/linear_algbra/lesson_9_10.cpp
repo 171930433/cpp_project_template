@@ -24,6 +24,43 @@ protected:
   Matrix<double, 3, 4> a_;
 };
 
+TEST_F(Lesson9_10, rref2_nullspace) {
+  MatrixXd A = a_;
+
+  constexpr int m = 3;
+  constexpr int n = 4;
+  auto const [Einv, R, Qinv, rank] = RREF2(A);
+  EXPECT_EQ(rank, 2);
+
+  // N(A)'s dim is n-r=2, N(A) in R^n
+  MatrixXd N_R = MatrixXd::Zero(n, n - rank);
+  N_R.topRows(rank) = -R.topRightCorner(rank, n - rank);
+  N_R.bottomRows(n - rank).setIdentity();
+  MatrixXd N_A = Qinv.inverse() * N_R;
+
+  EXPECT_TRUE((A * N_A).isZero());
+}
+
+TEST_F(Lesson9_10, rref2_left_nullspace) {
+  MatrixXd A = a_.transpose();
+
+  int const m = A.rows();
+  int const n = A.cols();
+  auto const [Einv, R, Qinv, rank] = RREF2(A);
+  EXPECT_EQ(rank, 2);
+
+  // N(A)'s dim is n-r=2, N(A) in R^n
+  MatrixXd N_R = MatrixXd::Zero(n, n - rank);
+  N_R.topRows(rank) = -R.topRightCorner(rank, n - rank);
+  N_R.bottomRows(n - rank).setIdentity();
+  MatrixXd N_A = Qinv.inverse() * N_R;
+
+  ELOGD << "N_A is \n" << N_A;
+
+
+  EXPECT_TRUE((A * N_A).isZero());
+}
+
 TEST_F(Lesson9_10, problem_set_3_6_1) {
   // if m=7,n=9,r=5
   constexpr int m = 7;

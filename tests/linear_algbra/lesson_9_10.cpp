@@ -104,3 +104,22 @@ TEST_F(Lesson9_10, problem_set_3_6_2) {
   Matrix<double, 2, 3> A = (Matrix<double, 2, 3>() << 1, 2, 4, 2, 4, 8).finished();
   Matrix<double, 2, 3> B = (Matrix<double, 2, 3>() << 1, 2, 4, 2, 5, 8).finished();
 }
+
+TEST_F(Lesson9_10, kf_demo) {
+  Matrix2d D0 = (Matrix2d() << 2, 1, 1, 100).finished();
+  Vector2d X0{ 0, 0 };
+  // 两侧方程x=1
+  Vector<double, 1> m = (Vector<double, 1>() << 1).finished();
+  Matrix<double, 1, 1> Rm = (Matrix<double, 1, 1>() << 2).finished();
+  Matrix<double, 1, 2> H = (Matrix<double, 1, 2>() << 1, 0).finished();
+  // 计算增益
+  MatrixXd K = D0 * H.transpose() * (H * D0 * H.transpose() + Rm).inverse();
+  Vector2d X1 = X0 +  K * (m - H * X0);
+  MatrixXd D2 = (MatrixXd::Identity(2,2) - K * H) * D0;
+  // 
+
+  ELOGD << "K = \n" << K;
+  ELOGD << "X1 = \n" << X1;
+  ELOGD << "D2 = \n" << D2;
+
+}

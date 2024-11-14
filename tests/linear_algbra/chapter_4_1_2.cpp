@@ -113,3 +113,14 @@ TEST_F(Chapter4_1_2, problem_set_4_2_30) {
   EXPECT_TRUE((A * Pr).isApprox(A));
   EXPECT_TRUE((Pc * A * Pr).isApprox(A));
 }
+
+TEST_F(Chapter4_1_2, problem_set_4_2_32) {
+  auto A = (Matrix<double, 3, 2>() << 1, 0, 2, 1, 0, 1).finished();
+  Vector3d a1 = A.col(0);
+
+  Matrix3d P2 = A * (A.transpose() * A).inverse() * A.transpose();
+  Matrix3d P1 = a1 * (a1.transpose() * a1).inverse() * a1.transpose();
+  // 因为 P1*y在C(A)中，所以
+  // P2*P1*y= P1*y, 故P2*P1=P1
+  EXPECT_TRUE((P2 * P1).isApprox(P1));
+}

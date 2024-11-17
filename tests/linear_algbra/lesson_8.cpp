@@ -223,7 +223,7 @@ TEST_F(Lesson8, worked_example_3_4B) {
   // 5. 无穷多个解 rref is [I F; 0], r<n
 }
 
-TEST_F(Lesson8, worked_example_3_4C) {
+TEST_F(Lesson8, worked_example_3_4C) { 
   constexpr int m = 3;
   constexpr int n = 4;
   Matrix<double, 3, 4> A;

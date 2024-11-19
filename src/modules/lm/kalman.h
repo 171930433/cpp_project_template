@@ -3,29 +3,35 @@
 #include "message/message_buffer.h"
 #include <eigen3/Eigen/Dense>
 
+namespace Eigen {
+using VectorMap3d = Eigen::Map<Eigen::Vector3d>;
+using CVectorMap3d = Eigen::Map<Eigen::Vector3d const>;
+using CQuaternionMapd = Eigen::Map<Eigen::Quaterniond const>;
+}
+
 namespace lm::filter {
 
 inline Eigen::Matrix3d askew(Eigen::Vector3d const& v) {
   return (Eigen::Matrix3d() << 0, -v(2), v(1), v(2), 0.0, -v(0), -v(1), v(0), 0).finished();
 }
 
-struct State16 : public Eigen::Matrix<double, 16, 1> {
+struct State16 : public Eigen::Vector<double, 16> {
   State16() {
     this->setZero();
-    this->data()[3] = 1;
+    this->qua().setIdentity();
   }
   enum class Idx { qua = 0, dv = 4, dp = 7, dbg = 10, dba = 13 };
-  auto qua() { return Eigen::Map<Eigen::Quaterniond>(this->data()); }
-  auto vel() { return Eigen::Map<Eigen::Vector3d>(this->data() + 4); }
-  auto pos() { return Eigen::Map<Eigen::Vector3d>(this->data() + 7); }
-  auto bg() { return Eigen::Map<Eigen::Vector3d>(this->data() + 10); }
-  auto ba() { return Eigen::Map<Eigen::Vector3d>(this->data() + 13); }
+  Eigen::QuaternionMapd qua() { return Eigen::QuaternionMapd(this->data() + (int)Idx::qua); }
+  Eigen::VectorMap3d vel() { return Eigen::VectorMap3d(this->data() + (int)Idx::dv); }
+  Eigen::VectorMap3d pos() { return Eigen::VectorMap3d(this->data() + (int)Idx::dp); }
+  Eigen::VectorMap3d bg() { return Eigen::VectorMap3d(this->data() + (int)Idx::dbg); }
+  Eigen::VectorMap3d ba() { return Eigen::VectorMap3d(this->data() + (int)Idx::dba); }
   //
-  auto qua() const { return Eigen::Map<Eigen::Quaterniond const>(this->data()); }
-  auto vel() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 4); }
-  auto pos() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 7); }
-  auto bg() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 10); }
-  auto ba() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + 13); }
+  Eigen::CQuaternionMapd qua() const { return Eigen::CQuaternionMapd(this->data() + (int)Idx::qua); }
+  Eigen::CVectorMap3d vel() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dv); }
+  Eigen::CVectorMap3d pos() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dp); }
+  Eigen::CVectorMap3d bg() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dbg); }
+  Eigen::CVectorMap3d ba() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dba); }
 
   template <typename OtherDerived>
   State16& operator=(const Eigen::MatrixBase<OtherDerived>& other) {
@@ -42,27 +48,27 @@ struct State16 : public Eigen::Matrix<double, 16, 1> {
     // pos vel att
     re.vel() += qua() * (vel_inc + vel_rot) + Vector3d{ 0, 0, gl_g0 } * dt;
     re.pos() += 0.5 * (re.vel() + this->vel());
-    re.qua() = AngleAxisd{ ang_inc.norm(), ang_inc / ang_inc.norm() } * this->qua();
+    re.qua() = AngleAxisd{ ang_inc.norm(), ang_inc.normalized() } * this->qua();
     return re;
   }
 };
 
-struct ErrorState15 : public Eigen::Matrix<double, 15, 1> {
+struct ErrorState15 : public Eigen::Vector<double, 15> {
   using Base = Eigen::Matrix<double, 15, 1>;
   constexpr static unsigned klocal = 15;
   ErrorState15() { this->setZero(); }
   enum class Idx { fai = 0, dv = 3, dp = 6, dbg = 9, dba = 12 };
-  auto fai() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::fai); }
-  auto dv() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::dv); }
-  auto dp() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::dp); }
-  auto dbg() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::dbg); }
-  auto dba() { return Eigen::Map<Eigen::Vector3d>(this->data() + (int)Idx::dba); }
+  Eigen::VectorMap3d fai() { return Eigen::VectorMap3d(this->data() + (int)Idx::fai); }
+  Eigen::VectorMap3d dv() { return Eigen::VectorMap3d(this->data() + (int)Idx::dv); }
+  Eigen::VectorMap3d dp() { return Eigen::VectorMap3d(this->data() + (int)Idx::dp); }
+  Eigen::VectorMap3d dbg() { return Eigen::VectorMap3d(this->data() + (int)Idx::dbg); }
+  Eigen::VectorMap3d dba() { return Eigen::VectorMap3d(this->data() + (int)Idx::dba); }
   //
-  auto fai() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::fai); }
-  auto dv() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dv); }
-  auto dp() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dp); }
-  auto dbg() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dbg); }
-  auto dba() const { return Eigen::Map<Eigen::Vector3d const>(this->data() + (int)Idx::dba); }
+  Eigen::CVectorMap3d fai() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::fai); }
+  Eigen::CVectorMap3d dv() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dv); }
+  Eigen::CVectorMap3d dp() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dp); }
+  Eigen::CVectorMap3d dbg() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dbg); }
+  Eigen::CVectorMap3d dba() const { return Eigen::CVectorMap3d(this->data() + (int)Idx::dba); }
   // This method allows you to assign Eigen expressions to MyVectorType
   // https://eigen.tuxfamily.org/dox/TopicCustomizing_InheritingMatrix.html
   template <typename OtherDerived>
@@ -74,8 +80,7 @@ struct ErrorState15 : public Eigen::Matrix<double, 15, 1> {
 
 inline State16 Compensate(State16 const& x, ErrorState15 const& dx) {
   State16 re;
-
-  re.qua() = Eigen::AngleAxisd{ dx.fai().norm(), dx.fai() / dx.fai().norm() } * x.qua();
+  re.qua() = Eigen::AngleAxisd{ dx.fai().norm(), dx.fai().normalized() } * x.qua();
   re.tail(12) = x.tail(12) + dx.tail(12);
 
   return re;
@@ -128,7 +133,7 @@ public:
 
     // 0. 误差状态更新
     FaiType const& Phi = Fai(states_, frame, dt);
-    if (!(states_.dx_.all() == 0)) { predicted_states->dx_ = Phi * states_.dx_; }
+    if (!states_.dx_.isZero()) { predicted_states->dx_ = Phi * states_.dx_; }
 
     // 1. 方差更新
     FaiType const cov = Phi.transpose() * states_.cov_ * Phi + FaiType(q_.asDiagonal() * dt);

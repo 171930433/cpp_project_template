@@ -1,8 +1,8 @@
 #pragma once
 
+#include "common/extral_units.hpp"
 #include "message/message_buffer.h"
 #include <eigen3/Eigen/Dense>
-#include <units.h>
 
 namespace Eigen {
 using VectorMap3d = Eigen::Map<Eigen::Vector3d>;
@@ -122,6 +122,7 @@ public:
     using namespace units::velocity;
     using namespace units::length;
     using namespace units::acceleration;
+    using namespace units::angle_random_walk;
     states_.t0_ = frame->t0();
     states_.x_ = { frame->msg_ };
     states_.dx_.setZero();
@@ -134,12 +135,12 @@ public:
     Eigen::Vector3d v3_ones = Vector3d::Ones();
     QType std0 = QType::Zero();
     std0 << v3_ones * convert<degree, radian>(5), v3_ones * 1.0_mps(), v3_ones * 1.0_m(),
-      v3_ones * convert<deg_per_s, rad_per_s>(100.0 / 3600), v3_ones * convert<SG, mps_sq>(5e-3);
+      v3_ones * convert<deg_per_h, rad_per_s>(100), v3_ones * (0.005_SG).convert<mps_sq>()();
 
     states_.cov_ = std0.cwiseAbs2().asDiagonal();
     // q
     q_.setZero();
-    q_ << Vector3d::Ones() * 0.1 * gl_dpsh, Vector3d::Ones() * 10 * gl_ugpshz, Vector<double, 15 - 6>::Zero();
+    q_ << Vector3d::Constant(0.1_dpsh()), Vector3d::Ones() * 10.0_ugpshz(), Vector<double, 15 - 6>::Zero();
   }
 
   std::shared_ptr<FStates> TimeUpdate(Message<Imu> const& frame) {

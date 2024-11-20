@@ -20,6 +20,13 @@ struct State16 : public Eigen::Vector<double, 16> {
     this->setZero();
     this->qua().setIdentity();
   }
+
+  State16(State const& s)
+    : State16() {
+    this->qua() = Eigen::Quaterniond(Eigen::EulerAnglesZXYd(s.att_.Map3d()));
+    this->pos() = s.pos_.Map3d();
+    this->vel() = s.vel_.Map3d();
+  }
   enum class Idx { qua = 0, dv = 4, dp = 7, dbg = 10, dba = 13 };
   Eigen::QuaternionMapd qua() { return Eigen::QuaternionMapd(this->data() + (int)Idx::qua); }
   Eigen::VectorMap3d vel() { return Eigen::VectorMap3d(this->data() + (int)Idx::dv); }
@@ -46,8 +53,8 @@ struct State16 : public Eigen::Vector<double, 16> {
     Vector3d const ang_inc = frame.msg_.gyr_.Map3d() * dt;
     Vector3d const vel_rot = 1.0 / 2.0 * ang_inc.cross(vel_inc);
     // pos vel att
-    re.vel() += qua() * (vel_inc + vel_rot) + Vector3d{ 0, 0, gl_g0 } * dt;
-    re.pos() += 0.5 * (re.vel() + this->vel());
+    re.vel() += qua() * (vel_inc + vel_rot) + Vector3d{ 0, 0, -gl_g0 } * dt;
+    re.pos() += 0.5 * (re.vel() + this->vel()) * dt;
     re.qua() = AngleAxisd{ ang_inc.norm(), ang_inc.normalized() } * this->qua();
     return re;
   }
@@ -108,7 +115,7 @@ public:
   void Init(std::shared_ptr<Message<State> const> frame) {
     using namespace Eigen;
     states_.t0_ = frame->t0();
-    states_.x_.vel() = Eigen::Vector3d{ 0, frame->msg_.vel_.Map3d().norm(), 0 };
+    states_.x_ = { frame->msg_ };
     states_.dx_.setZero();
 
     //
@@ -170,7 +177,7 @@ protected:
     return Phi;
   };
 
-protected:
+public:
   FStates states_;
   QType q_ = QType::Zero();
 };

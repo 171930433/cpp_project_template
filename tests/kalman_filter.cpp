@@ -8,6 +8,21 @@ using namespace lm;
 using namespace lm::filter;
 using namespace Eigen;
 
+using namespace units;
+using namespace units::angle;
+using namespace units::angular_velocity;
+using namespace units::literals;
+TEST(ESKF15, units) {
+  EXPECT_DOUBLE_EQ(SI(1.0_deg), M_PI / 180);
+  EXPECT_DOUBLE_EQ(SI(1.0_dph), M_PI / 180 / 3600);
+  EXPECT_DOUBLE_EQ(SI(1.0_rad), 1);
+  EXPECT_DOUBLE_EQ(SI(1.0_dpss), M_PI / 180);
+  EXPECT_DOUBLE_EQ(SI(1.0_dpsh), M_PI / 180 / 60);
+  EXPECT_DOUBLE_EQ(SI(1.0_gpshz), 1e0 * 980665 / 1e5);
+  EXPECT_DOUBLE_EQ(SI(1.0_mgpshz), 1e-3 * 980665 / 1e5);
+  EXPECT_DOUBLE_EQ(SI(1.0_ugpshz), 1e-6 * 980665 / 1e5);
+}
+
 TEST(ESKF15, base) {
   ESKF15 eskf;
   auto state0 = CreateMessage<State>("/init_pose");
@@ -27,10 +42,7 @@ TEST(ESKF15, base) {
 }
 
 TEST(ESKF15, time_update) {
-  using namespace units;
-  using namespace units::angle;
-  using namespace units::angular_velocity;
-  using namespace units::literals;
+
   ESKF15 eskf;
 
   Eigen::Vector3d v0 = Eigen::Vector3d{ 1, 1, 0 }.normalized() * 100;

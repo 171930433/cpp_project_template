@@ -2,6 +2,7 @@
 
 #include "message/message_buffer.h"
 #include <eigen3/Eigen/Dense>
+#include <units.h>
 
 namespace Eigen {
 using VectorMap3d = Eigen::Map<Eigen::Vector3d>;
@@ -114,6 +115,13 @@ public:
 
   void Init(std::shared_ptr<Message<State> const> frame) {
     using namespace Eigen;
+    using namespace units;
+    using namespace units::literals;
+    using namespace units::angular_velocity;
+    using namespace units::angle;
+    using namespace units::velocity;
+    using namespace units::length;
+    using namespace units::acceleration;
     states_.t0_ = frame->t0();
     states_.x_ = { frame->msg_ };
     states_.dx_.setZero();
@@ -123,9 +131,10 @@ public:
     static double const gl_dpsh = gl_deg / sqrt(3600);
     static double const gl_ugpshz = gl_g0 * 1e-6;
     // init cov
+    Eigen::Vector3d v3_ones = Vector3d::Ones();
     QType std0 = QType::Zero();
-    std0 << Vector3d::Ones() * 5 * gl_deg, Vector3d::Ones(), Vector3d::Ones() * 10,
-      Vector3d::Ones() * 100 * gl_deg / 3600, Vector3d::Ones() * 5e-3 * gl_g0;
+    std0 << v3_ones * convert<degree, radian>(5), v3_ones * 1.0_mps(), v3_ones * 1.0_m(),
+      v3_ones * convert<deg_per_s, rad_per_s>(100.0 / 3600), v3_ones * convert<SG, mps_sq>(5e-3);
 
     states_.cov_ = std0.cwiseAbs2().asDiagonal();
     // q

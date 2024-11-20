@@ -134,13 +134,13 @@ public:
     // init cov
     Eigen::Vector3d v3_ones = Vector3d::Ones();
     QType std0 = QType::Zero();
-    std0 << v3_ones * convert<degree, radian>(5), v3_ones * 1.0_mps(), v3_ones * 1.0_m(),
-      v3_ones * convert<deg_per_h, rad_per_s>(100), v3_ones * (0.005_SG).convert<mps_sq>()();
+    std0 << Vector3d::Constant(SI(5.0_deg)), Vector3d::Constant(SI(1.0_mps)), Vector3d::Constant(SI(1.0_m)),
+      Vector3d::Constant(SI(100.0_dph)), Vector3d::Constant(SI(0.005_SG));
 
     states_.cov_ = std0.cwiseAbs2().asDiagonal();
     // q
     q_.setZero();
-    q_ << Vector3d::Constant(0.1_dpsh()), Vector3d::Ones() * 10.0_ugpshz(), Vector<double, 15 - 6>::Zero();
+    q_ << Vector3d::Constant(SI(0.1_dpsh)), Vector3d::Constant(SI(10.0_ugpshz)), Vector<double, 15 - 6>::Zero();
   }
 
   std::shared_ptr<FStates> TimeUpdate(Message<Imu> const& frame) {

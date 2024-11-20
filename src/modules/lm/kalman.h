@@ -127,10 +127,6 @@ public:
     states_.x_ = { frame->msg_ };
     states_.dx_.setZero();
 
-    //
-    static double const gl_deg = M_PI / 180.0;
-    static double const gl_dpsh = gl_deg / sqrt(3600);
-    static double const gl_ugpshz = gl_g0 * 1e-6;
     // init cov
     Eigen::Vector3d v3_ones = Vector3d::Ones();
     QType std0 = QType::Zero();

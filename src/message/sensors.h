@@ -61,7 +61,7 @@ struct State {
   double t0_ = 0; // 产生时间 s
   Vec3d pos_ = { 0, 0, 0 };
   Vec3d vel_ = { 0, 0, 0 };
-  Vec3d att_ = { 0, 0, 0 };
+  Vec3d att_ = { 0, 0, 0 }; // yaw pitch roll
 };
 
 struct FramesPack {

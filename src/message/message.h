@@ -1,5 +1,6 @@
 #pragma once
 #include "common/earth.hpp"
+#include "common/eigen_type.hpp"
 #include "message/sensors.h"
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
@@ -7,6 +8,7 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <memory>
+#include <units.h>
 #include <unordered_set>
 #include <ylt/reflection/template_string.hpp>
 #include <ylt/struct_json/json_reader.h>
@@ -19,19 +21,19 @@ inline Eigen::Isometry3d ToIsometry3d(Gnss const& gnss) {
 }
 
 inline Eigen::Isometry3d ToIsometry3d(State const& state) {
-  Eigen::EulerAnglesZXYd att{ state.att_.z_, state.att_.x_, state.att_.y_ };
+  Eigen::EulerAnglesZXYd att{ state.att_.Map3d().data() };
   return Eigen::Translation3d(state.pos_.Map3d()) * att;
 }
 
 namespace Eigen {
 template <bool Is_writing_escape, typename Stream>
 IGUANA_INLINE void to_json_impl(Stream& ss, Eigen::Isometry3d const& v) {
+  using namespace units;
+  using namespace units::angle;
   double data[6] = { 0 };
-  Eigen::Map<Eigen::Vector3d> pos(data);
-  pos = v.translation();
-  Eigen::Map<Eigen::Vector3d> att(data + 3);
-  att = v.rotation().eulerAngles(2, 0, 1);
-  att = att.array() * 180 / M_PI;
+  Eigen::Map<Eigen::Vector3d> pose(data);
+  pose.head(3) = v.translation();
+  pose.tail(3) = v.rotation().eulerAngles(2, 0, 1) * convert<radian, degree>(1.0);
 
   iguana::detail::to_json_impl<Is_writing_escape>(ss, data);
 }
@@ -75,7 +77,7 @@ public:
   double t2_ = 0; // 落盘时间
 };
 
-template <typename _Sensor, bool = IsTrajectory<_Sensor>::value>
+template <typename _Sensor, bool = IsTrajectory_v<_Sensor>>
 struct Message;
 
 template <typename _Sensor>

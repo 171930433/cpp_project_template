@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Eigen/Dense>
 #include <fmt/core.h>
 #include <fmt/ostream.h>

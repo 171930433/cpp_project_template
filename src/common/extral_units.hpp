@@ -1,3 +1,4 @@
+#pragma once
 #include <units.h>
 
 namespace units::category {

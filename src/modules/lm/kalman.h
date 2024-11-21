@@ -1,14 +1,10 @@
 #pragma once
 
 #include "common/extral_units.hpp"
+#include "common/eigen_type.hpp"
 #include "message/message_buffer.h"
 #include <eigen3/Eigen/Dense>
 
-namespace Eigen {
-using VectorMap3d = Eigen::Map<Eigen::Vector3d>;
-using CVectorMap3d = Eigen::Map<Eigen::Vector3d const>;
-using CQuaternionMapd = Eigen::Map<Eigen::Quaterniond const>;
-}
 
 namespace lm::filter {
 

@@ -12,6 +12,7 @@ using namespace units;
 using namespace units::angle;
 using namespace units::angular_velocity;
 using namespace units::literals;
+
 TEST(ESKF15, units) {
   EXPECT_DOUBLE_EQ(SI(1.0_deg), M_PI / 180);
   EXPECT_DOUBLE_EQ(SI(1.0_dph), M_PI / 180 / 3600);
@@ -21,6 +22,18 @@ TEST(ESKF15, units) {
   EXPECT_DOUBLE_EQ(SI(1.0_gpshz), 1e0 * 980665 / 1e5);
   EXPECT_DOUBLE_EQ(SI(1.0_mgpshz), 1e-3 * 980665 / 1e5);
   EXPECT_DOUBLE_EQ(SI(1.0_ugpshz), 1e-6 * 980665 / 1e5);
+}
+
+TEST(ESKF15, euler_angle) {
+  EulerAnglesZXYd euler1{ SI(10.0_deg), SI(20.0_deg), SI(30.0_deg) };
+  ELOGD << "euler1 = " << euler1.angles().transpose() * convert<radian, degree>(1.0);
+
+  Quaterniond q1 = euler1;
+  Vector3d euler2 = q1.toRotationMatrix().eulerAngles(2, 0, 1);
+  ELOGD << "euler2 = " << euler2.transpose() * convert<radian, degree>(1.0);
+
+  // euler角向量的顺序为yaw pitch roll
+  EXPECT_TRUE(euler1.angles().isApprox(euler2));
 }
 
 TEST(ESKF15, base) {

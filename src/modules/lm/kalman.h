@@ -56,7 +56,7 @@ struct State16 : public Eigen::Vector<double, 16> {
     // pos vel att
     re.vel() += qua() * (vel_inc + vel_rot) + Vector3d{ 0, 0, -gl_g0 } * dt;
     re.pos() += 0.5 * (re.vel() + this->vel()) * dt;
-    re.qua() = AngleAxisd{ ang_inc.norm(), ang_inc.normalized() } * this->qua();
+    re.qua() = this->qua() * AngleAxisd{ ang_inc.norm(), ang_inc.normalized() };
     return re;
   }
 };

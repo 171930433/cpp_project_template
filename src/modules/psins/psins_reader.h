@@ -1,5 +1,6 @@
 #pragma once
 #include "PSINSCore/PSINS.h"
+#include "PSINSCore/KFApp.h"
 #include "data/reader.h"
 #include <deque>
 
@@ -92,7 +93,7 @@ inline std::pair<MessageBase::SPtr, IDataReader::IOState> PsinsReader::ReadFrame
   return { imu, state };
 }
 
-void PsinsReader::LoadResult(std::string const& path,SensorContainer<State>& result) {
+inline void PsinsReader::LoadResult(std::string const& path,SensorContainer<State>& result) {
   FILE* fp = fopen(path.c_str(), "rb"); // must use binary mode
 
   int const size = 19;

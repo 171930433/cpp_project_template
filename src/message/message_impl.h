@@ -32,20 +32,31 @@ inline std::string Message<_Sensor, true>::to_json() const {
 }
 
 template <typename _Sensor>
-void Message<_Sensor, true>::UpdateRelativePose() {
+void Message<_Sensor, true>::UpdateRelativePose(bool is_llh_pose) {
   static std::unordered_map<std::string_view, Eigen::Isometry3d> origins;
   static std::unordered_map<std::string_view, WGS84> wgs84_ellipsoids;
 
   Eigen::Isometry3d const Twb = ToIsometry3d(this->msg_);
   WGS84& ellipsoid = wgs84_ellipsoids[this->channel_name_];
 
+  // 确定圆心
   if (!origins.contains(this->channel_name_)) {
-    origins[this->channel_name_] = Twb;
-    ellipsoid.SetOrigin(Twb.translation());
+    if (is_llh_pose) {
+      origins[this->channel_name_] = Twb;
+      ellipsoid.SetOrigin(Twb.translation());
+    } else {
+      origins[this->channel_name_].setIdentity();
+      ellipsoid.SetOrigin(Eigen::Vector3d::Zero());
+    }
   }
 
+  // 确定相对位置
   origin_ = &origins[this->channel_name_];
 
-  rpose_.linear() = origin_->linear() * Twb.linear().inverse();
-  rpose_.translation() = ellipsoid.LLH2ENU(Twb.translation());
+  if (is_llh_pose) {
+    rpose_.linear() = origin_->linear() * Twb.linear().inverse();
+    rpose_.translation() = ellipsoid.LLH2ENU(Twb.translation());
+  } else {
+    rpose_ = Twb;
+  }
 }

@@ -2,8 +2,12 @@
 #include <gtest/gtest.h>
 
 #include "modules/lm/kalman.h"
+#include "modules/lm/lm.h"
+#include "modules/psins/psins_reader.h"
+#include "mylib.h"
 #include <common/eigen_units.h>
 #include <ylt/easylog.hpp>
+
 using namespace lm;
 using namespace lm::filter;
 using namespace Eigen;
@@ -26,11 +30,11 @@ TEST(ESKF15, units) {
 
 TEST(ESKF15, euler_angle) {
   EulerAnglesZXYd euler1{ SI(10.0_deg), SI(20.0_deg), SI(30.0_deg) };
-  ELOGD << "euler1 = " << euler1.angles().transpose() * convert<radian, degree>(1.0);
+  ELOGD << "euler1 = " << euler1.angles().transpose() * units::convert<radian, degree>(1.0);
 
   Quaterniond q1 = euler1;
   Vector3d euler2 = q1.toRotationMatrix().eulerAngles(2, 0, 1);
-  ELOGD << "euler2 = " << euler2.transpose() * convert<radian, degree>(1.0);
+  ELOGD << "euler2 = " << euler2.transpose() * units::convert<radian, degree>(1.0);
 
   // euler角向量的顺序为yaw pitch roll
   EXPECT_TRUE(euler1.angles().isApprox(euler2));
@@ -93,6 +97,36 @@ TEST(ESKF15, time_update) {
   EXPECT_TRUE(eskf.states_.x_.vel().isApprox(v0));
   EXPECT_TRUE(eskf.states_.x_.pos().isApprox(v0 * 0.02));
   ELOGD << "eskf.states_.x_.qua() is = "
-        << eskf.states_.x_.qua().toRotationMatrix().eulerAngles(2, 0, 1) * convert<radian, degree>(1.0);
+        << eskf.states_.x_.qua().toRotationMatrix().eulerAngles(2, 0, 1) * units::convert<radian, degree>(1.0);
   EXPECT_TRUE(eskf.states_.x_.qua().isApprox(Quaterniond(EulerAnglesZXYd((45_deg).convert<radian>()(), 0, 0))));
+}
+
+TEST(ESKF15, offline) {
+
+  MultuiSensorFusion msf;
+  msf.Init(FLAGS_config_dir);
+
+  PsinsReader reader;
+  reader.Init(FLAGS_data_dir + "/mimuattgps.bin");
+
+  msf.CreateModule<lm::LM>();
+
+  // 构造输出
+  std::deque<Message<State>::SCPtr> fused_states;
+  Message<State>::CFunc cbk = [&fused_states](Message<State>::SCPtr frame) {
+    fused_states.push_back(frame);
+    ELOGD << frame->to_json();
+  };
+
+  msf.dispatcher()->RegisterWriter("/releative_loc/pose", cbk);
+
+  int count = 125 * 1;
+  for (int i = 0; i < count; ++i) {
+    auto it = reader.ReadFrame();
+    msf.ProcessData(it.first);
+  }
+
+  EXPECT_TRUE(1);
+  // 数据有丢帧
+  EXPECT_GE(fused_states.size(), count * 0.99);
 }

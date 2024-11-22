@@ -109,7 +109,7 @@ struct Message<_Sensor, true> : public Message<_Sensor, false> {
     : Base(channel_name) {}
 
   std::string to_json() const override;
-  void UpdateRelativePose();
+  void UpdateRelativePose(bool is_llh_pose = true);
 
 public:
   Eigen::Isometry3d* origin_ = nullptr;

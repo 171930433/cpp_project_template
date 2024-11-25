@@ -35,7 +35,8 @@ inline Message<State>::SPtr ToState(DataSensor* frame) {
   state->msg_.t0_ = frame->t;
   state->msg_.pos_ = convert::ToVec3d(frame->gpspos);
   state->msg_.vel_ = convert::ToVec3d(frame->gpsvn);
-  state->msg_.att_ = convert::ToVec3d(frame->att);
+  // state->msg_.att_ = convert::ToVec3d(frame->att);
+  state->msg_.att_.Map3d() = Eigen::Vector3d{frame->att.k,frame->att.i,frame->att.j};
   state->UpdateRelativePose();
   return state;
 }
@@ -45,7 +46,8 @@ inline Message<State>::SPtr ToState(CSINS const& frame) {
   state->msg_.t0_ = frame.tk;
   state->msg_.pos_ = convert::ToVec3d(frame.pos);
   state->msg_.vel_ = convert::ToVec3d(frame.vn);
-  state->msg_.att_ = convert::ToVec3d(frame.att);
+  // state->msg_.att_ = convert::ToVec3d(frame.att);
+  state->msg_.att_.Map3d() = Eigen::Vector3d{frame.att.k,frame.att.i,frame.att.j};
   state->UpdateRelativePose();
   return state;
 }

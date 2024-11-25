@@ -8,6 +8,8 @@ ReleativeLoc::ReleativeLoc() { initializer_ = std::make_unique<Initializer>(); }
 Message<State>::SPtr ReleativeLoc::ProcessImpl(Message<Imu>::SCPtr frame) {
   if (!inited_) { return nullptr; }
 
+  ELOGD <<" ReleativeLoc::ProcessImpl imu is " << frame->to_json();
+
   auto filter_state = eskf_.TimeUpdate(*frame);
 
   auto re = CreateMessage<State>("/releative_loc/pose");
@@ -18,7 +20,7 @@ Message<State>::SPtr ReleativeLoc::ProcessImpl(Message<Imu>::SCPtr frame) {
   re->msg_.att_.Map3d() = Eigen::EulerAnglesZXYd(filter_state->x_.qua()).angles();
   re->UpdateRelativePose(false);
 
-  ELOGD << "ReleativeLoc::ProcessImpl " << re->to_header_str();
+  ELOGD << "ReleativeLoc::ProcessImpl " << re->to_json();
 
   return re;
 }

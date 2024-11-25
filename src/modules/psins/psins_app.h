@@ -57,7 +57,7 @@ inline void PsinsApp::ProcessInitState(std::shared_ptr<const Message<State>> fra
 
   CVect3 pos = convert::ToCVect3(frame->msg_.pos_);
   CVect3 vel = convert::ToCVect3(frame->msg_.vel_);
-  CVect3 att = convert::ToCVect3(frame->msg_.att_);
+  CVect3 att = { frame->msg_.att_.y_, frame->msg_.att_.z_, frame->msg_.att_.x_ };
   kf_app_->Init(CSINS(att, vel, pos, frame->t0()));
   inited_.store(true);
 }

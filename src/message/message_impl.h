@@ -54,7 +54,7 @@ void Message<_Sensor, true>::UpdateRelativePose(bool is_llh_pose) {
   origin_ = &origins[this->channel_name_];
 
   if (is_llh_pose) {
-    rpose_.linear() = origin_->linear() * Twb.linear().inverse();
+    rpose_.linear() = origin_->linear().inverse() * Twb.linear();
     rpose_.translation() = ellipsoid.LLH2ENU(Twb.translation());
   } else {
     rpose_ = Twb;

@@ -10,6 +10,7 @@
 #include <memory>
 #include <units.h>
 #include <unordered_set>
+#include <ylt/easylog.hpp>
 #include <ylt/reflection/template_string.hpp>
 #include <ylt/struct_json/json_reader.h>
 #include <ylt/struct_json/json_writer.h>
@@ -22,6 +23,7 @@ inline Eigen::Isometry3d ToIsometry3d(Gnss const& gnss) {
 
 inline Eigen::Isometry3d ToIsometry3d(State const& state) {
   Eigen::EulerAnglesZXYd att{ state.att_.Map3d().data() };
+  // ELOGD << " state.att_.Map3d() is" << state.att_.Map3d().transpose() <<" qua = " << att.angles().transpose();
   return Eigen::Translation3d(state.pos_.Map3d()) * att;
 }
 
@@ -31,9 +33,11 @@ IGUANA_INLINE void to_json_impl(Stream& ss, Eigen::Isometry3d const& v) {
   using namespace units;
   using namespace units::angle;
   double data[6] = { 0 };
-  Eigen::Map<Eigen::Vector3d> pose(data);
+  Eigen::Map<Eigen::Vector<double, 6>> pose(data);
   pose.head(3) = v.translation();
-  pose.tail(3) = v.rotation().eulerAngles(2, 0, 1) * convert<radian, degree>(1.0);
+  pose.tail(3) = Eigen::EulerAnglesZXYd(v.rotation()).angles() * convert<radian, degree>(1.0);
+
+  // ELOGD << "to_json_impl Eigen::Isometry3d " << pose.transpose();
 
   iguana::detail::to_json_impl<Is_writing_escape>(ss, data);
 }

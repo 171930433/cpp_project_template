@@ -115,12 +115,12 @@ TEST(ESKF15, offline) {
   std::deque<Message<State>::SCPtr> fused_states;
   Message<State>::CFunc cbk = [&fused_states](Message<State>::SCPtr frame) {
     fused_states.push_back(frame);
-    ELOGD << frame->to_json();
+    // ELOGD << frame->to_json();
   };
 
   msf.dispatcher()->RegisterWriter("/releative_loc/pose", cbk);
 
-  int count = 125 * 1;
+  int count = 125 * 0.1;
   for (int i = 0; i < count; ++i) {
     auto it = reader.ReadFrame();
     msf.ProcessData(it.first);

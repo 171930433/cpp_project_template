@@ -36,9 +36,9 @@ private:
 inline void PsinsApp::ProcessImu(std::shared_ptr<const Message<Imu>> frame) {
   if (!inited_) return;
   // ELOG_DEBUG << frame->to_header_str();
-
-  auto acc = convert::ToCVect3(frame->msg_.acc_);
-  auto gyr = convert::ToCVect3(frame->msg_.gyr_);
+  // 角速度，加速度转换成增量
+  auto acc = convert::ToCVect3(frame->msg_.acc_) * dt_;
+  auto gyr = convert::ToCVect3(frame->msg_.gyr_) * dt_;
   kf_app_->Update(&gyr, &acc, 1, dt_);
 
   // 构造输出

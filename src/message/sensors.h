@@ -16,6 +16,7 @@ struct Vec3d {
   auto Map3d() const { return Eigen::Map<Eigen::Vector3d const>(&x_); }
 };
 
+// 需要明确是增量还是角速度和比力，目前不是增量
 struct Imu {
   double t0_ = 0;           // 产生时间 s
   Vec3d acc_ = { 0, 0, 0 }; // imu系比力观测值
@@ -52,7 +53,7 @@ struct GnssDualAntenna {
 
 struct Gnss {
   double t0_ = 0; // 产生时间 s
-  GnssPosition pos_;
+  GnssPosition pos_;  // 维度、经度，高度 rad rad m
   GnssVelocity vel_;
   GnssDualAntenna dual_antenna_;
 };

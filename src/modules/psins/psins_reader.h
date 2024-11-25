@@ -1,22 +1,19 @@
 #pragma once
-#include "PSINSCore/PSINS.h"
 #include "PSINSCore/KFApp.h"
+#include "PSINSCore/PSINS.h"
 #include "data/reader.h"
 #include <deque>
 
 namespace convert {
 
-inline Vec3d ToVec3d(CVect3 const& in) {
-  return { in.i, in.j, in.k };
-}
-inline CVect3 ToCVect3(Vec3d const& in) {
-  return { in.x_, in.y_, in.z_ };
-}
+inline Vec3d ToVec3d(CVect3 const& in) { return { in.i, in.j, in.k }; }
+inline CVect3 ToCVect3(Vec3d const& in) { return { in.x_, in.y_, in.z_ }; }
 
 inline Message<Imu>::SPtr ToImu(DataSensor* frame) {
   auto imu = CreateMessage<Imu>("/imu");
-  imu->msg_.acc_ = convert::ToVec3d(frame->vm);
-  imu->msg_.gyr_ = convert::ToVec3d(frame->wm);
+  double const dt = 1.0 / 125;
+  imu->msg_.acc_ = convert::ToVec3d(frame->vm / dt);
+  imu->msg_.gyr_ = convert::ToVec3d(frame->wm / dt);
   imu->msg_.t0_ = frame->t;
   return imu;
 }
@@ -36,7 +33,7 @@ inline Message<State>::SPtr ToState(DataSensor* frame) {
   state->msg_.pos_ = convert::ToVec3d(frame->gpspos);
   state->msg_.vel_ = convert::ToVec3d(frame->gpsvn);
   // state->msg_.att_ = convert::ToVec3d(frame->att);
-  state->msg_.att_.Map3d() = Eigen::Vector3d{frame->att.k,frame->att.i,frame->att.j};
+  state->msg_.att_.Map3d() = Eigen::Vector3d{ frame->att.k, frame->att.i, frame->att.j };
   state->UpdateRelativePose();
   return state;
 }
@@ -47,7 +44,7 @@ inline Message<State>::SPtr ToState(CSINS const& frame) {
   state->msg_.pos_ = convert::ToVec3d(frame.pos);
   state->msg_.vel_ = convert::ToVec3d(frame.vn);
   // state->msg_.att_ = convert::ToVec3d(frame.att);
-  state->msg_.att_.Map3d() = Eigen::Vector3d{frame.att.k,frame.att.i,frame.att.j};
+  state->msg_.att_.Map3d() = Eigen::Vector3d{ frame.att.k, frame.att.i, frame.att.j };
   state->UpdateRelativePose();
   return state;
 }
@@ -63,7 +60,7 @@ public:
     buffer_.push_back({ convert::ToState(&reader_->DS0), IOState::OK });
   }
   std::pair<MessageBase::SPtr, IOState> ReadFrame() override;
-  static void LoadResult(std::string const& path,SensorContainer<State>& result);
+  static void LoadResult(std::string const& path, SensorContainer<State>& result);
 
 private:
   std::unique_ptr<CFileRdSr> reader_;
@@ -95,7 +92,7 @@ inline std::pair<MessageBase::SPtr, IDataReader::IOState> PsinsReader::ReadFrame
   return { imu, state };
 }
 
-inline void PsinsReader::LoadResult(std::string const& path,SensorContainer<State>& result) {
+inline void PsinsReader::LoadResult(std::string const& path, SensorContainer<State>& result) {
   FILE* fp = fopen(path.c_str(), "rb"); // must use binary mode
 
   int const size = 19;

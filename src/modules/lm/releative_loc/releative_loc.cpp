@@ -40,7 +40,7 @@ bool ReleativeLoc::TryInit(MessageBase::SCPtr frame) {
 
   // 设置初始pose
   re->msg_.pos_.Map3d() = re->rpose_.translation();
-  re->msg_.att_.Map3d() = re->rpose_.rotation().eulerAngles(2, 0, 1);
+  re->msg_.att_.Map3d() = Eigen::EulerAnglesZXYd(re->rpose_.rotation()).angles();
 
   eskf_.Init(re);
 

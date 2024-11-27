@@ -128,6 +128,21 @@ void PlotTrajectory(SensorContainer<_Sensor> const& single_buffer) {
   ImPlot::PlotScatter(single_buffer.channel_name_.data(), &pts[0].x, &pts[0].y, pts.size(), 0, 0, sizeof(ImPlotPoint));
 }
 
+template <typename _Sensor, std::enable_if_t<std::is_same_v<_Sensor, Imu>>* = nullptr>
+void PlotImu(SensorContainer<_Sensor> const& single_buffer, std::string_view name) {
+  auto const& pts = DownSample(single_buffer);
+  if (pts.empty()) return;
+  if (name == "acc_") {
+    ImPlot::PlotLine((std::string(name) + "x").c_str(), &pts[0][0], &pts[0][1], pts.size(), 0, 0, sizeof(double) * 8);
+    ImPlot::PlotLine((std::string(name) + "y").c_str(), &pts[0][0], &pts[0][2], pts.size(), 0, 0, sizeof(double) * 8);
+    ImPlot::PlotLine((std::string(name) + "z").c_str(), &pts[0][0], &pts[0][3], pts.size(), 0, 0, sizeof(double) * 8);
+  } else if (name == "gyr_") {
+    ImPlot::PlotLine((std::string(name) + "x").c_str(), &pts[0][0], &pts[0][4], pts.size(), 0, 0, sizeof(double) * 8);
+    ImPlot::PlotLine((std::string(name) + "y").c_str(), &pts[0][0], &pts[0][5], pts.size(), 0, 0, sizeof(double) * 8);
+    ImPlot::PlotLine((std::string(name) + "z").c_str(), &pts[0][0], &pts[0][6], pts.size(), 0, 0, sizeof(double) * 8);
+  }
+}
+
 void MyViewer::TrajectoryWindow() {
   ImGui::Begin("trj");
 
@@ -155,12 +170,18 @@ ImPlotPoint SinewaveGetter(int i, void* data) {
   return ImPlotPoint(i, sinf(f * i));
 }
 
+ImPlotPoint ImuGetter(int i, void* data) {
+  auto& frame = *(reinterpret_cast<bm::SensorContainer<Imu>*>(data));
+
+  return ImPlotPoint(frame[i]->t0(), frame[i]->msg_.acc_.x_);
+}
+
 void MyViewer::Plot2dWindow() {
   ImGui::Begin("plot 2d");
 
   auto const& channel_names_ = buffers_.channel_names_;
   static auto selected_it = channel_names_.begin();
-  if (ImGui::BeginCombo("##channels", (channel_names_.size() ? channel_names_.begin()->data() : nullptr))) {
+  if (ImGui::BeginCombo("##channels", (selected_it == channel_names_.end() ? nullptr : selected_it->data()))) {
     for (auto it = channel_names_.begin(); it != channel_names_.end(); ++it) {
       const bool is_selected = (selected_it == it);
       if (ImGui::Selectable(it->data(), is_selected)) selected_it = it;
@@ -177,7 +198,7 @@ void MyViewer::Plot2dWindow() {
   constexpr auto fields = ylt::reflection::get_member_names<Imu>();
 
   static ImPlotSubplotFlags flags = ImPlotSubplotFlags_ShareItems;
-  static int rows = 2;
+  static int rows = 1;
   static int cols = 2;
   static int id[] = { 0, 1, 2, 3, 4, 5 }; // 每个graph对应的序号
   static int curj = -1;
@@ -189,7 +210,9 @@ void MyViewer::Plot2dWindow() {
             float fj = 0.01f * (j + 2);
             char const* label = std::string(fields[j]).c_str();
 
-            ImPlot::PlotLineG(label, SinewaveGetter, &fj, 1000);
+            auto& imu_buffer = buffers_.Get<Imu>("/imu");
+            PlotImu(imu_buffer, label);
+
             if (ImPlot::BeginDragDropSourceItem(label)) {
               curj = j;
               ImGui::SetDragDropPayload("MY_DND", nullptr, 0);

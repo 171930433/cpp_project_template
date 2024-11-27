@@ -619,7 +619,7 @@ void vtkDearImGuiInjector::InterceptEvent(vtkObject* caller, unsigned long eid, 
       io.KeyShift = iStyle->GetInteractor()->GetShiftKey();
       io.KeySuper = (GetKeyState(VK_LWIN) || GetKeyState(VK_RWIN)) ? true : false;
 #endif
-      if (key >= 0 && key < IM_ARRAYSIZE(io.KeysDown)) { io.KeysDown[key] = (down); }
+      // if (key >= 0 && key < IM_ARRAYSIZE(io.KeysDown)) { io.KeysDown[key] = (down); }
 
       io.KeyAlt &= down;
       io.KeyCtrl &= down;

@@ -150,8 +150,65 @@ void MyViewer::TrajectoryWindow() {
   ImGui::End();
 }
 
+ImPlotPoint SinewaveGetter(int i, void* data) {
+  float f = *(float*)data;
+  return ImPlotPoint(i, sinf(f * i));
+}
+
 void MyViewer::Plot2dWindow() {
   ImGui::Begin("plot 2d");
+
+  auto const& channel_names_ = buffers_.channel_names_;
+  static auto selected_it = channel_names_.begin();
+  if (ImGui::BeginCombo("##channels", (channel_names_.size() ? channel_names_.begin()->data() : nullptr))) {
+    for (auto it = channel_names_.begin(); it != channel_names_.end(); ++it) {
+      const bool is_selected = (selected_it == it);
+      if (ImGui::Selectable(it->data(), is_selected)) selected_it = it;
+
+      if (is_selected) ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+
+  ImGui::SameLine();
+  static int row_col[2] = { 1, 3 };
+  ImGui::InputInt2("row*col", row_col);
+
+  constexpr auto fields = ylt::reflection::get_member_names<Imu>();
+
+  static ImPlotSubplotFlags flags = ImPlotSubplotFlags_ShareItems;
+  static int rows = 2;
+  static int cols = 2;
+  static int id[] = { 0, 1, 2, 3, 4, 5 }; // 每个graph对应的序号
+  static int curj = -1;
+  if (ImPlot::BeginSubplots("##ItemSharing", rows, cols, ImVec2(-1, 400), flags)) {
+    for (int i = 0; i < fields.size(); ++i) {
+      if (ImPlot::BeginPlot("")) {
+        for (int j = 0; j < fields.size(); ++j) {
+          if (id[j] == i) {
+            float fj = 0.01f * (j + 2);
+            char const* label = std::string(fields[j]).c_str();
+
+            ImPlot::PlotLineG(label, SinewaveGetter, &fj, 1000);
+            if (ImPlot::BeginDragDropSourceItem(label)) {
+              curj = j;
+              ImGui::SetDragDropPayload("MY_DND", nullptr, 0);
+              ImPlot::ItemIcon(ImPlot::GetLastItemColor());
+              ImGui::SameLine();
+              ImGui::TextUnformatted(label);
+              ImPlot::EndDragDropSource();
+            }
+          }
+        }
+        if (ImPlot::BeginDragDropTargetPlot()) {
+          if (ImGui::AcceptDragDropPayload("MY_DND")) id[curj] = i;
+          ImPlot::EndDragDropTarget();
+        }
+        ImPlot::EndPlot();
+      }
+    }
+    ImPlot::EndSubplots();
+  }
 
   if (ImPlot::BeginPlot("##CustomRend", ImVec2(-1, -1), ImPlotFlags_Equal)) {
     ImVec2 cntr = ImPlot::PlotToPixels(ImPlotPoint(0.5f, 0.5f));

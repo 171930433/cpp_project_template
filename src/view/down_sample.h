@@ -12,6 +12,10 @@ inline bool operator==(ImPlotRect const& r1, ImPlotRect const& r2) {
   return r1.Contains(r2.Min()) && r1.Contains(r2.Max()) && r2.Contains(r1.Min()) && r2.Contains(r1.Max());
 }
 
+inline bool operator==(ImPlotRange const& r1, ImPlotRange const& r2) {
+  return fabs(r1.Min - r2.Min) < 1e-6 && fabs(r1.Max - r2.Max) < 1e-6;
+}
+
 BOOST_GEOMETRY_REGISTER_POINT_2D(ImPlotPoint, double, cs::cartesian, x, y);
 namespace bg = boost::geometry;
 namespace bgm = boost::geometry::model;
@@ -141,7 +145,8 @@ inline std::vector<std::array<double, 8>> DownSample(SensorContainer<_Sensor> co
 
   if (!raw_pts_changed && !viewport_changed) { return down_pts[channel_name]; }
 
-  // bgm::box<std::array<double,8>> box{ range.Min(), range.Max() };
+  bool y_scale_changed = !(last_viewpor.Y == range.Y);
+
   ImVec2 plot_pos = ImPlot::GetPlotPos();            // 左上角的位置（像素单位）
   ImVec2 plot_size = ImPlot::GetPlotSize();          // 绘图区的大小（像素单位）
   double scale_ppm = plot_size.x / range.X.Size();   // pixel per meter
@@ -157,18 +162,19 @@ inline std::vector<std::array<double, 8>> DownSample(SensorContainer<_Sensor> co
     auto& pt = raw_pts[i];
     auto& last_pt = pts_downsample.back();
 
-    // if (!bg::within(pt, box)) { continue; }
     if (!range.X.Contains(pt[0])) { continue; }
 
-    double const dx = std::abs(pt[0] - last_pt[0]);
-    // double const dy = std::abs(pt.y - last_pt.y);
-
-    if (dx < scale_mpp_x) { continue; }
+    // 防止仅平移时抖动
+    if (y_scale_changed) {
+      double const dx = std::abs(pt[0] - last_pt[0]);
+      if (dx < scale_mpp_x) { continue; }
+    }
 
     pts_downsample.push_back(pt);
   }
 
   down_pts[channel_name] = pts_downsample;
+  ELOGD << fmt::format("raw={}, downsample to {}", raw_pts.size(), pts_downsample.size());
 
   return pts_downsample;
 }

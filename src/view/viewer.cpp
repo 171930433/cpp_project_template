@@ -130,6 +130,7 @@ void PlotTrajectory(SensorContainer<_Sensor> const& single_buffer) {
 
 template <typename _Sensor, std::enable_if_t<std::is_same_v<_Sensor, Imu>>* = nullptr>
 void PlotImu(SensorContainer<_Sensor> const& single_buffer, std::string_view name) {
+  ELOGD << " PlotImu " << name;
   auto const& pts = DownSample(single_buffer);
   if (pts.empty()) return;
   if (name == "acc_") {
@@ -141,6 +142,7 @@ void PlotImu(SensorContainer<_Sensor> const& single_buffer, std::string_view nam
     ImPlot::PlotLine((std::string(name) + "y").c_str(), &pts[0][0], &pts[0][5], pts.size(), 0, 0, sizeof(double) * 8);
     ImPlot::PlotLine((std::string(name) + "z").c_str(), &pts[0][0], &pts[0][6], pts.size(), 0, 0, sizeof(double) * 8);
   }
+  ELOGD << " PlotImu " << name << " done";
 }
 
 void MyViewer::TrajectoryWindow() {
@@ -200,10 +202,10 @@ void MyViewer::Plot2dWindow() {
   static ImPlotSubplotFlags flags = ImPlotSubplotFlags_ShareItems;
   static int rows = 1;
   static int cols = 2;
-  static int id[] = { 0, 1, 2, 3, 4, 5 }; // 每个graph对应的序号
+  static int id[] = { 0, 0, 1, 1, 1, 1 }; // 每个graph对应的序号
   static int curj = -1;
   if (ImPlot::BeginSubplots("##ItemSharing", rows, cols, ImVec2(-1, 400), flags)) {
-    for (int i = 0; i < fields.size(); ++i) {
+    for (int i = 0; i < (rows * cols); ++i) {
       if (ImPlot::BeginPlot("")) {
         for (int j = 0; j < fields.size(); ++j) {
           if (id[j] == i) {

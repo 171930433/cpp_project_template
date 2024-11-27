@@ -23,23 +23,35 @@ inline std::string JsonStr(_T const& elem) {
   return ss.str();
 }
 
+template <typename _T, _T... _Names>
+struct FieldInfo {};
+
 template <typename _T, std::enable_if_t<iguana::plain_v<_T>>* = nullptr>
-inline void GetAllMemberNamesImpl(std::string_view name, _T& field) {
-  std::string const filed_name(name);
-  char const* str = (std::stringstream() << field).str().c_str();
+inline void GetAllMemberNamesImpl(
+  std::string_view name, _T& field, std::vector<std::string>& re, std::string const& pre_fix) {
+  re.push_back(pre_fix + std::string(name));
 }
 
 template <typename _T, std::enable_if_t<iguana::ylt_refletable_v<_T>>* = nullptr>
-inline void GetAllMemberNamesImpl(std::string_view name, _T& field) {
-  std::string const filed_name(name);
-  ylt::reflection::for_each(field, [](auto& field, auto name) { GetAllMemberNamesImpl(name, field); });
+inline void GetAllMemberNamesImpl(
+  std::string_view name, _T& field, std::vector<std::string>& re, std::string& pre_fix) {
+
+  std::string new_prefix = pre_fix + std::string(name) + ".";
+
+  ylt::reflection::for_each(
+    field, [&re, &new_prefix](auto& field, auto name) { GetAllMemberNamesImpl(name, field, re, new_prefix); });
 }
 
 template <typename _T, std::enable_if_t<iguana::ylt_refletable_v<_T>, bool> = true>
-inline void GetAllMemberNames(_T& field) {
-  std::string const filed_name(ylt::reflection::type_string<_T>());
+inline std::vector<std::string> GetAllMemberNames(_T& field) {
+  std::vector<std::string> re;
 
-  ylt::reflection::for_each(field, [](auto& field, auto name) { GetAllMemberNamesImpl(name, field); });
+  std::string pre_fix = "";
+
+  ylt::reflection::for_each(
+    field, [&re, &pre_fix](auto& field, auto name) { GetAllMemberNamesImpl(name, field, re, pre_fix); });
+
+  return re;
 }
 
 TEST(ylt, all_fields) {
@@ -53,6 +65,15 @@ TEST(ylt, all_fields) {
   Imu i1;
 
   for_each(i1, [](auto& field, auto name, auto no) { ELOGD << fmt::format("{},{},{}", JsonStr(field), name, no); });
+
+  auto names = GetAllMemberNames(i1);
+
+  for (auto const& filed : names) { ELOGD << fmt::format("{}", filed); }
+
+  Gnss g2;
+  names = GetAllMemberNames(g2);
+
+  for (auto const& filed : names) { ELOGD << fmt::format("{}", filed); }
 
   EXPECT_TRUE(1);
 }

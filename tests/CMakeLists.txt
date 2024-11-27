@@ -13,7 +13,7 @@ target_link_libraries(
           $<$<BOOL:${FETCH_THIRD_PARTY_DEMO}>:${PROJECT_NAME}_3rd>
   PRIVATE GTest::gtest GTest::gmock Boost::timer)
 
-target_compile_features(main_test PRIVATE cxx_std_20)
+# target_compile_features(main_test PRIVATE cxx_std_20)
 
 include(GoogleTest)
 

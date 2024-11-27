@@ -35,7 +35,7 @@ target_link_libraries(
   # modules
   PUBLIC $<$<BOOL:${ENABLE_PSINS}>:psins> $<$<BOOL:${ENABLE_LM}>:lm>)
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+# target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 target_compile_definitions(
   ${PROJECT_NAME}

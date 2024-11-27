@@ -1,21 +1,22 @@
 {
   "dependencies": [
-    "protobuf",
     "eigen3",
+    "fmt",
+    "gflags",
     "glog",
     "gtest",
-    "gflags",
-    "fmt",
-    "units",
-    "taskflow",
     {
       "name": "imgui",
       "features": [
-        "opengl3-binding",
-        "docking-experimental"
+        "docking-experimental",
+        "opengl3-binding"
       ]
     },
     "implot",
-    "portable-file-dialogs"
+    "portable-file-dialogs",
+    "protobuf",
+    "taskflow",
+    "units",
+    "yalantinglibs"
   ]
 }

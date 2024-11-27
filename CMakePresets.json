@@ -11,7 +11,6 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_PREFIX_PATH": "/home/gsk/install",
                 "PROTOBUF_DEMO": false,
                 "FETCH_THIRD_PARTY_DEMO": false
             }

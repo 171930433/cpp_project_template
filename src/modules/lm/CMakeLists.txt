@@ -22,7 +22,7 @@ target_include_directories(
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/modules/${MODULE_NAME}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/src>)
 
-target_compile_features(${MODULE_NAME} PUBLIC cxx_std_20)
+# target_compile_features(${MODULE_NAME} PUBLIC cxx_std_20)
 
 target_link_libraries(
   ${MODULE_NAME}

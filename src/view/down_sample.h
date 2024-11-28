@@ -95,6 +95,7 @@ inline std::vector<ImPlotPoint> DownSample(SensorContainer<_Sensor> const& singl
   return pts_downsample;
 }
 
+// ! todo graph类型，还是需要根据y值进行采样，分辨率和范围决定点数，y坐标值本身使用lttb进行采样
 template <typename _Sensor, std::enable_if_t<std::is_same_v<_Sensor, Imu>>* = nullptr>
 inline std::vector<std::array<double, 8>> DownSample(SensorContainer<_Sensor> const& single_buffer) {
   std::vector<std::array<double, 8>> pts_downsample;

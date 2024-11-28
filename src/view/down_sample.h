@@ -145,36 +145,32 @@ inline std::vector<std::array<double, 8>> DownSample(SensorContainer<_Sensor> co
 
   if (!raw_pts_changed && !viewport_changed) { return down_pts[channel_name]; }
 
-  bool y_scale_changed = !(last_viewpor.Y == range.Y);
-
   ImVec2 plot_pos = ImPlot::GetPlotPos();            // 左上角的位置（像素单位）
   ImVec2 plot_size = ImPlot::GetPlotSize();          // 绘图区的大小（像素单位）
-  double scale_ppm = plot_size.x / range.X.Size();   // pixel per meter
   double scale_mpp_x = range.X.Size() / plot_size.x; // meter per pixel
-  double scale_mpp_y = range.Y.Size() / plot_size.y; // meter per pixel
 
   // 最终结果
   pts_downsample.reserve(raw_pts.size());
-
   pts_downsample.push_back(raw_pts[0]);
+  int last_index = 0;
 
+  // 获得视口范围内的点, 根据采样间隔遍历
   for (int i = 0; i < raw_pts.size(); ++i) {
     auto& pt = raw_pts[i];
-    auto& last_pt = pts_downsample.back();
+    auto& last_pt = raw_pts[last_index];
+
+    // 根据所有点的时间间隔进行采样，在平移时就不会抖动
+    if (fabs(pt[0] - last_pt[0]) < scale_mpp_x) { continue; }
+
+    last_index = i;
 
     if (!range.X.Contains(pt[0])) { continue; }
-
-    // 防止仅平移时抖动
-    if (y_scale_changed) {
-      double const dx = std::abs(pt[0] - last_pt[0]);
-      if (dx < scale_mpp_x) { continue; }
-    }
 
     pts_downsample.push_back(pt);
   }
 
   down_pts[channel_name] = pts_downsample;
-  ELOGD << fmt::format("raw={}, downsample to {}", raw_pts.size(), pts_downsample.size());
+  // ELOGD << fmt::format("raw={}, downsample to {}", raw_pts.size(), pts_downsample.size());
 
   return pts_downsample;
 }

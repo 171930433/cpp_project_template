@@ -82,4 +82,11 @@ bool ReleativeLoc::StaticCheck(Message<Imu> const& frame) {
   return false;
 }
 
+bool ReleativeLoc::StaticFuse(Message<Imu> const& frame) {
+
+  if (int(frame.t0() * 1000) % 1000 == 0) { eskf_.FuseStatic(); }
+
+  return true;
+}
+
 }

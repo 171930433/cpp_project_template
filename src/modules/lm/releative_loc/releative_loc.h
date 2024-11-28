@@ -14,7 +14,7 @@ public:
     buffers_.Append(frame);
     if (!inited_) {
       inited_.store(TryInit(frame));
-      if (inited_) { return; }
+      if (inited_) {}
     }
 
     return ProcessImpl(frame);
@@ -24,8 +24,11 @@ public:
   //   void ProcessImpl(MessageBase::SCPtr frame) {};
   void ProcessImpl(std::shared_ptr<Message<Gnss> const> frame);
   void ProcessImpl(std::shared_ptr<Message<State> const> frame);
+
+protected:
   bool TryInit(MessageBase::SCPtr frame);
   bool StaticCheck(Message<Imu> const& frame);
+  bool StaticFuse(Message<Imu> const& frame);
 
 private:
   std::unique_ptr<Initializer> initializer_;

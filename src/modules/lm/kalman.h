@@ -1,10 +1,9 @@
 #pragma once
 
-#include "common/extral_units.hpp"
 #include "common/eigen_type.hpp"
+#include "common/extral_units.hpp"
 #include "message/message_buffer.h"
 #include <eigen3/Eigen/Dense>
-
 
 namespace lm::filter {
 
@@ -60,7 +59,10 @@ struct State16 : public Eigen::Vector<double, 16> {
 struct ErrorState15 : public Eigen::Vector<double, 15> {
   using Base = Eigen::Matrix<double, 15, 1>;
   constexpr static unsigned klocal = 15;
-  ErrorState15() { this->setZero(); }
+  ErrorState15()
+    : Base() {
+    this->setZero();
+  }
   enum class Idx { fai = 0, dv = 3, dp = 6, dbg = 9, dba = 12 };
   Eigen::VectorMap3d fai() { return Eigen::VectorMap3d(this->data() + (int)Idx::fai); }
   Eigen::VectorMap3d dv() { return Eigen::VectorMap3d(this->data() + (int)Idx::dv); }
@@ -80,6 +82,11 @@ struct ErrorState15 : public Eigen::Vector<double, 15> {
     this->Base::operator=(other);
     return *this;
   }
+
+  // This constructor allows you to construct MyVectorType from Eigen expressions
+  template <typename OtherDerived>
+  ErrorState15(const Eigen::MatrixBase<OtherDerived>& other)
+    : Base(other) {}
 };
 
 inline State16 Compensate(State16 const& x, ErrorState15 const& dx) {
@@ -106,6 +113,7 @@ public:
   using FaiType = Eigen::Matrix<double, klocal, klocal>;
   using QType = Eigen::Matrix<double, klocal, 1>;
   using FStates = FilterState<_State, _ErrorState>;
+  using Idx = _ErrorState::Idx;
 
   ErrorStateKalmanFilter() = default;
 
@@ -157,7 +165,38 @@ public:
     return predicted_states;
   }
 
+  // 量测函数
+  void FuseStatic() {
+    using namespace Eigen;
+    using namespace units;
+    using namespace units::literals;
+    using namespace units::velocity;
+
+    Eigen::Matrix<double, 3, klocal> H = Eigen::Matrix<double, 3, klocal>::Zero();
+    H.template block<3, 3>(0, (int)Idx::dv).setIdentity();
+
+    Vector3d Z = states_.x_.vel() - Vector3d::Zero();
+
+    Vector3d r = Vector3d::Constant(0.1_mps());
+
+    Filter(Z, H, r);
+  }
+
 protected:
+  void Filter(Eigen::VectorXd const& Z, Eigen::MatrixXd const& H, Eigen::VectorXd const& r) {
+    using namespace Eigen;
+    auto& P = states_.cov_;
+    Eigen::MatrixXd R = r.cwiseAbs2().asDiagonal();
+
+    Eigen::Matrix<double, klocal, 3> K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
+    _ErrorState dx = K * Z; // todo 序贯与多线程需要考虑
+
+    states_.x_ = Compensate(states_.x_, dx);
+
+    P = (FaiType::Identity() - K * H) * P;
+    P = (P + P.transpose()) * 0.5;
+  }
+
   FaiType Fai(FStates const& states, Message<Imu> const& frame, double dt) {
     static FaiType const Inn = FaiType::Identity();
     auto& x = states.x_;

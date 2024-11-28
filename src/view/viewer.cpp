@@ -130,7 +130,7 @@ void PlotTrajectory(SensorContainer<_Sensor> const& single_buffer) {
 
 template <typename _Sensor, std::enable_if_t<std::is_same_v<_Sensor, Imu>>* = nullptr>
 void PlotImu(SensorContainer<_Sensor> const& single_buffer, std::string_view name) {
-  ELOGD << " PlotImu " << name;
+  // ELOGD << " PlotImu " << name;
   auto const& pts = DownSample(single_buffer);
   if (pts.empty()) return;
   if (name == "acc_") {
@@ -142,7 +142,7 @@ void PlotImu(SensorContainer<_Sensor> const& single_buffer, std::string_view nam
     ImPlot::PlotLine((std::string(name) + "y").c_str(), &pts[0][0], &pts[0][5], pts.size(), 0, 0, sizeof(double) * 8);
     ImPlot::PlotLine((std::string(name) + "z").c_str(), &pts[0][0], &pts[0][6], pts.size(), 0, 0, sizeof(double) * 8);
   }
-  ELOGD << " PlotImu " << name << " done";
+  // ELOGD << " PlotImu " << name << " done";
 }
 
 void MyViewer::TrajectoryWindow() {

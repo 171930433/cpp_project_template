@@ -63,6 +63,7 @@ struct State {
   Vec3d pos_ = { 0, 0, 0 };
   Vec3d vel_ = { 0, 0, 0 };
   Vec3d att_ = { 0, 0, 0 }; // yaw pitch roll
+  bool is_static_ = false;
 };
 
 struct FramesPack {

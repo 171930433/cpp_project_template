@@ -11,9 +11,10 @@ public:
 
   template <typename _Sensor>
   auto ProcessData(std::shared_ptr<Message<_Sensor> const> frame) {
+    buffers_.Append(frame);
     if (!inited_) {
       inited_.store(TryInit(frame));
-      if (inited_) {}
+      if (inited_) { return; }
     }
 
     return ProcessImpl(frame);
@@ -24,6 +25,7 @@ public:
   void ProcessImpl(std::shared_ptr<Message<Gnss> const> frame);
   void ProcessImpl(std::shared_ptr<Message<State> const> frame);
   bool TryInit(MessageBase::SCPtr frame);
+  bool StaticCheck(Message<Imu> const& frame);
 
 private:
   std::unique_ptr<Initializer> initializer_;

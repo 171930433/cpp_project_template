@@ -17,7 +17,7 @@ public:
 protected:
 };
 
-TEST_F(Chapter6_3, problem_set_1) {
+TEST_F(Chapter6_3, eigenvalues_eigenvectors) {
   Matrix2d A = (Matrix2d() << 4, 3, 0, 1).finished();
 
   EigenSolver<Matrix2d> solver(A);
@@ -32,6 +32,27 @@ TEST_F(Chapter6_3, problem_set_1) {
   EXPECT_EQ(lambdas, (Vector2cd(Eigen::dcomplex(4), Eigen::dcomplex(1))));
 
   Matrix2cd S = solver.eigenvectors();
+
+  ELOGD << " S = \n" << S;
+}
+
+TEST_F(Chapter6_3, eigenvalues_eigenvectors2) {
+  Matrix2d A = (Matrix2d() << 4, 3, 3, 1).finished();
+
+  SelfAdjointEigenSolver<Matrix2d> solver(A);
+
+  EXPECT_TRUE(solver.info() == Eigen::ComputationInfo::Success);
+
+  if (solver.info() != Eigen::ComputationInfo::Success) return;
+
+  Vector2d lambdas = solver.eigenvalues();
+  ELOGD << " lambdas = " << lambdas.transpose();
+
+  double const d = 3 * sqrt(5);
+
+  EXPECT_TRUE(lambdas.isApprox(Vector2d{ 0.5 * (5 - d), 0.5 * (5 + d) }));
+
+  Matrix2d S = solver.eigenvectors();
 
   ELOGD << " S = \n" << S;
 }

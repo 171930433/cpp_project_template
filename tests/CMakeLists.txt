@@ -1,5 +1,18 @@
 # vcpkg
-file(GLOB TEST_FILES *.cpp linear_algbra/*.cpp boost/*.cpp template/*.cpp)
+file(GLOB TEST_FILES *.cpp)
+
+option(BUILD_ALGBRA_TEST "BUILD ALGBRA TEST" OFF)
+if(BUILD_ALGBRA_TEST)
+  file(GLOB SRC_FILES linear_algbra/*.cpp)  
+  set(TEST_FILES ${TEST_FILES} ${SRC_FILES})
+endif()
+
+option(BUILD_TEMPLATE_TEST "BUILD TEMPLATE TEST" OFF)
+if(BUILD_TEMPLATE_TEST)
+  file(GLOB SRC_FILES template/*.cpp boost/*.cpp)  
+  set(TEST_FILES ${TEST_FILES} ${SRC_FILES})
+endif()
+
 
 find_package(GTest CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS timer)

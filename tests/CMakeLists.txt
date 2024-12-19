@@ -3,7 +3,7 @@ file(GLOB TEST_FILES *.cpp)
 
 option(BUILD_ALGBRA_TEST "BUILD ALGBRA TEST" OFF)
 if(BUILD_ALGBRA_TEST)
-  file(GLOB SRC_FILES linear_algbra/*.cpp)  
+  file(GLOB SRC_FILES linear_algbra/*.cpp sophus/*.cpp)  
   set(TEST_FILES ${TEST_FILES} ${SRC_FILES})
 endif()
 

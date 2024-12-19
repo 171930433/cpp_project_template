@@ -17,6 +17,7 @@
     "protobuf",
     "taskflow",
     "units",
-    "yalantinglibs"
+    "yalantinglibs",
+    "sophus"
   ]
 }
